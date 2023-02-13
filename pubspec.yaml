@@ -31,6 +31,7 @@ dependencies:
       ref: 604523dd6edfb54e643f577512ea698c8debb96d
   launch_at_startup: ^0.2.1
   package_info_plus: ^3.0.3
+  shared_preferences: ^2.0.17
 
 dev_dependencies:
   flutter_test:
