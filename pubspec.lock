@@ -118,14 +118,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.0"
-  flutter_emoji:
-    dependency: "direct main"
-    description:
-      name: flutter_emoji
-      sha256: a4341f2440b7f97c2ec4bb19a0903f313918a755c55d30ac746f1312085788dd
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.4.0"
   flutter_hooks:
     dependency: "direct main"
     description:
@@ -155,6 +147,27 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_web_plugins:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  fuzzywuzzy:
+    dependency: "direct main"
+    description:
+      name: fuzzywuzzy
+      sha256: f685751951297e560361b6416d9ba62d40231599d7b3e8c078318990d3bab84a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  google_fonts:
+    dependency: "direct main"
+    description:
+      name: google_fonts
+      sha256: "927573f2e8a8d65c17931e21918ad0ab0666b1b636537de7c4932bdb487b190f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.3"
   hooks_riverpod:
     dependency: "direct main"
     description:
@@ -163,6 +176,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.3"
+  hotkey_manager:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "604523dd6edfb54e643f577512ea698c8debb96d"
+      resolved-ref: "604523dd6edfb54e643f577512ea698c8debb96d"
+      url: "https://github.com/leanflutter/hotkey_manager.git"
+    source: git
+    version: "0.1.7"
   http:
     dependency: "direct main"
     description:
@@ -465,6 +487,15 @@ packages:
       url: "https://github.com/leanflutter/window_manager.git"
     source: git
     version: "0.3.0"
+  window_size:
+    dependency: "direct main"
+    description:
+      path: "plugins/window_size"
+      ref: HEAD
+      resolved-ref: "6c66ad23ee79749f30a8eece542cf54eaf157ed8"
+      url: "https://github.com/google/flutter-desktop-embedding.git"
+    source: git
+    version: "0.1.0"
   xdg_directories:
     dependency: transitive
     description:
