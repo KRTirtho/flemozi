@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flemozi/components/root/twemoji.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,28 +6,61 @@ import 'package:flemozi/collections/emojis.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:window_manager/window_manager.dart';
 
-class Emoji extends HookWidget {
+class Emoji extends StatefulHookWidget {
   const Emoji({Key? key}) : super(key: key);
+
+  @override
+  State<Emoji> createState() => _EmojiState();
+}
+
+class _EmojiState extends State<Emoji> with WindowListener {
+  late FocusNode searchFocusNode;
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    searchFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void onWindowFocus() {
+    searchFocusNode.requestFocus();
+  }
 
   @override
   Widget build(BuildContext context) {
     final searchTerm = useState("");
-    final searchFocusNode = useFocusNode();
 
     final filteredEmojis = useMemoized(
-      () => searchTerm.value.isEmpty
-          ? emojis
-          : emojis.sortedBy<num>(
-              (emoji) {
-                final description = emoji["description"] as String;
-                final aliases = (emoji["aliases"] as List).join(" ");
-                final tags = (emoji["tags"] as List? ?? []).join(" ");
-                return weightedRatio(
-                  "$description $aliases $tags",
-                  searchTerm.value,
-                );
-              },
-            ).reversed,
+      () {
+        if (searchTerm.value.isEmpty) {
+          return emojis;
+        } else {
+          final List<Map<String, Object>> map = [];
+          for (var emoji in emojis) {
+            final description = emoji["description"] as String;
+            final aliases = (emoji["aliases"] as List).join(" ");
+            final tags = (emoji["tags"] as List? ?? []).join(" ");
+            final ratio = weightedRatio(
+              "$description $aliases $tags",
+              searchTerm.value,
+            );
+            emoji["ratio"] = ratio;
+            if (ratio > 50) {
+              map.add(emoji);
+            }
+          }
+          map.sort((a, b) => (b["ratio"] as int) - (a["ratio"] as int));
+          return map;
+        }
+      },
       [searchTerm.value],
     );
 
@@ -100,8 +132,8 @@ class Emoji extends HookWidget {
                     child: MaterialButton(
                       focusNode: focusNode,
                       padding: EdgeInsets.zero,
-                      focusColor: Theme.of(context).primaryColor,
-                      highlightColor: Theme.of(context).primaryColor,
+                      focusColor: Theme.of(context).colorScheme.primary,
+                      highlightColor: Theme.of(context).colorScheme.primary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),

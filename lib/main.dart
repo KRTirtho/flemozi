@@ -60,11 +60,11 @@ void main() async {
     },
   );
 
-  runApp(const MainApp());
+  runApp(const Flemozi());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class Flemozi extends StatelessWidget {
+  const Flemozi({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +72,18 @@ class MainApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          scaffoldBackgroundColor: Colors.white60,
+          colorScheme: ColorScheme.light(
+            primary: Colors.grey[900]!,
+            secondary: Colors.grey[900]!,
+            background: Colors.white,
+          ),
           tabBarTheme: TabBarTheme(
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.black,
+            unselectedLabelColor: Colors.grey[900]!,
             indicator: BoxDecoration(
               borderRadius: BorderRadius.circular(5),
-              color: Colors.black87,
+              color: Colors.grey[900]!,
             ),
           ),
         ),

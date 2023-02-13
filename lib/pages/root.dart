@@ -28,16 +28,20 @@ class RootPage extends HookWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.zero,
-                    shape: const CircleBorder(),
+                Container(
+                  alignment: Alignment.topRight,
+                  margin: const EdgeInsets.only(top: 10),
+                  child: FilledButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      padding: EdgeInsets.zero,
+                      shape: const CircleBorder(),
+                    ),
+                    onPressed: () {
+                      windowManager.close();
+                    },
+                    child: const Icon(Icons.close),
                   ),
-                  onPressed: () {
-                    windowManager.close();
-                  },
                 ),
               ],
             ),
