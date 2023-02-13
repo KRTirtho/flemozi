@@ -1,4 +1,5 @@
 import 'package:flemozi/components/root/emoji.dart';
+import 'package:flemozi/intents/close_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:window_manager/window_manager.dart';
@@ -16,6 +17,9 @@ class RootPage extends HookWidget {
           child: GestureDetector(
             onHorizontalDragStart: (details) {
               windowManager.startDragging();
+            },
+            onSecondaryTap: () {
+              windowManager.popUpWindowMenu();
             },
             child: Row(
               children: [
@@ -38,7 +42,7 @@ class RootPage extends HookWidget {
                       shape: const CircleBorder(),
                     ),
                     onPressed: () {
-                      windowManager.close();
+                      Actions.invoke(context, const CloseWindowIntent());
                     },
                     child: const Icon(Icons.close),
                   ),

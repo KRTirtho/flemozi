@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -9,10 +9,10 @@ class CloseWindowIntent extends Intent {
 class CloseWindowAction extends Action<CloseWindowIntent> {
   @override
   void invoke(CloseWindowIntent intent) async {
-    if (kDebugMode) {
-      await windowManager.hide();
+    if (kIsWayland) {
+      await windowManager.close();
     } else {
-      windowManager.close();
+      await windowManager.hide();
     }
   }
 }

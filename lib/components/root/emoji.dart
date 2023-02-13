@@ -1,4 +1,5 @@
 import 'package:flemozi/components/root/twemoji.dart';
+import 'package:flemozi/intents/close_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -167,7 +168,7 @@ class _EmojiState extends State<Emoji> with WindowListener {
                           duration: const Duration(seconds: 2),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        windowManager.hide();
+                        Actions.invoke(context, const CloseWindowIntent());
                       },
                       child: Twemoji(
                         emoji: emoji["emoji"] as String,
