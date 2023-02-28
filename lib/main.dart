@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flemozi/api/api.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/utils/platform.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,39 +62,56 @@ void main(List<String> args) async {
     await windowManager.focus();
   });
 
-  await hotKeyManager.register(
-    HotKey(
-      KeyCode.period,
-      modifiers: [
-        KeyModifier.control,
-        KeyModifier.alt,
-      ],
-      identifier: "Show/Hide",
-      scope: HotKeyScope.system,
-    ),
-    keyDownHandler: (hotKey) async {
-      if (await windowManager.isVisible() && !await windowManager.isFocused()) {
-        if (kIsLinux) await windowManager.setAlwaysOnTop(true);
-        await windowManager.focus();
-        if (kIsLinux) {
-          Future.delayed(const Duration(milliseconds: 100), () async {
-            await windowManager.setAlwaysOnTop(false);
-            await windowManager.focus();
-          });
-        }
+  /// No shortcut for wayland as it's not supported (yet)
+  if (kIsWayland) {
+    try {
+      final res = await get(Uri.parse("http://localhost:42069/ping"));
+      final body = jsonDecode(res.body);
+      if (body["pong"] == true) {
+        await get(Uri.parse("http://localhost:42069/show"));
+        exit(0);
       } else {
-        if (kIsLinux) await windowManager.setAlwaysOnTop(true);
-        await windowManager.show();
-        await windowManager.focus();
-        if (kIsLinux) {
-          Future.delayed(const Duration(milliseconds: 100), () async {
-            await windowManager.setAlwaysOnTop(false);
-            await windowManager.focus();
-          });
-        }
+        await api();
       }
-    },
-  );
+    } catch (e) {
+      await api();
+    }
+  } else {
+    await hotKeyManager.register(
+      HotKey(
+        KeyCode.period,
+        modifiers: [
+          KeyModifier.control,
+          KeyModifier.alt,
+        ],
+        identifier: "Show/Hide",
+        scope: HotKeyScope.system,
+      ),
+      keyDownHandler: (hotKey) async {
+        if (await windowManager.isVisible() &&
+            !await windowManager.isFocused()) {
+          if (kIsLinux) await windowManager.setAlwaysOnTop(true);
+          await windowManager.focus();
+          if (kIsLinux) {
+            Future.delayed(const Duration(milliseconds: 100), () async {
+              await windowManager.setAlwaysOnTop(false);
+              await windowManager.focus();
+            });
+          }
+        } else {
+          if (kIsLinux) await windowManager.setAlwaysOnTop(true);
+          await windowManager.show();
+          await windowManager.focus();
+          if (kIsLinux) {
+            Future.delayed(const Duration(milliseconds: 100), () async {
+              await windowManager.setAlwaysOnTop(false);
+              await windowManager.focus();
+            });
+          }
+        }
+      },
+    );
+  }
 
   runApp(const Flemozi());
 }
