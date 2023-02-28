@@ -213,10 +213,10 @@ packages:
     dependency: "direct main"
     description:
       name: launch_at_startup
-      sha256: "3868ca0b0e6de6b63328f5dd196d34829ff83e394111b28608e7bafdbf3ad292"
+      sha256: "93fc5638e088290004fae358bae691486673d469957d461d9dae5b12248593eb"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1"
+    version: "0.2.2"
   lints:
     dependency: transitive
     description:
@@ -569,12 +569,11 @@ packages:
   window_manager:
     dependency: "direct main"
     description:
-      path: "."
-      ref: b4f2e56606cc9a0f76fdf5e9964bfde75bab2903
-      resolved-ref: b4f2e56606cc9a0f76fdf5e9964bfde75bab2903
-      url: "https://github.com/leanflutter/window_manager.git"
-    source: git
-    version: "0.3.0"
+      name: window_manager
+      sha256: "492806c69879f0d28e95472bbe5e8d5940ac8c6e99cc07052fe14946974555ba"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
   window_size:
     dependency: "direct main"
     description:
@@ -593,5 +592,5 @@ packages:
     source: hosted
     version: "1.0.0"
 sdks:
-  dart: ">=2.19.0 <4.0.0"
+  dart: ">=2.19.0 <3.0.0"
   flutter: ">=3.3.0"

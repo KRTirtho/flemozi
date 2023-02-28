@@ -17,10 +17,7 @@ dependencies:
   hooks_riverpod: ^2.1.3
   http: ^0.13.5
   riverpod: ^2.1.3
-  window_manager:
-    git:
-      url: https://github.com/leanflutter/window_manager.git
-      ref: b4f2e56606cc9a0f76fdf5e9964bfde75bab2903
+  window_manager: ^0.3.1
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git
@@ -29,7 +26,7 @@ dependencies:
     git:
       url: https://github.com/leanflutter/hotkey_manager.git
       ref: 604523dd6edfb54e643f577512ea698c8debb96d
-  launch_at_startup: ^0.2.1
+  launch_at_startup: ^0.2.2
   package_info_plus: ^3.0.3
   shared_preferences: ^2.0.17
 
