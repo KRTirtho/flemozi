@@ -160,8 +160,9 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
-        theme: ThemeData.light(),
+        theme: ThemeData.light(useMaterial3: true),
         darkTheme: ThemeData(
+          useMaterial3: true,
           brightness: Brightness.dark,
           colorSchemeSeed: SystemTheme.accentColor.accent,
           splashFactory: NoSplash.splashFactory,

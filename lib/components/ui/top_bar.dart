@@ -15,9 +15,9 @@ class TopBar extends StatelessWidget with PreferredSizeWidget {
         height: 20,
         width: double.infinity,
         color: Colors.transparent,
-        child: ElevatedButtonTheme(
-          data: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
+        child: FilledButtonTheme(
+          data: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
               shape: const CircleBorder(),
               minimumSize: const Size(10, 10),
             ),
@@ -40,7 +40,7 @@ class TopBar extends StatelessWidget with PreferredSizeWidget {
                   start: 0,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 5.0),
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Icon(Icons.arrow_back, size: 14),
                     ),
@@ -51,7 +51,7 @@ class TopBar extends StatelessWidget with PreferredSizeWidget {
                 end: 0,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 5.0),
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: () =>
                         CloseWindowAction().invoke(const CloseWindowIntent()),
                     child: const Icon(Icons.close, size: 14),
