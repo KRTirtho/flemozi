@@ -65,14 +65,8 @@ void main(List<String> args) async {
   /// No shortcut for wayland as it's not supported (yet)
   if (kIsWayland) {
     try {
-      final res = await get(Uri.parse("http://localhost:42069/ping"));
-      final body = jsonDecode(res.body);
-      if (body["pong"] == true) {
-        await get(Uri.parse("http://localhost:42069/show"));
-        exit(0);
-      } else {
-        await api();
-      }
+      await get(Uri.parse("http://localhost:42069/show"));
+      exit(0);
     } catch (e) {
       await api();
     }

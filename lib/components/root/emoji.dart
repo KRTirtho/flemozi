@@ -65,122 +65,125 @@ class _EmojiState extends State<Emoji> with WindowListener {
       [searchTerm.value],
     );
 
-    return Column(
-      children: [
-        CallbackShortcuts(
-          bindings: {
-            LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-              searchFocusNode.nextFocus();
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          CallbackShortcuts(
+            bindings: {
+              LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
+                searchFocusNode.nextFocus();
+              },
             },
-          },
-          child: TextField(
-            autofocus: true,
-            focusNode: searchFocusNode,
-            decoration: const InputDecoration(
-              hintText: "Search",
-              isDense: true,
-              prefixIcon: Icon(Icons.search),
+            child: TextField(
+              autofocus: true,
+              focusNode: searchFocusNode,
+              decoration: const InputDecoration(
+                hintText: "Search",
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                searchTerm.value = value;
+              },
+              onSubmitted: (value) {
+                searchFocusNode.nextFocus();
+              },
             ),
-            onChanged: (value) {
-              searchTerm.value = value;
-            },
-            onSubmitted: (value) {
-              searchFocusNode.nextFocus();
-            },
           ),
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 40,
-              childAspectRatio: 1,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: filteredEmojis.length,
-            itemBuilder: (context, index) {
-              return HookBuilder(builder: (context) {
-                final focusNode = useFocusNode();
-                final emoji = filteredEmojis.elementAt(index);
-                final tooltipKey = GlobalKey<TooltipState>();
+          const SizedBox(height: 10),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 40,
+                childAspectRatio: 1,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: filteredEmojis.length,
+              itemBuilder: (context, index) {
+                return HookBuilder(builder: (context) {
+                  final focusNode = useFocusNode();
+                  final emoji = filteredEmojis.elementAt(index);
+                  final tooltipKey = GlobalKey<TooltipState>();
 
-                useEffect(() {
-                  listener() {
-                    if (focusNode.hasFocus) {
-                      tooltipKey.currentState?.ensureTooltipVisible();
-                    } else {
-                      tooltipKey.currentState?.deactivate();
+                  useEffect(() {
+                    listener() {
+                      if (focusNode.hasFocus) {
+                        tooltipKey.currentState?.ensureTooltipVisible();
+                      } else {
+                        tooltipKey.currentState?.deactivate();
+                      }
                     }
-                  }
 
-                  focusNode.addListener(listener);
-                  return () {
-                    focusNode.removeListener(listener);
-                  };
-                }, [focusNode]);
+                    focusNode.addListener(listener);
+                    return () {
+                      focusNode.removeListener(listener);
+                    };
+                  }, [focusNode]);
 
-                return CallbackShortcuts(
-                  bindings: {
-                    LogicalKeySet(LogicalKeyboardKey.escape): () {
-                      searchFocusNode.requestFocus();
-                    },
-                  },
-                  child: Tooltip(
-                    message: emoji["description"] as String,
-                    key: tooltipKey,
-                    triggerMode: TooltipTriggerMode.manual,
-                    child: MaterialButton(
-                      focusNode: focusNode,
-                      padding: EdgeInsets.zero,
-                      focusColor: Theme.of(context).colorScheme.primary,
-                      highlightColor: Theme.of(context).colorScheme.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      onPressed: () {
-                        focusNode.requestFocus();
-                        Clipboard.setData(
-                          ClipboardData(text: emoji["emoji"] as String),
-                        );
-                        SnackBar snackBar = SnackBar(
-                          content: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.copy,
-                                color: Theme.of(context).colorScheme.background,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Copied ${(emoji["aliases"] as List).first as String} ",
-                              ),
-                              Twemoji(
-                                emoji: emoji["emoji"] as String,
-                                height: 20,
-                                width: 20,
-                              ),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        Actions.invoke(context, const CloseWindowIntent());
+                  return CallbackShortcuts(
+                    bindings: {
+                      LogicalKeySet(LogicalKeyboardKey.escape): () {
+                        searchFocusNode.requestFocus();
                       },
-                      child: Twemoji(
-                        emoji: emoji["emoji"] as String,
+                    },
+                    child: Tooltip(
+                      message: emoji["description"] as String,
+                      key: tooltipKey,
+                      triggerMode: TooltipTriggerMode.manual,
+                      child: MaterialButton(
+                        focusNode: focusNode,
+                        padding: EdgeInsets.zero,
+                        focusColor: Theme.of(context).colorScheme.primary,
+                        highlightColor: Theme.of(context).colorScheme.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        onPressed: () {
+                          focusNode.requestFocus();
+                          Clipboard.setData(
+                            ClipboardData(text: emoji["emoji"] as String),
+                          );
+                          SnackBar snackBar = SnackBar(
+                            content: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.copy,
+                                  color:
+                                      Theme.of(context).colorScheme.background,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  "Copied ${(emoji["aliases"] as List).first as String} ",
+                                ),
+                                Twemoji(
+                                  emoji: emoji["emoji"] as String,
+                                  height: 20,
+                                  width: 20,
+                                ),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          Actions.invoke(context, const CloseWindowIntent());
+                        },
+                        child: Twemoji(
+                          emoji: emoji["emoji"] as String,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              });
-            },
+                  );
+                });
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
