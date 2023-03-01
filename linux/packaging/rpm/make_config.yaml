@@ -1,0 +1,23 @@
+icon: assets/logo.png
+summary: A powerful emoji picker
+group: Applications/Text
+vendor: Kingkor Roy Tirtho
+packager: Kingkor Roy Tirtho
+packagerEmail: krtirtho@gmail.com
+license: BSD-4-Clause
+url: https://github.com/KRTirtho/flemozi
+requires:
+  - keybinder3
+  - keybinder3-devel
+
+display_name: Flemozi
+
+keywords:
+  - Emoji
+  - Clipboard
+
+generic_name: Emoji Picker
+categories:
+  - Utility
+
+startup_notify: true

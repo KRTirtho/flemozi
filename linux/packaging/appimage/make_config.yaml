@@ -1,0 +1,5 @@
+appId: dev.krtirtho.flemozi
+icon: assets/logo.png
+
+include:
+  - keybinder-3.0
