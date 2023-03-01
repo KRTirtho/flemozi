@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:window_manager/window_manager.dart';
 
 class VerticalTabs extends HookWidget {
   final TabController? controller;
@@ -40,43 +41,51 @@ class VerticalTabs extends HookWidget {
       padding: const EdgeInsets.all(5.0),
       child: Row(
         children: [
-          Column(
-            children: tabs.mapIndexed((index, tab) {
-              final active = activeIndex.value == index;
-              return Container(
-                decoration: BoxDecoration(
-                  color: active
-                      ? Theme.of(context).cardColor.withOpacity(.5)
-                      : null,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    bottomLeft: Radius.circular(8),
-                  ),
-                ),
-                width: 40,
-                child: MaterialButton(
-                  onPressed: () {
-                    controller.animateTo(index);
-                  },
-                  elevation: 0,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
+          GestureDetector(
+            onHorizontalDragStart: (details) {
+              windowManager.startDragging();
+            },
+            child: ColoredBox(
+              color: Colors.transparent,
+              child: Column(
+                children: tabs.mapIndexed((index, tab) {
+                  final active = activeIndex.value == index;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: active
+                          ? Theme.of(context).cardColor.withOpacity(.5)
+                          : null,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        bottomLeft: Radius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: IconTheme(
-                    data: Theme.of(context).iconTheme.copyWith(
-                          size: 16,
-                          color: active
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).iconTheme.color,
+                    width: 40,
+                    child: MaterialButton(
+                      onPressed: () {
+                        controller.animateTo(index);
+                      },
+                      elevation: 0,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          bottomLeft: Radius.circular(8),
                         ),
-                    child: tab,
-                  ),
-                ),
-              );
-            }).toList(),
+                      ),
+                      child: IconTheme(
+                        data: Theme.of(context).iconTheme.copyWith(
+                              size: 16,
+                              color: active
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).iconTheme.color,
+                            ),
+                        child: tab,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
           Expanded(
             child: Container(

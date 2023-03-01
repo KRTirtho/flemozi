@@ -13,6 +13,7 @@ import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
 
@@ -22,6 +23,8 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
+  SystemTheme.fallbackColor = Colors.blue;
+  await SystemTheme.accentColor.load();
 
   window_size.setWindowMinSize(const Size(400, 300));
   window_size.setWindowMaxSize(const Size(720, 480));
@@ -160,9 +163,9 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
         theme: ThemeData.light(),
         darkTheme: ThemeData(
           brightness: Brightness.dark,
-          colorSchemeSeed: Colors.brown,
+          colorSchemeSeed: SystemTheme.accentColor.accent,
           splashFactory: NoSplash.splashFactory,
-          scaffoldBackgroundColor: Colors.grey[900]?.withOpacity(.6),
+          scaffoldBackgroundColor: Colors.transparent,
           tabBarTheme: TabBarTheme(
             indicatorSize: TabBarIndicatorSize.tab,
             dividerColor: Colors.transparent,

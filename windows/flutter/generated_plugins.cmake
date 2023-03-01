@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager
   screen_retriever
+  system_theme
   window_manager
   window_size
 )
