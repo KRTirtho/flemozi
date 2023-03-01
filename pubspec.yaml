@@ -31,6 +31,8 @@ dependencies:
   shared_preferences: ^2.0.17
   alfred: ^1.0.0+1
   system_theme: ^2.1.0
+  flutter_svg: ^2.0.2
+  url_launcher: ^6.1.10
 
 dev_dependencies:
   flutter_test:

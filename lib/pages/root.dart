@@ -13,8 +13,14 @@ class RootPage extends HookWidget {
       appBar: const TopBar(),
       body: VerticalTabs(
         tabs: const [
-          Icon(Icons.emoji_emotions),
-          Icon(Icons.image),
+          Tooltip(
+            message: 'Emoji',
+            child: Icon(Icons.emoji_emotions),
+          ),
+          Tooltip(
+            message: 'GIFs',
+            child: Icon(Icons.image),
+          ),
         ],
         children: const [
           Emoji(),

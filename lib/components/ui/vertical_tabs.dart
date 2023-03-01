@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flemozi/pages/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:window_manager/window_manager.dart';
@@ -6,7 +7,7 @@ import 'package:window_manager/window_manager.dart';
 class VerticalTabs extends HookWidget {
   final TabController? controller;
 
-  final List<Icon> tabs;
+  final List<Widget> tabs;
   final List<Widget> children;
   const VerticalTabs({
     required this.tabs,
@@ -45,45 +46,66 @@ class VerticalTabs extends HookWidget {
             onHorizontalDragStart: (details) {
               windowManager.startDragging();
             },
-            child: ColoredBox(
+            child: Container(
               color: Colors.transparent,
               child: Column(
-                children: tabs.mapIndexed((index, tab) {
-                  final active = activeIndex.value == index;
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: active
-                          ? Theme.of(context).cardColor.withOpacity(.5)
-                          : null,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
+                children: [
+                  ...tabs.mapIndexed((index, tab) {
+                    final active = activeIndex.value == index;
+                    final radius = active
+                        ? const BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            bottomLeft: Radius.circular(8),
+                          )
+                        : BorderRadius.circular(8);
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: active
+                            ? Theme.of(context).cardColor.withOpacity(.5)
+                            : null,
+                        borderRadius: radius,
                       ),
-                    ),
-                    width: 40,
-                    child: MaterialButton(
-                      onPressed: () {
-                        controller.animateTo(index);
-                      },
-                      elevation: 0,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          bottomLeft: Radius.circular(8),
+                      width: 40,
+                      height: 40,
+                      child: MaterialButton(
+                        onPressed: () {
+                          controller.animateTo(index);
+                        },
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: radius),
+                        child: IconTheme(
+                          data: Theme.of(context).iconTheme.copyWith(
+                                color: active
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).iconTheme.color,
+                              ),
+                          child: tab,
                         ),
                       ),
-                      child: IconTheme(
-                        data: Theme.of(context).iconTheme.copyWith(
-                              size: 16,
-                              color: active
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).iconTheme.color,
-                            ),
-                        child: tab,
-                      ),
+                    );
+                  }),
+                  const Spacer(),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return const Settings();
+                          },
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).cardColor.withOpacity(.5),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      shape: const CircleBorder(),
+                      minimumSize: const Size(20, 20),
+                      padding: const EdgeInsets.all(0),
                     ),
-                  );
-                }).toList(),
+                    child: const Icon(Icons.settings_outlined),
+                  ),
+                ],
               ),
             ),
           ),

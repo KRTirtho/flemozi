@@ -15,35 +15,51 @@ class TopBar extends StatelessWidget with PreferredSizeWidget {
         height: 20,
         width: double.infinity,
         color: Colors.transparent,
-        child: Stack(
-          children: [
-            Center(
-              child: Container(
-                width: 70,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary,
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                ),
-              ),
+        child: ElevatedButtonTheme(
+          data: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(),
+              minimumSize: const Size(10, 10),
             ),
-            Positioned.directional(
-              textDirection: Directionality.of(context),
-              end: 0,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 5.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    minimumSize: const Size(10, 10),
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Container(
+                  width: 70,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
                   ),
-                  onPressed: () =>
-                      CloseWindowAction().invoke(const CloseWindowIntent()),
-                  child: const Icon(Icons.close, size: 14),
                 ),
               ),
-            )
-          ],
+              if (Navigator.of(context).canPop())
+                Positioned.directional(
+                  textDirection: Directionality.of(context),
+                  start: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 5.0),
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.arrow_back, size: 14),
+                    ),
+                  ),
+                ),
+              Positioned.directional(
+                textDirection: Directionality.of(context),
+                end: 0,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 5.0),
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        CloseWindowAction().invoke(const CloseWindowIntent()),
+                    child: const Icon(Icons.close, size: 14),
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

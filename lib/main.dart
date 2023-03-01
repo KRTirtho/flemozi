@@ -179,7 +179,7 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
           ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.grey[850],
+            fillColor: Colors.grey[850]?.withOpacity(.5),
           ),
         ),
         builder: (context, child) {
@@ -188,7 +188,7 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
             margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color:
-                  isDark ? Colors.grey[900]!.withOpacity(.6) : Colors.white60,
+                  isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
               borderRadius: BorderRadius.circular(10),
             ),
             child: DragToResizeArea(child: child!),
