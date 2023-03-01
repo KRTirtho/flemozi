@@ -1,0 +1,133 @@
+name: Flemozi Nightly
+on:
+  push:
+    branches:
+      - build
+  workflow_dispatch:
+
+jobs:
+  build_ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Installing dependencies and configuring version
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tar clang cmake ninja-build pkg-config libgtk-3-dev make python3-pip python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libkeybinder-3.0-0 libkeybinder-3.0-dev
+          curl -sS https://webi.sh/yq | sh
+          yq -i '.version |= sub("\+\d+", "+nightly.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          flutter config --enable-linux-desktop
+          flutter pub get
+
+      - name: Installing appimage-builder
+        run: |
+          wget -O appimage-builder https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage
+          chmod +x appimage-builder
+          mv appimage-builder /usr/local/bin/
+
+      - name: Building Linux application
+        run: |
+          dart pub global activate flutter_distributor
+          QA_RPATHS=$(( 0x0001|0x0010|0x0002 )) flutter_distributor package --platform=linux --targets=deb,appimage,rpm --skip-clean
+          make tar
+          mv build/Flemozi-linux-x86_64.tar.xz dist/
+          mv dist/**/flemozi-*-linux.deb dist/Flemozi-linux-x86_64-nightly.deb
+          mv dist/**/flemozi-*-linux.rpm dist/Flemozi-linux-x86_64-nightly.rpm
+          mv dist/**/flemozi-*-linux.AppImage dist/Flemozi-linux-x86_64-nightly.AppImage
+
+      - name: Uploading binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: dist/*
+          tag: refs/tags/nightly
+          body: |
+            ## nightly-${{ github.run_number }}
+            Nightly build no. ${{ github.run_number }} of Flemozi
+          overwrite: true
+
+      - name: Setting up upterm session
+        if: ${{ failure() }}
+        uses: lhotari/action-upterm@v1
+        with:
+          limit-access-to-actor: true
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Installing dependencies and configuring versions
+        run: |
+          choco install sed make yq -y
+          yq -i '.version |= sub("\+\d+", "+nightly.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          flutter config --enable-windows-desktop
+          flutter pub get
+
+      - name: Building for Windows x64
+        run: |
+          dart pub global activate flutter_distributor
+          make innoinstall
+          flutter_distributor package --platform=windows --targets=exe --skip-clean
+          mv dist/**/flemozi-*-windows-setup.exe dist/Flemozi-windows-x86_64-setup-nightly.exe
+
+      - name: Uploading binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: dist/*
+          tag: refs/tags/nightly
+          body: |
+            ## nightly-${{ github.run_number }}
+            Nightly build no. ${{ github.run_number }} of Flemozi
+          overwrite: true
+
+  build_macos:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Installing dependencies and configuring versions
+        run: |
+          brew install yq
+          yq -i '.version |= sub("\+\d+", "+nightly.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          flutter config --enable-macos-desktop
+          flutter pub get
+
+      - name: Building for MacOS
+        run: |
+          flutter build macos
+          npm install -g appdmg
+          appdmg appdmg.json build/Flemozi-macos-x86_64-nightly.dmg
+
+      - name: Uploading binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/Flemozi-macos-x86_64-nightly.dmg
+          tag: refs/tags/nightly
+          body: |
+            ## nightly-${{ github.run_number }}
+            Nightly build no. ${{ github.run_number }} of Flemozi
+          overwrite: true
+
+      - name: Setting up upterm session
+        if: ${{ failure() }}
+        uses: lhotari/action-upterm@v1
+        with:
+          limit-access-to-actor: true
