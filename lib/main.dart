@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flemozi/api/api.dart';
+import 'package:flemozi/collections/env.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/utils/platform.dart';
@@ -21,6 +22,7 @@ void main(List<String> args) async {
   final isHeadless = args.contains("--headless");
 
   WidgetsFlutterBinding.ensureInitialized();
+  await Env.configure();
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
   SystemTheme.fallbackColor = Colors.blue;
