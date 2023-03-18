@@ -2,11 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:flemozi/caching/queries.dart';
 import 'package:flemozi/components/ui/waypoint.dart';
+import 'package:flemozi/hooks/use_debounced_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 class Gif extends HookConsumerWidget {
@@ -20,7 +22,12 @@ class Gif extends HookConsumerWidget {
     final tenorTrending = Queries.useTenorGet(ref);
     final giphyTrending = Queries.useGiphyGet(ref);
 
-    final gifs = useMemoized(
+    final text = useDebouncedState('');
+
+    final tenorSearch = Queries.useTenorSearch(ref, text.value);
+    final giphySearch = Queries.useGiphySearch(ref, text.value);
+
+    final displayGifs = useMemoized(
         () => [
               ...tenorTrending.pages
                   .expand((page) =>
@@ -35,7 +42,45 @@ class Gif extends HookConsumerWidget {
                       ))
                   .whereNotNull(),
             ],
-        [tenorTrending.pages, giphyTrending.pages]);
+        [
+          tenorTrending.pages,
+          giphyTrending.pages,
+        ]);
+
+    final searchGifs = useMemoized(
+        () => [
+              ...tenorSearch.pages
+                  .expand((page) =>
+                      page.results.map((r) => r.tinygif?.url.toString()))
+                  .whereNotNull(),
+              ...giphySearch.pages
+                  .expand((page) => (page.data ?? []).map(
+                        (e) => e?.images?.fixedWidthDownsampled?.url
+                            ?.replaceAll(
+                                RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
+                            .split("?")[0],
+                      ))
+                  .whereNotNull(),
+            ],
+        [
+          tenorSearch.pages,
+          giphySearch.pages,
+        ]);
+
+    final gifs =
+        text.value.isEmpty || searchGifs.isEmpty ? displayGifs : searchGifs;
+
+    useEffect(() {
+      if (text.value.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          controller.jumpTo(0);
+          await Future.wait(
+            [giphySearch.refreshAll(), tenorSearch.refreshAll()],
+          );
+        });
+      }
+      return null;
+    }, [text.value]);
 
     return Column(
       children: [
@@ -45,8 +90,9 @@ class Gif extends HookConsumerWidget {
               FocusScope.of(context).requestFocus(focusNode);
             },
           },
-          child: const TextField(
-            decoration: InputDecoration(
+          child: TextField(
+            onChanged: (value) => text.value = value,
+            decoration: const InputDecoration(
               hintText: 'Search GIFs and Stickers',
             ),
           ),
@@ -78,13 +124,13 @@ class Gif extends HookConsumerWidget {
                   if (imageFile == null) {
                     return;
                   }
-
                   await ClipboardWriter.instance.write([
-                    DataWriterItem()
-                      ..add(Formats.gif(imageFile))
+                    DataWriterItem(suggestedName: basename(gif))
                       ..add(Formats.png(imageFile))
-                      ..add(Formats.jpeg(imageFile))
                       ..add(Formats.bmp(imageFile))
+                      ..add(Formats.webp(imageFile))
+                      ..add(Formats.gif(imageFile))
+                      ..add(Formats.tiff(imageFile))
                       ..add(
                         Formats.htmlText(
                           '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
