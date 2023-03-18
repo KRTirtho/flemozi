@@ -8,10 +8,10 @@ part of 'media_format.dart';
 
 TenorMediaFormat _$TenorMediaFormatFromJson(Map<String, dynamic> json) =>
     TenorMediaFormat(
-      url: Uri.parse(json['media_format'] as String),
-      duration: secondsToDuration(json['duration'] as double),
+      url: Uri.parse(json['url'] as String),
+      duration: secondsToDuration(json['duration'] as num),
       preview: json['preview'] as String,
-      dims: dimsFromJson(json['dims'] as List<int>),
+      dims: dimsFromJson(json['dims'] as List),
       size: json['size'] as int,
     );
 

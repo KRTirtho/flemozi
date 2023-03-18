@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_query/fl_query.dart';
 import 'package:flemozi/api/api.dart';
 import 'package:flemozi/collections/env.dart';
 import 'package:flemozi/intents/close_window.dart';
@@ -22,6 +23,7 @@ void main(List<String> args) async {
   final isHeadless = args.contains("--headless");
 
   WidgetsFlutterBinding.ensureInitialized();
+  QueryClient.initialize(cachePrefix: 'flemoji');
   await Env.configure();
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
@@ -159,59 +161,61 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        theme: ThemeData.light(useMaterial3: true),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorSchemeSeed: SystemTheme.accentColor.accent,
-          splashFactory: NoSplash.splashFactory,
-          scaffoldBackgroundColor: Colors.transparent,
-          tabBarTheme: TabBarTheme(
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            indicator: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(5),
-                topRight: Radius.circular(5),
+      child: QueryClientProvider(
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeMode.dark,
+          theme: ThemeData.light(useMaterial3: true),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorSchemeSeed: SystemTheme.accentColor.accent,
+            splashFactory: NoSplash.splashFactory,
+            scaffoldBackgroundColor: Colors.transparent,
+            tabBarTheme: TabBarTheme(
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: Colors.grey[850],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(5),
+                  topRight: Radius.circular(5),
+                ),
               ),
             ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.grey[850]?.withOpacity(.5),
-          ),
-        ),
-        builder: (context, child) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Container(
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color:
-                  isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
-              borderRadius: BorderRadius.circular(10),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.grey[850]?.withOpacity(.5),
             ),
-            child: DragToResizeArea(child: child!),
-          );
-        },
-        home: CallbackShortcuts(
-          bindings: {
-            LogicalKeySet(LogicalKeyboardKey.escape): () =>
-                CloseWindowAction().invoke(const CloseWindowIntent()),
+          ),
+          builder: (context, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Container(
+              margin: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: DragToResizeArea(child: child!),
+            );
           },
-          child: const RootPage(),
+          home: CallbackShortcuts(
+            bindings: {
+              LogicalKeySet(LogicalKeyboardKey.escape): () =>
+                  CloseWindowAction().invoke(const CloseWindowIntent()),
+            },
+            child: const RootPage(),
+          ),
+          shortcuts: {
+            ...WidgetsApp.defaultShortcuts,
+            LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
+          },
+          actions: {
+            ...WidgetsApp.defaultActions,
+            CloseWindowIntent: CloseWindowAction(),
+          },
         ),
-        shortcuts: {
-          ...WidgetsApp.defaultShortcuts,
-          LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
-        },
-        actions: {
-          ...WidgetsApp.defaultActions,
-          CloseWindowIntent: CloseWindowAction(),
-        },
       ),
     );
   }

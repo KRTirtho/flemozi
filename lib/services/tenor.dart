@@ -71,10 +71,14 @@ class Tenor {
     TenorArRange? arRange,
     bool? random,
     int? limit,
-    int? pos,
+    Object? pos,
     String? locale,
     String? country,
   }) async {
+    assert(
+      pos == null || pos is String || pos is int,
+      'pos must be either a String or an int',
+    );
     final response = await _request(
       'search',
       {
@@ -179,11 +183,15 @@ class Tenor {
     TenorArRange? arRange,
     bool? random,
     int? limit,
-    int? pos,
+    Object? pos,
     String? locale,
     String? country,
     Set<TenorMediaType>? mediaFilter,
   }) async {
+    assert(
+      pos == null || pos is String || pos is int,
+      'pos must be either a String or an int',
+    );
     final response = await _request(
       'featured',
       {

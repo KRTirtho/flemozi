@@ -12,7 +12,7 @@ TenorGif _$TenorGifFromJson(Map<String, dynamic> json) => TenorGif(
       url: json['url'] as String,
       itemUrl: Uri.parse(json['itemurl'] as String),
       contentDescription: json['content_description'] as String,
-      created: DateTime.fromMillisecondsSinceEpoch(json['created'] as int),
+      created: unixToDateTime(json['created'] as double),
       tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
       flags: (json['flags'] as List<dynamic>).map((e) => e as String).toList(),
       hasAudio: json['hasaudio'] as bool,

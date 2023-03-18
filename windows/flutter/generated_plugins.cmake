@@ -4,7 +4,10 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager
+  irondash_engine_context
+  pasteboard
   screen_retriever
+  super_native_extensions
   system_theme
   url_launcher_windows
   window_manager

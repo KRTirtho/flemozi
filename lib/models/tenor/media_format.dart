@@ -7,7 +7,7 @@ part 'media_format.g.dart';
 @JsonSerializable()
 class TenorMediaFormat {
   @JsonKey(
-    name: 'media_format',
+    name: 'url',
     fromJson: Uri.parse,
     toJson: uriToString,
   )

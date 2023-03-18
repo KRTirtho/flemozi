@@ -38,6 +38,7 @@ class _EmojiState extends State<Emoji> with WindowListener {
   @override
   Widget build(BuildContext context) {
     final searchTerm = useState("");
+    final firstEmojiFocusNode = useFocusNode();
 
     final filteredEmojis = useMemoized(
       () {
@@ -72,7 +73,7 @@ class _EmojiState extends State<Emoji> with WindowListener {
           CallbackShortcuts(
             bindings: {
               LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-                searchFocusNode.nextFocus();
+                FocusScope.of(context).requestFocus(firstEmojiFocusNode);
               },
             },
             child: TextField(
@@ -102,7 +103,9 @@ class _EmojiState extends State<Emoji> with WindowListener {
               itemCount: filteredEmojis.length,
               itemBuilder: (context, index) {
                 return HookBuilder(builder: (context) {
-                  final focusNode = useFocusNode();
+                  final focusnodeUn = useFocusNode();
+                  final focusNode =
+                      index == 0 ? firstEmojiFocusNode : focusnodeUn;
                   final emoji = filteredEmojis.elementAt(index);
                   final tooltipKey = GlobalKey<TooltipState>();
 

@@ -1,4 +1,5 @@
 import 'package:flemozi/components/root/emoji.dart';
+import 'package:flemozi/components/root/gif.dart';
 import 'package:flemozi/components/ui/top_bar.dart';
 import 'package:flemozi/components/ui/vertical_tabs.dart';
 import 'package:flutter/material.dart';
@@ -24,9 +25,7 @@ class RootPage extends HookWidget {
         ],
         children: const [
           Emoji(),
-          Center(
-            child: Text('Image'),
-          ),
+          Gif(),
         ],
       ),
     );

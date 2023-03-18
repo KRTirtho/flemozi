@@ -20,7 +20,7 @@ class TenorGif {
 
   @JsonKey(
     name: 'created',
-    fromJson: DateTime.fromMillisecondsSinceEpoch,
+    fromJson: unixToDateTime,
     toJson: dateTimeToUnix,
   )
   final DateTime created;
