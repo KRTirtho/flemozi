@@ -35,14 +35,17 @@ dependencies:
   url_launcher: ^6.1.10
   fl_query: ^1.0.0-alpha.2
   fl_query_hooks: ^1.0.0-alpha.2
-  tenor: ^1.0.9
   giphy_api_client: ^0.1.3
   flutter_dotenv: ^5.0.2
+  json_annotation: ^4.8.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  melos: ^3.0.0
+  json_serializable: ^6.6.1
+  build_runner: ^2.3.3
 
 flutter:
   uses-material-design: true    
