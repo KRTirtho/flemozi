@@ -9,7 +9,7 @@ tar:
 		&& cp -r $(BUNDLE_DIR)/* $(TEMP_DIR)\
 		&& cp linux/flemozi.desktop $(TEMP_DIR)\
 		&& cp assets/logo.png $(TEMP_DIR)\
-		&& tar -cJf build/Flemozi-linux-x86_64.tar.xz -C $(TEMP_DIR) .\
+		&& tar -cJf build/flemozi-linux-${VERSION}-x86_64.tar.xz -C $(TEMP_DIR) .\
 		&& rm -rf $(TEMP_DIR)
 
 aursrcinfo:

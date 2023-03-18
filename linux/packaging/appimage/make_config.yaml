@@ -1,5 +1,12 @@
-appId: dev.krtirtho.flemozi
+display_name: Flemozi
 icon: assets/logo.png
 
-include:
-  - keybinder-3.0
+keywords:
+  - Emoji
+  - Clipboard
+
+generic_name: Emoji Picker
+categories:
+  - Utility
+
+startup_notify: true

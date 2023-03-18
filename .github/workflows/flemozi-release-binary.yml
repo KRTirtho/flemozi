@@ -1,0 +1,237 @@
+name: Flemozi Release Binary
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (x.x.x)
+        default: 0.1.0
+        required: true
+      channel:
+        type: choice
+        description: Release Channel
+        required: true
+        options:
+          - stable
+          - nightly
+        default: nightly
+      dry_run:
+        description: Dry run
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: |
+          choco install sed make yq -y
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
+
+      - name: Replace version in files
+        run: |
+          choco install sed make -y
+          sed -i "s/%{{FLEMOZI_VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          
+
+      - name: Build Windows Executable
+        run: |
+          dart pub global activate flutter_distributor
+          flutter config --enable-windows-desktop
+          flutter pub get
+          make innoinstall
+          flutter_distributor package --platform=windows --targets=exe --skip-clean
+          mv dist/**/flemozi-*-windows.exe dist/Flemozi-windows-x86_64-setup.exe
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Flemozi-Release-Binaries
+          path: dist/
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tar\
+            clang\
+            cmake\
+            ninja-build\
+            pkg-config\
+            libgtk-3-dev\
+            make python3-pip\
+            python3-setuptools\
+            patchelf\
+            desktop-file-utils\
+            libgdk-pixbuf2.0-dev\
+            fakeroot\
+            strace\
+            fuse\
+            libunwind-dev\
+            locate\
+            patchelf\
+            libkeybinder-3.0-0\
+            libkeybinder-3.0-dev
+
+      - name: Install AppImage Tool
+        run: |
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          mv appimagetool /usr/local/bin/
+
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: |
+          curl -sS https://webi.sh/yq | sh
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel  }}.${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+      - name: Build Linux Packages
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          dart pub global activate flutter_distributor
+          flutter_distributor package --platform=linux --targets=deb,appimage,rpm --skip-clean
+
+      - name: Create tar.xz (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: make tar VERSION=${{ env.BUILD_VERSION }}
+      
+      - name: Create tar.xz (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: make tar VERSION=nightly
+
+      - name: Move Files to dist
+        run: |
+          mv build/flemozi-linux-*-x86_64.tar.xz dist/
+          mv dist/**/flemozi-*-linux.deb dist/Flemozi-linux-x86_64.deb
+          mv dist/**/flemozi-*-linux.rpm dist/Flemozi-linux-x86_64.rpm
+          mv dist/**/flemozi-*-linux.AppImage dist/Flemozi-linux-x86_64.AppImage
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Flemozi-Release-Binaries
+          path: dist/
+
+  macos:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2.8.0
+        with:
+          cache: true
+
+      - name: Installing dependencies
+        run : |
+          brew install yq
+          npm install -g appdmg
+          dart pub global activate flutter_distributor
+
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: |
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel  }}.${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+      - name: Build Macos Package
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter_distributor package --platform=macos --targets=dmg --skip-clean
+
+      - name: Move files to dist
+        run: |
+          mv dist/**/flemozi-*-macos.dmg dist/Flemozi-macos-universal.dmg
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Flemozi-Release-Binaries
+          path: |
+            dist/
+
+  upload:
+    runs-on: ubuntu-22.04
+    needs:
+      - windows
+      - linux
+      - android
+      - macos
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: Flemozi-Release-Binaries
+          path: ./Flemozi-Release-Binaries
+
+      - name: Install dependencies
+        run: sudo apt-get install tree -y
+
+      - name: Generate Checksums
+        run: |
+          tree .
+          md5sum Flemozi-Release-Binaries/* >> RELEASE.md5sum
+          sha256sum Flemozi-Release-Binaries/* >> RELEASE.sha256sum
+          sed -i 's|Flemozi-Release-Binaries/||' RELEASE.sha256sum RELEASE.md5sum
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Flemozi-Release-Binaries
+          path: |
+            RELEASE.md5sum
+            RELEASE.sha256sum
+
+      - name: Upload Release Binaries (stable)
+        if: ${{ !inputs.dry_run && inputs.channel == 'stable' }}
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ inputs.version }} # mind the "v" prefix
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifacts: Flemozi-Release-Binaries/*,RELEASE.sha256sum,RELEASE.md5sum
+
+      - name: Upload Release Binaries (nightly)
+        if: ${{ !inputs.dry_run && inputs.channel == 'nightly' }}
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: nightly
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifacts: Flemozi-Release-Binaries/*,RELEASE.sha256sum,RELEASE.md5sum
