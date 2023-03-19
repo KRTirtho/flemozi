@@ -32,6 +32,14 @@ jobs:
         with:
           cache: true
 
+      - name: Create Stable .env
+        if: ${{ inputs.channel == 'stable' }}
+        run: echo '${{ secrets.DOTENV_RELEASE }}' > .env
+
+      - name: Create Nightly .env
+        if: ${{ inputs.channel == 'nightly' }}
+        run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
+
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
@@ -73,6 +81,14 @@ jobs:
       - uses: subosito/flutter-action@v2.8.0
         with:
           cache: true
+
+      - name: Create Stable .env
+        if: ${{ inputs.channel == 'stable' }}
+        run: echo '${{ secrets.DOTENV_RELEASE }}' > .env
+
+      - name: Create Nightly .env
+        if: ${{ inputs.channel == 'nightly' }}
+        run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
       - name: Install Dependencies
         run: |
@@ -150,6 +166,14 @@ jobs:
       - uses: subosito/flutter-action@v2.8.0
         with:
           cache: true
+
+      - name: Create Stable .env
+        if: ${{ inputs.channel == 'stable' }}
+        run: echo '${{ secrets.DOTENV_RELEASE }}' > .env
+
+      - name: Create Nightly .env
+        if: ${{ inputs.channel == 'nightly' }}
+        run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
       - name: Installing dependencies
         run : |

@@ -54,6 +54,7 @@ dev_dependencies:
   melos: ^3.0.0
   json_serializable: ^6.6.1
   build_runner: ^2.3.3
+  flutter_launcher_icons: "^0.12.0"
 
 flutter:
   uses-material-design: true    
@@ -61,3 +62,13 @@ flutter:
     - assets/
     - assets/twemoji/
     - .env
+
+flutter_icons:
+  android: false
+  ios: false
+  image_path: "assets/logo.png"
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true
