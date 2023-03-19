@@ -12,6 +12,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:giphy_api_client/giphy_api_client.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 class Gif extends HookConsumerWidget {
@@ -21,6 +22,7 @@ class Gif extends HookConsumerWidget {
   Widget build(BuildContext context, ref) {
     final controller = useScrollController();
     final focusNode = useFocusNode();
+    final searchFocusNode = useFocusNode();
 
     final tenorTrending = Queries.useTenorGet(ref);
     final giphyTrending = Queries.useGiphyGet(ref);
@@ -83,6 +85,26 @@ class Gif extends HookConsumerWidget {
       return null;
     }, [text.value]);
 
+    final tenorImg = useMemoized(
+        () => Image.asset(
+              "assets/tenor.png",
+              height: 20,
+              width: 20,
+            ),
+        []);
+
+    final giphyImg = useMemoized(
+        () => Image.asset(
+              "assets/giphy.png",
+              height: 40,
+              width: 40,
+            ),
+        []);
+
+    final isEverythingLoading = text.value.isEmpty || searchGifs.isEmpty
+        ? (!tenorTrending.hasPageData && !giphyTrending.hasPageData)
+        : (!tenorSearch.hasPageData && !giphySearch.hasPageData);
+
     return Column(
       children: [
         CallbackShortcuts(
@@ -92,114 +114,171 @@ class Gif extends HookConsumerWidget {
             },
           },
           child: TextField(
+            focusNode: searchFocusNode,
             onChanged: (value) => text.value = value,
             decoration: const InputDecoration(
               hintText: 'Search GIFs and Stickers',
             ),
           ),
         ),
-        Expanded(
-          child: GridView.builder(
-            controller: controller,
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 200,
-              childAspectRatio: 1,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: gifs.length + 1,
-            itemBuilder: (context, index) {
-              if (index == gifs.length) {
-                return Waypoint.item(
-                  controller: controller,
-                  onTouchEdge: () async {
-                    if (text.value.isEmpty || searchGifs.isEmpty) {
-                      if (giphyTrending.hasNextPage) {
-                        await giphyTrending.fetchNext();
-                      }
-                      if (tenorTrending.hasNextPage) {
-                        await tenorTrending.fetchNext();
-                      }
-                    } else {
-                      if (giphySearch.hasNextPage) {
-                        await giphySearch.fetchNext();
-                      }
-                      if (tenorSearch.hasNextPage) {
-                        await tenorSearch.fetchNext();
-                      }
-                    }
-                  },
-                  child: Stack(
-                    children: const [
-                      Center(
-                        child: SizedBox(
-                          height: 50,
-                          width: 50,
-                          child: CircularProgressIndicator(),
-                        ),
+        if (isEverythingLoading)
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                childAspectRatio: 1,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: 4,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[850]!,
+                    highlightColor: Colors.grey[800]!,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
+                    ),
                   ),
                 );
-              }
-              final gif = gifs[index];
-
-              final image = CachedNetworkImage(
-                imageUrl: gif,
-                fit: BoxFit.contain,
-              );
-
-              return InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () async {
-                  final imageFile = await DefaultCacheManager()
-                      .getFileFromCache(gif)
-                      .then((s) async => await s?.file.readAsBytes());
-                  if (imageFile == null) {
-                    return;
-                  }
-                  await ClipboardWriter.instance.write([
-                    DataWriterItem(suggestedName: basename(gif))
-                      ..add(Formats.png(imageFile))
-                      ..add(Formats.bmp(imageFile))
-                      ..add(Formats.webp(imageFile))
-                      ..add(Formats.gif(imageFile))
-                      ..add(Formats.tiff(imageFile))
-                      ..add(
-                        Formats.htmlText(
-                          '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
+              },
+            ),
+          )
+        else
+          Expanded(
+            child: GridView.builder(
+              controller: controller,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                childAspectRatio: 1,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: gifs.length + 1,
+              itemBuilder: (context, index) {
+                if (index == gifs.length) {
+                  return Waypoint.item(
+                    controller: controller,
+                    onTouchEdge: () async {
+                      if (text.value.isEmpty || searchGifs.isEmpty) {
+                        if (giphyTrending.hasNextPage) {
+                          await giphyTrending.fetchNext();
+                        }
+                        if (tenorTrending.hasNextPage) {
+                          await tenorTrending.fetchNext();
+                        }
+                      } else {
+                        if (giphySearch.hasNextPage) {
+                          await giphySearch.fetchNext();
+                        }
+                        if (tenorSearch.hasNextPage) {
+                          await tenorSearch.fetchNext();
+                        }
+                      }
+                    },
+                    child: Stack(
+                      children: const [
+                        Center(
+                          child: SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
-                      )
-                  ]);
-                  SnackBar snackBar = SnackBar(
-                    content: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(width: 35, child: image),
-                        const SizedBox(width: 10),
-                        const Text("Copied to clipboard!"),
                       ],
                     ),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
                   );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    Actions.invoke(context, const CloseWindowIntent());
-                  }
-                },
-                focusNode: index == 0 ? focusNode : null,
-                canRequestFocus: true,
-                focusColor: Theme.of(context).colorScheme.secondary,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: image,
-                ),
-              );
-            },
+                }
+                final gif = gifs[index];
+
+                final image = CachedNetworkImage(
+                  imageUrl: gif,
+                  fit: BoxFit.contain,
+                );
+
+                return CallbackShortcuts(
+                  bindings: {
+                    LogicalKeySet(LogicalKeyboardKey.escape): () {
+                      FocusScope.of(context).requestFocus(searchFocusNode);
+                    },
+                  },
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      final imageFile = await DefaultCacheManager()
+                          .getFileFromCache(gif)
+                          .then((s) async => await s?.file.readAsBytes());
+                      if (imageFile == null) {
+                        return;
+                      }
+                      await ClipboardWriter.instance.write([
+                        DataWriterItem(suggestedName: basename(gif))
+                          ..add(Formats.png(imageFile))
+                          ..add(Formats.bmp(imageFile))
+                          ..add(Formats.webp(imageFile))
+                          ..add(Formats.gif(imageFile))
+                          ..add(Formats.tiff(imageFile))
+                          ..add(
+                            Formats.htmlText(
+                              '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
+                            ),
+                          )
+                      ]);
+                      SnackBar snackBar = SnackBar(
+                        content: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 35, child: image),
+                            const SizedBox(width: 10),
+                            const Text("Copied to clipboard!"),
+                          ],
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        Actions.invoke(context, const CloseWindowIntent());
+                      }
+                    },
+                    focusNode: index == 0 ? focusNode : null,
+                    canRequestFocus: true,
+                    focusColor: Theme.of(context).colorScheme.secondary,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: image,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        SizedBox(
+          height: 20,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                "Powered by",
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(width: 5),
+              giphyImg,
+              const SizedBox(width: 5),
+              Text(
+                "and",
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(width: 5),
+              tenorImg,
+            ],
+          ),
+        )
       ],
     );
   }

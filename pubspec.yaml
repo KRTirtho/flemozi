@@ -45,6 +45,7 @@ dependencies:
   path: ^1.8.2
   easy_debounce: ^2.0.3
   uuid: ^3.0.7
+  shimmer: ^2.0.0
 
 dev_dependencies:
   flutter_test:
