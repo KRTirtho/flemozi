@@ -23,7 +23,6 @@ void main(List<String> args) async {
   final isHeadless = args.contains("--headless");
 
   WidgetsFlutterBinding.ensureInitialized();
-  QueryClient.initialize(cachePrefix: 'flemoji');
   await Env.configure();
   await windowManager.ensureInitialized();
   await hotKeyManager.unregisterAll();
@@ -113,7 +112,8 @@ void main(List<String> args) async {
       },
     );
   }
-
+  
+  await QueryClient.initialize(cachePrefix: 'flemoji');
   runApp(const Flemozi());
 }
 
