@@ -20,7 +20,7 @@ class RootPage extends HookWidget {
           ),
           Tooltip(
             message: 'GIFs',
-            child: Icon(Icons.image),
+            child: Icon(Icons.gif_rounded),
           ),
         ],
         children: const [

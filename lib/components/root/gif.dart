@@ -3,10 +3,13 @@ import 'package:collection/collection.dart';
 import 'package:flemozi/caching/queries.dart';
 import 'package:flemozi/components/ui/waypoint.dart';
 import 'package:flemozi/hooks/use_debounced_state.dart';
+import 'package:flemozi/intents/close_window.dart';
+import 'package:flemozi/models/tenor/response_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:giphy_api_client/giphy_api_client.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:super_clipboard/super_clipboard.dart';
@@ -27,20 +30,28 @@ class Gif extends HookConsumerWidget {
     final tenorSearch = Queries.useTenorSearch(ref, text.value);
     final giphySearch = Queries.useGiphySearch(ref, text.value);
 
+    final tenorPagesToStrings = useCallback(
+      (List<TenorResponsePage> pages) => pages
+          .expand((page) => page.results.map((r) => r.tinygif?.url.toString()))
+          .whereNotNull(),
+      [],
+    );
+
+    final giphyPagesToStrings = useCallback(
+      (List<GiphyCollection> pages) => pages
+          .expand((page) => (page.data ?? []).map(
+                (e) => e?.images?.fixedWidthDownsampled?.url
+                    ?.replaceAll(RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
+                    .split("?")[0],
+              ))
+          .whereNotNull(),
+      [],
+    );
+
     final displayGifs = useMemoized(
         () => [
-              ...tenorTrending.pages
-                  .expand((page) =>
-                      page.results.map((r) => r.tinygif?.url.toString()))
-                  .whereNotNull(),
-              ...giphyTrending.pages
-                  .expand((page) => (page.data ?? []).map(
-                        (e) => e?.images?.fixedWidthDownsampled?.url
-                            ?.replaceAll(
-                                RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
-                            .split("?")[0],
-                      ))
-                  .whereNotNull(),
+              ...tenorPagesToStrings(tenorTrending.pages),
+              ...giphyPagesToStrings(giphyTrending.pages),
             ],
         [
           tenorTrending.pages,
@@ -49,18 +60,8 @@ class Gif extends HookConsumerWidget {
 
     final searchGifs = useMemoized(
         () => [
-              ...tenorSearch.pages
-                  .expand((page) =>
-                      page.results.map((r) => r.tinygif?.url.toString()))
-                  .whereNotNull(),
-              ...giphySearch.pages
-                  .expand((page) => (page.data ?? []).map(
-                        (e) => e?.images?.fixedWidthDownsampled?.url
-                            ?.replaceAll(
-                                RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
-                            .split("?")[0],
-                      ))
-                  .whereNotNull(),
+              ...tenorPagesToStrings(tenorSearch.pages),
+              ...giphyPagesToStrings(giphySearch.pages),
             ],
         [
           tenorSearch.pages,
@@ -106,8 +107,41 @@ class Gif extends HookConsumerWidget {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
-            itemCount: gifs.length,
+            itemCount: gifs.length + 1,
             itemBuilder: (context, index) {
+              if (index == gifs.length) {
+                return Waypoint.item(
+                  controller: controller,
+                  onTouchEdge: () async {
+                    if (text.value.isEmpty || searchGifs.isEmpty) {
+                      if (giphyTrending.hasNextPage) {
+                        await giphyTrending.fetchNext();
+                      }
+                      if (tenorTrending.hasNextPage) {
+                        await tenorTrending.fetchNext();
+                      }
+                    } else {
+                      if (giphySearch.hasNextPage) {
+                        await giphySearch.fetchNext();
+                      }
+                      if (tenorSearch.hasNextPage) {
+                        await tenorSearch.fetchNext();
+                      }
+                    }
+                  },
+                  child: Stack(
+                    children: const [
+                      Center(
+                        child: SizedBox(
+                          height: 50,
+                          width: 50,
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
               final gif = gifs[index];
 
               final image = CachedNetworkImage(
@@ -115,7 +149,7 @@ class Gif extends HookConsumerWidget {
                 fit: BoxFit.contain,
               );
 
-              final child = InkWell(
+              return InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () async {
                   final imageFile = await DefaultCacheManager()
@@ -152,8 +186,8 @@ class Gif extends HookConsumerWidget {
                   );
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    Actions.invoke(context, const CloseWindowIntent());
                   }
-                  // Actions.invoke(context, const CloseWindowIntent());
                 },
                 focusNode: index == 0 ? focusNode : null,
                 canRequestFocus: true,
@@ -163,21 +197,6 @@ class Gif extends HookConsumerWidget {
                   child: image,
                 ),
               );
-              if (index == gifs.length - 1) {
-                return Waypoint.item(
-                  controller: controller,
-                  onTouchEdge: () async {
-                    if (giphyTrending.hasNextPage) {
-                      await giphyTrending.fetchNext();
-                    }
-                    if (tenorTrending.hasNextPage) {
-                      await tenorTrending.fetchNext();
-                    }
-                  },
-                  child: child,
-                );
-              }
-              return child;
             },
           ),
         ),
