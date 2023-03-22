@@ -15,6 +15,19 @@ import 'package:path/path.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
+const placeholder = SizedBox(
+  height: 200,
+  width: 200,
+  child: ColoredBox(
+    color: Color(0xFF2F3136),
+    child: Icon(
+      Icons.image_rounded,
+      size: 50,
+      color: Color(0xFF8E9297),
+    ),
+  ),
+);
+
 class Gif extends HookConsumerWidget {
   const Gif({Key? key}) : super(key: key);
 
@@ -198,6 +211,7 @@ class Gif extends HookConsumerWidget {
                 final image = CachedNetworkImage(
                   imageUrl: gif,
                   fit: BoxFit.contain,
+                  placeholder: (context, url) => placeholder,
                 );
 
                 return CallbackShortcuts(

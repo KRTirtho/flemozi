@@ -76,43 +76,8 @@ void main(List<String> args) async {
     } catch (e) {
       await api();
     }
-  } else {
-    await hotKeyManager.register(
-      HotKey(
-        KeyCode.period,
-        modifiers: [
-          KeyModifier.control,
-          KeyModifier.alt,
-        ],
-        identifier: "Show/Hide",
-        scope: HotKeyScope.system,
-      ),
-      keyDownHandler: (hotKey) async {
-        if (await windowManager.isVisible() &&
-            !await windowManager.isFocused()) {
-          if (kIsLinux) await windowManager.setAlwaysOnTop(true);
-          await windowManager.focus();
-          if (kIsLinux) {
-            Future.delayed(const Duration(milliseconds: 100), () async {
-              await windowManager.setAlwaysOnTop(false);
-              await windowManager.focus();
-            });
-          }
-        } else {
-          if (kIsLinux) await windowManager.setAlwaysOnTop(true);
-          await windowManager.show();
-          await windowManager.focus();
-          if (kIsLinux) {
-            Future.delayed(const Duration(milliseconds: 100), () async {
-              await windowManager.setAlwaysOnTop(false);
-              await windowManager.focus();
-            });
-          }
-        }
-      },
-    );
   }
-  
+
   await QueryClient.initialize(cachePrefix: 'flemoji');
   runApp(const Flemozi());
 }
