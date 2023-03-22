@@ -2,9 +2,12 @@ import 'package:collection/collection.dart';
 import 'package:flemozi/pages/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
-class VerticalTabs extends HookWidget {
+final tabsIndex = StateProvider<int>((ref) => 0);
+
+class VerticalTabs extends HookConsumerWidget {
   final TabController? controller;
 
   final List<Widget> tabs;
@@ -20,16 +23,16 @@ class VerticalTabs extends HookWidget {
         );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     final controllerHook = useTabController(initialLength: tabs.length);
 
     final controller = this.controller ?? controllerHook;
 
-    final activeIndex = useState(0);
+    final activeIndex = ref.watch(tabsIndex);
 
     useEffect(() {
       void listener() {
-        activeIndex.value = controller.index;
+        ref.read(tabsIndex.notifier).state = controller.index;
       }
 
       controller.addListener(listener);
@@ -51,7 +54,7 @@ class VerticalTabs extends HookWidget {
               child: Column(
                 children: [
                   ...tabs.mapIndexed((index, tab) {
-                    final active = activeIndex.value == index;
+                    final active = activeIndex == index;
                     final radius = active
                         ? const BorderRadius.only(
                             topLeft: Radius.circular(8),
@@ -116,9 +119,8 @@ class VerticalTabs extends HookWidget {
                 borderRadius: BorderRadius.only(
                   topRight: const Radius.circular(8),
                   bottomRight: const Radius.circular(8),
-                  topLeft: activeIndex.value > 0
-                      ? const Radius.circular(8)
-                      : Radius.zero,
+                  topLeft:
+                      activeIndex > 0 ? const Radius.circular(8) : Radius.zero,
                   bottomLeft: const Radius.circular(8),
                 ),
               ),
@@ -138,7 +140,7 @@ class VerticalTabs extends HookWidget {
                     ),
                   );
                 },
-                child: children[activeIndex.value],
+                child: children[activeIndex],
               ),
             ),
           ),

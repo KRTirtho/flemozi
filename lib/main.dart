@@ -5,6 +5,7 @@ import 'package:fl_query/fl_query.dart';
 import 'package:flemozi/api/api.dart';
 import 'package:flemozi/collections/env.dart';
 import 'package:flemozi/intents/close_window.dart';
+import 'package:flemozi/intents/switch_tabs.dart';
 import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
@@ -79,17 +80,17 @@ void main(List<String> args) async {
   }
 
   await QueryClient.initialize(cachePrefix: 'flemoji');
-  runApp(const Flemozi());
+  runApp(const ProviderScope(child: Flemozi()));
 }
 
-class Flemozi extends StatefulWidget {
+class Flemozi extends StatefulHookConsumerWidget {
   const Flemozi({super.key});
 
   @override
-  State<Flemozi> createState() => _FlemoziState();
+  ConsumerState<Flemozi> createState() => _FlemoziState();
 }
 
-class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
+class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
   Size? prevSize;
 
   @override
@@ -125,62 +126,59 @@ class _FlemoziState extends State<Flemozi> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return ProviderScope(
-      child: QueryClientProvider(
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          themeMode: ThemeMode.dark,
-          theme: ThemeData.light(useMaterial3: true),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorSchemeSeed: SystemTheme.accentColor.accent,
-            splashFactory: NoSplash.splashFactory,
-            scaffoldBackgroundColor: Colors.transparent,
-            tabBarTheme: TabBarTheme(
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              indicator: BoxDecoration(
-                color: Colors.grey[850],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(5),
-                  topRight: Radius.circular(5),
-                ),
+    return QueryClientProvider(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        theme: ThemeData.light(useMaterial3: true),
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorSchemeSeed: SystemTheme.accentColor.accent,
+          splashFactory: NoSplash.splashFactory,
+          scaffoldBackgroundColor: Colors.transparent,
+          tabBarTheme: TabBarTheme(
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            indicator: BoxDecoration(
+              color: Colors.grey[850],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(5),
+                topRight: Radius.circular(5),
               ),
             ),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: Colors.grey[850]?.withOpacity(.5),
-            ),
           ),
-          builder: (context, child) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            return Container(
-              margin: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color:
-                    isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: DragToResizeArea(child: child!),
-            );
-          },
-          home: CallbackShortcuts(
-            bindings: {
-              LogicalKeySet(LogicalKeyboardKey.escape): () =>
-                  CloseWindowAction().invoke(const CloseWindowIntent()),
-            },
-            child: const RootPage(),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.grey[850]?.withOpacity(.5),
           ),
-          shortcuts: {
-            ...WidgetsApp.defaultShortcuts,
-            LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
-          },
-          actions: {
-            ...WidgetsApp.defaultActions,
-            CloseWindowIntent: CloseWindowAction(),
-          },
         ),
+        builder: (context, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Container(
+            margin: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color:
+                  isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: DragToResizeArea(child: child!),
+          );
+        },
+        home: const RootPage(),
+        shortcuts: {
+          ...WidgetsApp.defaultShortcuts,
+          LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
+          LogicalKeySet(
+            LogicalKeyboardKey.control,
+            LogicalKeyboardKey.tab,
+          ): SwitchTabsIntent(ref),
+        },
+        actions: {
+          ...WidgetsApp.defaultActions,
+          CloseWindowIntent: CloseWindowAction(),
+          SwitchTabsIntent: SwitchTabsAction(),
+        },
       ),
     );
   }
