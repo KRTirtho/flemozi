@@ -10,7 +10,9 @@ class SwitchTabsIntent extends Intent {
 class SwitchTabsAction extends Action<SwitchTabsIntent> {
   @override
   void invoke(SwitchTabsIntent intent) async {
-    intent.ref.read(tabsIndex.notifier).state =
-        intent.ref.read(tabsIndex) == 0 ? 1 : 0;
+    // cycle tabs
+    const length = 3;
+    final tabs = intent.ref.read(tabsIndex);
+    intent.ref.read(tabsIndex.notifier).state = (tabs + 1) % length;
   }
 }

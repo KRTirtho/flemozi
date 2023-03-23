@@ -1,42 +1,59 @@
-import 'package:flemozi/components/root/twemoji.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flemozi/collections/emoticons.dart';
 import 'package:flemozi/hooks/use_window_listeners.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flemozi/collections/emojis.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
-class Emoji extends HookWidget {
-  const Emoji({Key? key}) : super(key: key);
+class Emoticon extends HookWidget {
+  const Emoticon({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final searchFocusNode = useFocusNode();
     final searchTerm = useState("");
-    final firstEmojiFocusNode = useFocusNode();
+    final firstEmoticonFocusNode = useFocusNode();
 
-    final filteredEmojis = useMemoized(
+    final List<Map<String, String>> filteredEmoticons = useMemoized(
       () {
         if (searchTerm.value.isEmpty) {
-          return emojis;
+          return emoticons.entries
+              .map(
+                (e) => e.value.map(
+                  (f) => {
+                    "emoticon": f,
+                    "description": e.key,
+                  },
+                ),
+              )
+              .expand((e) => e)
+              .toList();
         } else {
-          final List<Map<String, Object>> map = [];
-          for (var emoji in emojis) {
-            final description = emoji["description"] as String;
-            final aliases = (emoji["aliases"] as List).join(" ");
-            final tags = (emoji["tags"] as List? ?? []).join(" ");
+          final List<Map<String, dynamic>> map = [];
+          for (var group in emoticons.entries) {
+            final description = group.key;
             final ratio = weightedRatio(
-              "$description $aliases $tags",
+              "$description ${group.value.join(" ")}",
               searchTerm.value,
             );
-            emoji["ratio"] = ratio;
+
             if (ratio > 50) {
-              map.add(emoji);
+              map.addAll(group.value.map(
+                (e) => {
+                  "emoticon": e,
+                  "description": description,
+                  "ratio": ratio,
+                },
+              ));
             }
           }
           map.sort((a, b) => (b["ratio"] as int) - (a["ratio"] as int));
-          return map;
+          return map.map((e) {
+            e.remove("ratio");
+            return e.cast<String, String>();
+          }).toList();
         }
       },
       [searchTerm.value],
@@ -55,7 +72,7 @@ class Emoji extends HookWidget {
           CallbackShortcuts(
             bindings: {
               LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-                FocusScope.of(context).requestFocus(firstEmojiFocusNode);
+                FocusScope.of(context).requestFocus(firstEmoticonFocusNode);
               },
             },
             child: TextField(
@@ -77,18 +94,18 @@ class Emoji extends HookWidget {
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 40,
+                maxCrossAxisExtent: 60,
                 childAspectRatio: 1,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
-              itemCount: filteredEmojis.length,
+              itemCount: filteredEmoticons.length,
               itemBuilder: (context, index) {
                 return HookBuilder(builder: (context) {
                   final focusnodeUn = useFocusNode();
                   final focusNode =
-                      index == 0 ? firstEmojiFocusNode : focusnodeUn;
-                  final emoji = filteredEmojis.elementAt(index);
+                      index == 0 ? firstEmoticonFocusNode : focusnodeUn;
+                  final emoticon = filteredEmoticons.elementAt(index);
                   final tooltipKey = GlobalKey<TooltipState>();
 
                   useEffect(() {
@@ -113,9 +130,8 @@ class Emoji extends HookWidget {
                       },
                     },
                     child: Tooltip(
-                      message: emoji["description"] as String,
                       key: tooltipKey,
-                      triggerMode: TooltipTriggerMode.manual,
+                      message: emoticon["description"]!,
                       child: MaterialButton(
                         focusNode: focusNode,
                         padding: EdgeInsets.zero,
@@ -128,7 +144,7 @@ class Emoji extends HookWidget {
                         onPressed: () {
                           focusNode.requestFocus();
                           Clipboard.setData(
-                            ClipboardData(text: emoji["emoji"] as String),
+                            ClipboardData(text: emoticon["emoticon"]),
                           );
                           SnackBar snackBar = SnackBar(
                             content: Row(
@@ -142,12 +158,7 @@ class Emoji extends HookWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  "Copied ${(emoji["aliases"] as List).first as String} ",
-                                ),
-                                Twemoji(
-                                  emoji: emoji["emoji"] as String,
-                                  height: 20,
-                                  width: 20,
+                                  "${emoticon["emoticon"]} was copied to clipboard",
                                 ),
                               ],
                             ),
@@ -157,8 +168,11 @@ class Emoji extends HookWidget {
                           ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           Actions.invoke(context, const CloseWindowIntent());
                         },
-                        child: Twemoji(
-                          emoji: emoji["emoji"] as String,
+                        child: AutoSizeText(
+                          emoticon["emoticon"]!,
+                          maxLines: 1,
+                          minFontSize: 5,
+                          maxFontSize: 20,
                         ),
                       ),
                     ),

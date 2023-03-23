@@ -1,4 +1,5 @@
 import 'package:flemozi/components/root/emoji.dart';
+import 'package:flemozi/components/root/emoticon.dart';
 import 'package:flemozi/components/root/gif.dart';
 import 'package:flemozi/components/ui/top_bar.dart';
 import 'package:flemozi/components/ui/vertical_tabs.dart';
@@ -55,10 +56,15 @@ class RootPage extends HookWidget {
                     message: 'GIFs',
                     child: Icon(Icons.gif_rounded),
                   ),
+                  Tooltip(
+                    message: 'Emoticons',
+                    child: Text(':)'),
+                  ),
                 ],
                 children: const [
                   Emoji(),
                   Gif(),
+                  Emoticon(),
                 ],
               )
             : const SizedBox.shrink(),

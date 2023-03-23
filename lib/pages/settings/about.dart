@@ -83,7 +83,7 @@ class About extends HookConsumerWidget {
                           mode: LaunchMode.externalApplication,
                         );
                       },
-                      child: const Text("License:               BSD-4-Clause"),
+                      child: const Text("License:               GPLv3"),
                     ),
                     const SizedBox(height: 5),
                     InkWell(

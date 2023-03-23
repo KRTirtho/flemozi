@@ -24,6 +24,7 @@ class VerticalTabs extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final theme = Theme.of(context);
     final controllerHook = useTabController(initialLength: tabs.length);
 
     final controller = this.controller ?? controllerHook;
@@ -63,9 +64,7 @@ class VerticalTabs extends HookConsumerWidget {
                         : BorderRadius.circular(8);
                     return Container(
                       decoration: BoxDecoration(
-                        color: active
-                            ? Theme.of(context).cardColor.withOpacity(.5)
-                            : null,
+                        color: active ? theme.cardColor.withOpacity(.5) : null,
                         borderRadius: radius,
                       ),
                       width: 40,
@@ -76,13 +75,23 @@ class VerticalTabs extends HookConsumerWidget {
                         },
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: radius),
-                        child: IconTheme(
-                          data: Theme.of(context).iconTheme.copyWith(
-                                color: active
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).iconTheme.color,
-                              ),
-                          child: tab,
+                        child: DefaultTextStyle(
+                          style: theme.textTheme.bodyLarge!.copyWith(
+                            color: active
+                                ? theme.colorScheme.primary
+                                : theme.textTheme.bodyLarge?.color,
+                            fontWeight: active
+                                ? FontWeight.bold
+                                : theme.textTheme.bodyLarge?.fontWeight,
+                          ),
+                          child: IconTheme(
+                            data: theme.iconTheme.copyWith(
+                              color: active
+                                  ? theme.colorScheme.primary
+                                  : theme.iconTheme.color,
+                            ),
+                            child: tab,
+                          ),
                         ),
                       ),
                     );
@@ -99,9 +108,8 @@ class VerticalTabs extends HookConsumerWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).cardColor.withOpacity(.5),
-                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: theme.cardColor.withOpacity(.5),
+                      foregroundColor: theme.colorScheme.primary,
                       shape: const CircleBorder(),
                       minimumSize: const Size(20, 20),
                       padding: const EdgeInsets.all(0),
@@ -115,7 +123,7 @@ class VerticalTabs extends HookConsumerWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor.withOpacity(0.5),
+                color: theme.cardColor.withOpacity(0.5),
                 borderRadius: BorderRadius.only(
                   topRight: const Radius.circular(8),
                   bottomRight: const Radius.circular(8),
