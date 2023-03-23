@@ -127,6 +127,7 @@ class Gif extends HookConsumerWidget {
             },
           },
           child: TextField(
+            autofocus: true,
             focusNode: searchFocusNode,
             onChanged: (value) => text.value = value,
             decoration: const InputDecoration(
