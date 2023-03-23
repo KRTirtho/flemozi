@@ -20,22 +20,28 @@ class ShortcutsRegistry {
   final Map<ShortcutAction, VoidCallback> _shortcuts = {
     ShortcutAction.openFlemozi: () async {
       if (await windowManager.isVisible() && !await windowManager.isFocused()) {
-        if (kIsLinux) await windowManager.setAlwaysOnTop(true);
+        if (kIsLinux) {
+          await windowManager.setAlwaysOnTop(true);
+        }
         await windowManager.focus();
+        if (kIsLinux) await windowManager.grabKeyboard();
         if (kIsLinux) {
           Future.delayed(const Duration(milliseconds: 100), () async {
             await windowManager.setAlwaysOnTop(false);
             await windowManager.focus();
+            await windowManager.grabKeyboard();
           });
         }
       } else {
         if (kIsLinux) await windowManager.setAlwaysOnTop(true);
         await windowManager.show();
         await windowManager.focus();
+        if (kIsLinux) await windowManager.grabKeyboard();
         if (kIsLinux) {
           Future.delayed(const Duration(milliseconds: 100), () async {
             await windowManager.setAlwaysOnTop(false);
             await windowManager.focus();
+            await windowManager.grabKeyboard();
           });
         }
       }

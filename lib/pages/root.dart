@@ -2,6 +2,7 @@ import 'package:flemozi/components/root/emoji.dart';
 import 'package:flemozi/components/root/gif.dart';
 import 'package:flemozi/components/ui/top_bar.dart';
 import 'package:flemozi/components/ui/vertical_tabs.dart';
+import 'package:flemozi/hooks/use_window_listeners.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/pages/settings/settings.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,21 @@ class RootPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final windowIsShowing = useState(true);
+
+    useWindowListeners(onWindowEvent: (String eventName) {
+      switch (eventName) {
+        case "hide":
+          windowIsShowing.value = false;
+          break;
+        case "show":
+          windowIsShowing.value = true;
+          break;
+        default:
+          break;
+      }
+    });
+
     return CallbackShortcuts(
       bindings: {
         LogicalKeySet(
@@ -28,22 +44,24 @@ class RootPage extends HookWidget {
       },
       child: Scaffold(
         appBar: const TopBar(),
-        body: VerticalTabs(
-          tabs: const [
-            Tooltip(
-              message: 'Emoji',
-              child: Icon(Icons.emoji_emotions),
-            ),
-            Tooltip(
-              message: 'GIFs',
-              child: Icon(Icons.gif_rounded),
-            ),
-          ],
-          children: const [
-            Emoji(),
-            Gif(),
-          ],
-        ),
+        body: windowIsShowing.value
+            ? VerticalTabs(
+                tabs: const [
+                  Tooltip(
+                    message: 'Emoji',
+                    child: Icon(Icons.emoji_emotions),
+                  ),
+                  Tooltip(
+                    message: 'GIFs',
+                    child: Icon(Icons.gif_rounded),
+                  ),
+                ],
+                children: const [
+                  Emoji(),
+                  Gif(),
+                ],
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }
