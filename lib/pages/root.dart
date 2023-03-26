@@ -72,9 +72,10 @@ class RootPage extends HookWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.error,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pop();
-                      Hive.box("config").put("showWaylandDialog", false);
+                      await Hive.box("flemozi.config")
+                          .put("showWaylandDialog", false);
                     },
                     child: const Text("Don't show this again"),
                   ),
