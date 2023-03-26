@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
+import 'package:path_provider/path_provider.dart';
 
 void main(List<String> args) async {
   final isHeadless = args.contains("--headless");
@@ -80,7 +81,12 @@ void main(List<String> args) async {
     }
   }
 
-  await QueryClient.initialize(cachePrefix: 'flemoji');
+  final appDataDir = await getApplicationSupportDirectory();
+
+  await QueryClient.initialize(
+    cachePrefix: 'flemoji',
+    cacheDir: appDataDir.path,
+  );
   await Hive.openBox('flemozi.config');
   runApp(const ProviderScope(child: Flemozi()));
 }
