@@ -38,7 +38,7 @@ class RootPage extends HookWidget {
     useEffect(() {
       final showWaylandDialog =
           Hive.box("config").get("showWaylandDialog", defaultValue: true);
-      if (kIsWayland && !showWaylandDialog) {
+      if (kIsWayland && showWaylandDialog) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           showDialog(
             context: context,
