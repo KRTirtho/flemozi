@@ -33,6 +33,11 @@
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/krtirtho)
 <a href="https://patreon.com/krtirtho"><img src="https://user-images.githubusercontent.com/61944859/180249027-678b01b8-c336-451e-b147-6d84a5b9d0e7.png" width="250"/></a>
 
+## Screenshots
+<img src="assets/screenshots/one.png" alt="One" width="400">
+<img src="assets/screenshots/two.png" alt="Two" width="400">
+<img src="assets/screenshots/three.png" alt="Three" width="400">
+
 ## Contributing🤝
 
 Contributions are always welcome! Please read the [contribution guidelines](CONTRIBUTING.md) first.
