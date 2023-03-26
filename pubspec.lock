@@ -249,6 +249,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  csslib:
+    dependency: transitive
+    description:
+      name: csslib
+      sha256: b36c7f7e24c0bdf1bf9a3da461c837d1de64b9f8beb190c9011d8c72a3dfd745
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.17.2"
   dart_style:
     dependency: transitive
     description:
@@ -473,6 +481,14 @@ packages:
       url: "https://github.com/leanflutter/hotkey_manager.git"
     source: git
     version: "0.1.7"
+  html:
+    dependency: "direct dev"
+    description:
+      name: html
+      sha256: "79d498e6d6761925a34ee5ea8fa6dfef38607781d2fa91e37523474282af55cb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.15.2"
   http:
     dependency: "direct main"
     description:
@@ -641,6 +657,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
+  oauth2:
+    dependency: transitive
+    description:
+      name: oauth2
+      sha256: "1e8376c222651904caf7785fd2fa01b1e2be608c94bec842a94e116deca88f13"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   octo_image:
     dependency: transitive
     description:
@@ -809,6 +833,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  pub_api_client:
+    dependency: "direct dev"
+    description:
+      name: pub_api_client
+      sha256: d4bc6c9ec778da1a79675eab41bde456b392973216acd783156afaee69230e22
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   pub_semver:
     dependency: transitive
     description:

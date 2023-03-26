@@ -58,6 +58,8 @@ dev_dependencies:
   json_serializable: ^6.6.1
   build_runner: ^2.3.3
   flutter_launcher_icons: "^0.12.0"
+  html: ^0.15.2
+  pub_api_client: ^2.4.0
 
 flutter:
   uses-material-design: true    
