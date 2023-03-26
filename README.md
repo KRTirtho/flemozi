@@ -34,9 +34,9 @@
 <a href="https://patreon.com/krtirtho"><img src="https://user-images.githubusercontent.com/61944859/180249027-678b01b8-c336-451e-b147-6d84a5b9d0e7.png" width="250"/></a>
 
 ## Screenshots
-<img src="assets/screenshots/one.png" alt="One" width="400">
-<img src="assets/screenshots/two.png" alt="Two" width="400">
-<img src="assets/screenshots/three.png" alt="Three" width="400">
+![One](/assets/screenshots/one.png)
+![Two](/assets/screenshots/two.png)
+![Three](/assets/screenshots/three.png)
 
 ## Contributing🤝
 
