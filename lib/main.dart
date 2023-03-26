@@ -10,6 +10,7 @@ import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:http/http.dart';
@@ -80,6 +81,7 @@ void main(List<String> args) async {
   }
 
   await QueryClient.initialize(cachePrefix: 'flemoji');
+  await Hive.openBox('config');
   runApp(const ProviderScope(child: Flemozi()));
 }
 
