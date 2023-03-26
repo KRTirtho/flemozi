@@ -81,7 +81,7 @@ void main(List<String> args) async {
   }
 
   await QueryClient.initialize(cachePrefix: 'flemoji');
-  await Hive.openBox('config');
+  await Hive.openBox('flemozi.config');
   runApp(const ProviderScope(child: Flemozi()));
 }
 

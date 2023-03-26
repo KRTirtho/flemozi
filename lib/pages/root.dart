@@ -36,8 +36,8 @@ class RootPage extends HookWidget {
     });
 
     useEffect(() {
-      final showWaylandDialog =
-          Hive.box("config").get("showWaylandDialog", defaultValue: true);
+      final showWaylandDialog = Hive.box('flemozi.config')
+          .get("showWaylandDialog", defaultValue: true);
       if (kIsWayland && showWaylandDialog) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           showDialog(
@@ -91,7 +91,7 @@ class RootPage extends HookWidget {
         });
       }
       return null;
-    });
+    }, []);
 
     return CallbackShortcuts(
       bindings: {
