@@ -16,6 +16,7 @@ import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:super_hot_key/super_hot_key.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
@@ -69,6 +70,42 @@ void main(List<String> args) async {
     await windowManager.show();
     await windowManager.focus();
   });
+
+  await HotKey.create(
+    definition: HotKeyDefinition(
+      key: PhysicalKeyboardKey.period,
+      alt: true,
+      control: true,
+    ),
+    callback: () async {
+      if (await windowManager.isVisible() && !await windowManager.isFocused()) {
+        if (kIsLinux) {
+          await windowManager.setAlwaysOnTop(true);
+        }
+        await windowManager.focus();
+        if (kIsLinux) await windowManager.grabKeyboard();
+        if (kIsLinux) {
+          Future.delayed(const Duration(milliseconds: 100), () async {
+            await windowManager.setAlwaysOnTop(false);
+            await windowManager.focus();
+            await windowManager.grabKeyboard();
+          });
+        }
+      } else {
+        if (kIsLinux) await windowManager.setAlwaysOnTop(true);
+        await windowManager.show();
+        await windowManager.focus();
+        if (kIsLinux) await windowManager.grabKeyboard();
+        if (kIsLinux) {
+          Future.delayed(const Duration(milliseconds: 100), () async {
+            await windowManager.setAlwaysOnTop(false);
+            await windowManager.focus();
+            await windowManager.grabKeyboard();
+          });
+        }
+      }
+    },
+  );
 
   /// No shortcut for wayland as it's not supported (yet)
   if (kIsWayland) {

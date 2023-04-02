@@ -1077,6 +1077,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.3+1"
+  super_hot_key:
+    dependency: "direct main"
+    description:
+      name: super_hot_key
+      sha256: cb9d2bd0340c1ecafb2429e332e0fcde8de9f47aad2c7c30fb280cd0458e429a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1+1"
+  super_keyboard_layout:
+    dependency: transitive
+    description:
+      name: super_keyboard_layout
+      sha256: "42c269374b979eb14da841ba7fcbe316b2a4c6ed89ab74c723748632f66369fd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1+1"
   super_native_extensions:
     dependency: transitive
     description:
