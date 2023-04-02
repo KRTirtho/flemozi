@@ -1,4 +1,6 @@
+import 'package:flemozi/components/settings/keyboard_shortcuts/shortcut_picker_dialog.dart';
 import 'package:flemozi/components/ui/top_bar.dart';
+import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flemozi/providers/shortcut.dart';
 
 import 'package:flutter/material.dart';
@@ -10,6 +12,7 @@ class KeyboardShortcutsPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final shortcuts = ref.watch(ShortcutNotifier.provider).entries;
+    final shortcutsNotifier = ref.watch(ShortcutNotifier.provider.notifier);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
@@ -39,7 +42,22 @@ class KeyboardShortcutsPage extends HookConsumerWidget {
                       ),
                     );
                   }),
-              onTap: () async {},
+              onTap: () async {
+                final shortcutDef = await showDialog<FlemoziShortcutDef?>(
+                  context: context,
+                  builder: (context) => ShortcutPickerDialog(
+                    initialSelection: shortcut.value,
+                    title: shortcut.key.title,
+                  ),
+                );
+                if (shortcutDef != null && context.mounted) {
+                  await shortcutsNotifier.updateShortcut(
+                    shortcut.key,
+                    shortcutDef,
+                    context,
+                  );
+                }
+              },
             );
           },
         ),

@@ -22,9 +22,9 @@ class FlemoziShortcutDef {
     this.meta = false,
   });
 
-  HotKeyDefinition toHotKeyDefinition() {
+  Future<HotKeyDefinition> toHotKeyDefinition() async {
     return HotKeyDefinition(
-      key: trigger as PhysicalKeyboardKey,
+      key: (await triggerAsPhysicalKey())!,
       alt: alt,
       shift: shift,
       control: control,
@@ -32,9 +32,9 @@ class FlemoziShortcutDef {
     );
   }
 
-  SingleActivator toSingleActivator() {
+  Future<SingleActivator> toSingleActivator() async {
     return SingleActivator(
-      trigger as LogicalKeyboardKey,
+      (await triggerAsLogicalKey())!,
       alt: alt,
       shift: shift,
       control: control,
@@ -42,13 +42,26 @@ class FlemoziShortcutDef {
     );
   }
 
-  Future<String?> _getPhysicalKeyLabel(PhysicalKeyboardKey trigger) async {
-    final layout =
-        await KeyboardLayoutManager.instance().then((v) => v.currentLayout);
+  Future<LogicalKeyboardKey?> triggerAsLogicalKey() async {
+    if (trigger is LogicalKeyboardKey) {
+      return trigger as LogicalKeyboardKey;
+    } else {
+      final layout =
+          await KeyboardLayoutManager.instance().then((v) => v.currentLayout);
 
-    final key = layout.getLogicalKeyForPhysicalKey(trigger)?.keyLabel;
+      return layout.getLogicalKeyForPhysicalKey(trigger as PhysicalKeyboardKey);
+    }
+  }
 
-    return key;
+  Future<PhysicalKeyboardKey?> triggerAsPhysicalKey() async {
+    if (trigger is PhysicalKeyboardKey) {
+      return trigger as PhysicalKeyboardKey;
+    } else {
+      final layout =
+          await KeyboardLayoutManager.instance().then((v) => v.currentLayout);
+
+      return layout.getPhysicalKeyForLogicalKey(trigger as LogicalKeyboardKey);
+    }
   }
 
   Future<Set<String>> get keyLabels async {
@@ -57,10 +70,7 @@ class FlemoziShortcutDef {
       if (shift) 'Shift',
       if (alt) 'Alt',
       if (meta) 'Meta',
-      if (trigger is PhysicalKeyboardKey)
-        await _getPhysicalKeyLabel(trigger as PhysicalKeyboardKey) ?? "?"
-      else
-        (trigger as LogicalKeyboardKey).keyLabel,
+      (await triggerAsLogicalKey())?.keyLabel ?? 'Unknown',
     };
   }
 }

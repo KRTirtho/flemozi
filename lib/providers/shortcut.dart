@@ -18,7 +18,7 @@ class ShortcutNotifier
 
     for (var shortcut in globalShortcuts) {
       final hotKey = await HotKey.create(
-        definition: state[shortcut]!.toHotKeyDefinition(),
+        definition: await state[shortcut]!.toHotKeyDefinition(),
         callback: () {
           return shortcut.action(ref.read, context);
         },
@@ -36,7 +36,7 @@ class ShortcutNotifier
     ),
   );
 
-  void updateShortcut(
+  Future<void> updateShortcut(
     FlemoziShortcuts shortcutAction,
     FlemoziShortcutDef keyDef, [
     BuildContext? context,
@@ -48,7 +48,7 @@ class ShortcutNotifier
       );
       await _hotKeys[shortcutAction]?.dispose();
       final hotKey = await HotKey.create(
-        definition: keyDef.toHotKeyDefinition(),
+        definition: await keyDef.toHotKeyDefinition(),
         callback: () {
           return shortcutAction.action(ref.read, context!);
         },

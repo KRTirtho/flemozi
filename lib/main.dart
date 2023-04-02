@@ -176,29 +176,26 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
         builder: (context, child) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return HookBuilder(builder: (context) {
-            final appShortcuts = useMemoized(
-              () => Map<SingleActivator, VoidCallback>.fromEntries(
-                shortcuts.entries
-                    .where(
-                        (entry) => entry.key.type == ShortcutType.application)
-                    .map(
-                  (entry) {
-                    return MapEntry(
-                      entry.value.toSingleActivator(),
-                      () => entry.key.action(
-                        ref.read,
-                        navigatorKey.currentContext ?? context,
-                      ),
-                    );
-                  },
-                ),
-              ),
+            final appShortcuts = useFuture(useMemoized(
+              () => Future.wait(shortcuts.entries
+                  .where((entry) => entry.key.type == ShortcutType.application)
+                  .map(
+                (entry) async {
+                  return MapEntry(
+                    await entry.value.toSingleActivator(),
+                    () => entry.key.action(
+                      ref.read,
+                      navigatorKey.currentContext ?? context,
+                    ),
+                  );
+                },
+              )),
               [shortcuts],
-            );
+            ));
 
             return CallbackShortcuts(
               bindings: {
-                ...appShortcuts,
+                ...Map.fromEntries(appShortcuts.data ?? []),
                 LogicalKeySet(LogicalKeyboardKey.escape): () =>
                     CloseWindowAction().invoke(const CloseWindowIntent())
               },
