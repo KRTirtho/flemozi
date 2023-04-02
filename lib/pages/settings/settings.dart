@@ -1,7 +1,6 @@
 import 'package:flemozi/components/ui/top_bar.dart';
 import 'package:flemozi/hooks/use_force_updater.dart';
 import 'package:flemozi/pages/settings/about.dart';
-import 'package:flemozi/pages/settings/shortcuts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
@@ -50,9 +49,9 @@ class Settings extends StatelessWidget {
               title: const Text('Keyboard shortcuts'),
               leading: const Icon(Icons.keyboard_rounded),
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const ShortcutsPage(),
-                ));
+                // Navigator.of(context).push(MaterialPageRoute(
+                //   builder: (context) => const ShortcutsPage(),
+                // ));
               },
             ),
             const SizedBox(height: 5),

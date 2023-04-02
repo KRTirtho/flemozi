@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  hotkey_manager
   irondash_engine_context
   pasteboard
   screen_retriever

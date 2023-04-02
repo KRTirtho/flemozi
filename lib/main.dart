@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -28,7 +27,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Env.configure();
   await windowManager.ensureInitialized();
-  await hotKeyManager.unregisterAll();
+
   SystemTheme.fallbackColor = Colors.blue;
   await SystemTheme.accentColor.load();
 
