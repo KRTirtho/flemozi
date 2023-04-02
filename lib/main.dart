@@ -4,12 +4,14 @@ import 'dart:io';
 import 'package:fl_query/fl_query.dart';
 import 'package:flemozi/api/api.dart';
 import 'package:flemozi/collections/env.dart';
+import 'package:flemozi/collections/shortcuts.dart';
 import 'package:flemozi/intents/close_window.dart';
-import 'package:flemozi/intents/switch_tabs.dart';
 import 'package:flemozi/pages/root.dart';
+import 'package:flemozi/providers/shortcut.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart';
@@ -127,6 +129,8 @@ void main(List<String> args) async {
   runApp(const ProviderScope(child: Flemozi()));
 }
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 class Flemozi extends StatefulHookConsumerWidget {
   const Flemozi({super.key});
 
@@ -170,10 +174,19 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final shortcutsNotifier = ref.watch(ShortcutNotifier.provider.notifier);
+    final shortcuts = ref.watch(ShortcutNotifier.provider);
+
+    useEffect(() {
+      shortcutsNotifier.initialize(context);
+      return null;
+    }, const []);
+
     return QueryClientProvider(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
+        navigatorKey: navigatorKey,
         theme: ThemeData.light(useMaterial3: true),
         darkTheme: ThemeData(
           useMaterial3: true,
@@ -199,29 +212,54 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
         ),
         builder: (context, child) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Container(
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color:
-                  isDark ? Colors.grey[900]!.withOpacity(.5) : Colors.white60,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: DragToResizeArea(child: child!),
-          );
+          return HookBuilder(builder: (context) {
+            final appShortcuts = useMemoized(
+              () => Map<SingleActivator, VoidCallback>.fromEntries(
+                shortcuts.entries
+                    .where(
+                        (entry) => entry.key.type == ShortcutType.application)
+                    .map(
+                  (entry) {
+                    return MapEntry(
+                      entry.value.toSingleActivator(),
+                      () => entry.key.action(
+                        ref.read,
+                        navigatorKey.currentContext ?? context,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              [shortcuts],
+            );
+
+            return CallbackShortcuts(
+              bindings: {
+                ...appShortcuts,
+                LogicalKeySet(LogicalKeyboardKey.escape): () =>
+                    CloseWindowAction().invoke(const CloseWindowIntent())
+              },
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[900]!.withOpacity(.5)
+                      : Colors.white60,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DragToResizeArea(child: child!),
+              ),
+            );
+          });
         },
         home: const RootPage(),
         shortcuts: {
           ...WidgetsApp.defaultShortcuts,
           LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
-          LogicalKeySet(
-            LogicalKeyboardKey.control,
-            LogicalKeyboardKey.tab,
-          ): SwitchTabsIntent(ref),
         },
         actions: {
           ...WidgetsApp.defaultActions,
           CloseWindowIntent: CloseWindowAction(),
-          SwitchTabsIntent: SwitchTabsAction(),
         },
       ),
     );
