@@ -1086,7 +1086,7 @@ packages:
     source: hosted
     version: "0.1.1+1"
   super_keyboard_layout:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: super_keyboard_layout
       sha256: "42c269374b979eb14da841ba7fcbe316b2a4c6ed89ab74c723748632f66369fd"
