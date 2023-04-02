@@ -9,7 +9,7 @@
 
 ## Highlights🚀
 
-- *Not Electron based🙃
+- Not Electron based🙃
 - Configurable Global🪩 shortcut🩳✂️ to open the emoji picker
 - Launches on system startup, runs in the background and can invoked from anywhere👻
 - Supports GIFs📼, stickers🎟️ and ASCII emojis👴 too
@@ -22,11 +22,11 @@
 | Linux                                                                   | Windows                                                       | macOS                                               |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
 | [AppImage⚙️][AppImage]                                                   | [exe🪟][exe]                                                   | [DMG💿][dmg]                                         |
-| [Debian🍥/Ubuntu⭕][deb]                                                  | WinGet🪟🌈 (Soon)<!-- <br>`winget install KRTirtho.flemozi` --> | Homebrew🍺 (Soon)<!-- <br>`brew install flemozi` --> |
-| [Fedora🎩/OpenSuse🦎][rpm]                                                | Chocolatey🍫 (Soon)<!-- <br>`choco install flemozi`  -->       |                                                     |
+| [Debian🍥/Ubuntu⭕][deb]                                                | WinGet🪟🌈 (Soon)<!-- <br>`winget install KRTirtho.flemozi` --> | Homebrew🍺 (Soon)<!-- <br>`brew install flemozi` --> |
+| [Fedora🎩/OpenSuse🦎][rpm]                                              | Chocolatey🍫 (Soon)<!-- <br>`choco install flemozi`  -->       |                                                     |
 | [Tarball][tar]                                                          |                                                               |                                                     |
-| Flatpak📦 (Soon)<!-- <br>`flatpak install dev.krtirtho.Flemozi` -->      |                                                               |                                                     |
-| AUR🌁 (Soon)<!-- <br>`yay -S flemozi`<br>or, `pamac install flemozi` --> |                                                               |                                                     |
+| Flatpak📦 (Soon)<!-- <br>`flatpak install dev.krtirtho.Flemozi` -->     |                                                               |                                                     |
+| [AUR🌁][AUR] <br>`yay -S flemozi`                                       |                                                               |                                                     |
 
 ## Sponsor☕💘
 
@@ -218,3 +218,4 @@ This project is licensed under the [GPLv3](LICENSE) license.
 [rpm]: https://github.com/KRTirtho/flemozi/releases/latest/download/Flemozi-linux-x86_64.rpm
 [exe]: https://github.com/KRTirtho/flemozi/releases/latest/download/Flemozi-windows-x86_64-setup.exe
 [dmg]: https://github.com/KRTirtho/flemozi/releases/latest/download/Flemozi-macos-universal.dmg
+[AUR]: https://aur.archlinux.org/packages/flemozi
