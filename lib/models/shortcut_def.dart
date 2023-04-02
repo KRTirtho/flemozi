@@ -22,6 +22,19 @@ class FlemoziShortcutDef {
     this.meta = false,
   });
 
+  factory FlemoziShortcutDef.fromJson(Map<String, dynamic> json) {
+    final trigger = json['trigger']['keyId'] != null
+        ? LogicalKeyboardKey.findKeyByKeyId(json['trigger']['keyId'])
+        : PhysicalKeyboardKey.findKeyByCode(json['trigger']['usbHidUsage']);
+    return FlemoziShortcutDef(
+      trigger!,
+      alt: json['alt'],
+      shift: json['shift'],
+      control: json['control'],
+      meta: json['meta'],
+    );
+  }
+
   Future<HotKeyDefinition> toHotKeyDefinition() async {
     return HotKeyDefinition(
       key: (await triggerAsPhysicalKey())!,
@@ -71,6 +84,21 @@ class FlemoziShortcutDef {
       if (alt) 'Alt',
       if (meta) 'Meta',
       (await triggerAsLogicalKey())?.keyLabel ?? 'Unknown',
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'trigger': {
+        if (trigger is LogicalKeyboardKey)
+          'keyId': (trigger as LogicalKeyboardKey).keyId
+        else
+          'usbHidUsage': (trigger as PhysicalKeyboardKey).usbHidUsage
+      },
+      'alt': alt,
+      'shift': shift,
+      'control': control,
+      'meta': meta,
     };
   }
 }
