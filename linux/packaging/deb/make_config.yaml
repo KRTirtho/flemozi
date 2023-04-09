@@ -9,9 +9,6 @@ priority: optional
 section: x11
 installed_size: 24400
 
-dependencies:
-  - keybinder-3.0
-
 essential: false
 icon: assets/logo.png
 

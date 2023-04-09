@@ -23,7 +23,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
 import 'package:path_provider/path_provider.dart';
 
-void main(List<String> args) async {
+Future<void> main(List<String> args) async {
   final isHeadless = args.contains("--headless");
 
   WidgetsFlutterBinding.ensureInitialized();

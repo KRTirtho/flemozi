@@ -6,9 +6,6 @@ packager: Kingkor Roy Tirtho
 packagerEmail: krtirtho@gmail.com
 license: BSD-4-Clause
 url: https://github.com/KRTirtho/flemozi
-requires:
-  - keybinder3
-  - keybinder3-devel
 
 display_name: Flemozi
 
