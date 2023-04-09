@@ -57,7 +57,7 @@ jobs:
           flutter pub get
           make innoinstall
           flutter_distributor package --platform=windows --targets=exe --skip-clean
-          mv dist/**/flemozi-*-windows.exe dist/Flemozi-windows-x86_64-setup.exe
+          mv dist/**/flemozi-*+*-windows-setup.exe dist/Flemozi-windows-x86_64-setup.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
