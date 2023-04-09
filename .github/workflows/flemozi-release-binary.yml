@@ -57,7 +57,7 @@ jobs:
           flutter pub get
           make innoinstall
           flutter_distributor package --platform=windows --targets=exe --skip-clean
-          mv dist/**/flemozi-*-windows.exe dist/Flemozi-windows-x86_64-setup.exe
+          mv dist/**/flemozi-*+*-windows-setup.exe dist/Flemozi-windows-x86_64-setup.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
@@ -113,12 +113,20 @@ jobs:
       - name: BUILD_VERSION Env
         run: |
           echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+      
 
+      ### Running flutter_distributor 3 times to mitigate a bug in flutter_distributor
+      ### causing RPATH to be set incorrectly for deb packages
+      ### 
+      ### alias dpkg-deb="dpkg-deb -Zxz" is used to mitigate a bug in debian dpkg
+      ### caused by unsupported zstd compression. -Zxz instrcuts dpkg-deb to use
+      ### xz compression instead of zstd
       - name: Build Linux Packages
         run: |
           flutter config --enable-linux-desktop
           flutter pub get
           dart pub global activate flutter_distributor
+          alias dpkg-deb="dpkg-deb -Zxz"
           flutter_distributor package --platform=linux --targets=appimage
           flutter_distributor package --platform=linux --targets=rpm
           flutter_distributor package --platform=linux --targets=deb
