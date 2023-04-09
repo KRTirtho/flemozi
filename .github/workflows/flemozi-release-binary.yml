@@ -40,16 +40,7 @@ jobs:
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
-      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
-        if: ${{ inputs.channel == 'nightly' }}
-        run: |
-          choco install sed make yq -y
-          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
-
-      - name: BUILD_VERSION Env (stable)
-        if: ${{ inputs.channel == 'stable' }}
+      - name: BUILD_VERSION Env
         run: |
           "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
 
@@ -119,16 +110,7 @@ jobs:
           chmod +x appimagetool
           mv appimagetool /usr/local/bin/
 
-      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
-        if: ${{ inputs.channel == 'nightly' }}
-        run: |
-          curl -sS https://webi.sh/yq | sh
-          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel  }}.${{ github.run_number }}" >> $GITHUB_ENV
-
-      - name: BUILD_VERSION Env (stable)
-        if: ${{ inputs.channel == 'stable' }}
+      - name: BUILD_VERSION Env
         run: |
           echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
@@ -137,7 +119,9 @@ jobs:
           flutter config --enable-linux-desktop
           flutter pub get
           dart pub global activate flutter_distributor
-          flutter_distributor package --platform=linux --targets=deb,appimage,rpm --skip-clean
+          flutter_distributor package --platform=linux --targets=appimage
+          flutter_distributor package --platform=linux --targets=rpm
+          flutter_distributor package --platform=linux --targets=deb
 
       - name: Create tar.xz (stable)
         if: ${{ inputs.channel == 'stable' }}
@@ -181,15 +165,7 @@ jobs:
           npm install -g appdmg
           dart pub global activate flutter_distributor
 
-      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
-        if: ${{ inputs.channel == 'nightly' }}
-        run: |
-          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel  }}.${{ github.run_number }}" >> $GITHUB_ENV
-
-      - name: BUILD_VERSION Env (stable)
-        if: ${{ inputs.channel == 'stable' }}
+      - name: BUILD_VERSION Env
         run: |
           echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
