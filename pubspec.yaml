@@ -24,7 +24,7 @@ dependencies:
       path: plugins/window_size
   launch_at_startup: ^0.2.2
   package_info_plus: ^3.0.3
-  shared_preferences: ^2.0.17
+  shared_preferences: ^2.1.0
   alfred: ^1.0.0+1
   system_theme: ^2.1.0
   flutter_svg: ^2.0.2
