@@ -952,28 +952,28 @@ packages:
       name: super_clipboard
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.3+1"
+    version: "0.3.0+2"
   super_hot_key:
     dependency: "direct main"
     description:
       name: super_hot_key
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.1+1"
+    version: "0.3.0+2"
   super_keyboard_layout:
     dependency: "direct main"
     description:
       name: super_keyboard_layout
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.1+1"
+    version: "0.3.0+2"
   super_native_extensions:
     dependency: transitive
     description:
       name: super_native_extensions
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.4"
+    version: "0.3.0+2"
   sync_http:
     dependency: transitive
     description:
