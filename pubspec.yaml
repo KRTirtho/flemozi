@@ -16,7 +16,7 @@ dependencies:
   google_fonts: ^4.0.3
   hooks_riverpod: ^2.1.3
   http: ^0.13.5
-  riverpod: ^2.1.3
+  riverpod: ^2.3.6
   window_manager: ^0.3.2
   window_size:
     git:

@@ -339,7 +339,7 @@ packages:
       name: flutter_riverpod
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.4"
+    version: "2.3.6"
   flutter_svg:
     dependency: "direct main"
     description:
@@ -424,7 +424,7 @@ packages:
       name: hooks_riverpod
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.4"
+    version: "2.3.6"
   html:
     dependency: "direct dev"
     description:
@@ -786,7 +786,7 @@ packages:
       name: riverpod
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.4"
+    version: "2.3.6"
   rxdart:
     dependency: transitive
     description:
