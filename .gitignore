@@ -47,3 +47,4 @@ dist
 
 **/.env*
 !**/.env.example
+/lib/collections/env.g.dart

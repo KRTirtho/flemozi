@@ -1,10 +1,10 @@
 name: flemozi
 description: A powerful emoji picker
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
-  sdk: '>=2.19.0 <3.0.0'
+  sdk: ">=2.19.0 <3.0.0"
 
 dependencies:
   cached_network_image: ^3.2.3
@@ -32,7 +32,6 @@ dependencies:
   fl_query: ^1.0.0-alpha.2
   fl_query_hooks: ^1.0.0-alpha.2
   giphy_api_client: ^0.1.3
-  flutter_dotenv: ^5.0.2
   json_annotation: ^4.8.0
   visibility_detector: ^0.4.0+2
   pasteboard: ^0.2.0
@@ -47,6 +46,7 @@ dependencies:
   path_provider: ^2.0.14
   super_hot_key: ^0.1.1+1
   super_keyboard_layout: ^0.2.1+1
+  envied: ^0.3.0
 
 dev_dependencies:
   flutter_test:
@@ -57,12 +57,13 @@ dev_dependencies:
   melos: ^3.0.1
   json_serializable: ^6.6.1
   build_runner: ^2.3.3
+  envied_generator: ^0.3.0
   flutter_launcher_icons: "^0.12.0"
   html: ^0.15.2
   pub_api_client: ^2.4.0
 
 flutter:
-  uses-material-design: true    
+  uses-material-design: true
   assets:
     - assets/
     - assets/twemoji/

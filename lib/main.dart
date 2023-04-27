@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:fl_query/fl_query.dart';
 import 'package:flemozi/api/api.dart';
-import 'package:flemozi/collections/env.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flemozi/pages/root.dart';
@@ -27,7 +26,7 @@ Future<void> main(List<String> args) async {
   final isHeadless = args.contains("--headless");
 
   WidgetsFlutterBinding.ensureInitialized();
-  await Env.configure();
+
   await windowManager.ensureInitialized();
 
   SystemTheme.fallbackColor = Colors.blue;

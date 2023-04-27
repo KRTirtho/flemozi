@@ -56,6 +56,7 @@ jobs:
           flutter config --enable-windows-desktop
           flutter pub get
           make innoinstall
+          flutter pub run build_runner build --delete-conflicting-outputs
           flutter_distributor package --platform=windows --targets=exe --skip-clean
           mv dist/**/flemozi-*+*-windows-setup.exe dist/Flemozi-windows-x86_64-setup.exe
 
@@ -66,7 +67,7 @@ jobs:
           path: dist/
 
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2.10.0
@@ -100,9 +101,7 @@ jobs:
             fuse\
             libunwind-dev\
             locate\
-            patchelf\
-            libkeybinder-3.0-0\
-            libkeybinder-3.0-dev
+            patchelf
 
       - name: Install AppImage Tool
         run: |
@@ -126,6 +125,7 @@ jobs:
           flutter config --enable-linux-desktop
           flutter pub get
           dart pub global activate flutter_distributor
+          flutter pub run build_runner build --delete-conflicting-outputs
           alias dpkg-deb="dpkg-deb -Zxz"
           flutter_distributor package --platform=linux --targets=appimage
           flutter_distributor package --platform=linux --targets=rpm
@@ -181,6 +181,7 @@ jobs:
         run: |
           flutter config --enable-macos-desktop
           flutter pub get
+          flutter pub run build_runner build --delete-conflicting-outputs
           flutter_distributor package --platform=macos --targets=dmg --skip-clean
 
       - name: Move files to dist

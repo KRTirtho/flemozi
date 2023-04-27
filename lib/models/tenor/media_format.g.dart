@@ -17,7 +17,7 @@ TenorMediaFormat _$TenorMediaFormatFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$TenorMediaFormatToJson(TenorMediaFormat instance) =>
     <String, dynamic>{
-      'media_format': uriToString(instance.url),
+      'url': uriToString(instance.url),
       'duration': durationToSeconds(instance.duration),
       'preview': instance.preview,
       'dims': dimsToJson(instance.dims),

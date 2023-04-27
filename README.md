@@ -48,19 +48,20 @@ Contributions are always welcome! Please read the [contribution guidelines](CONT
 
 - Flutter SDK v3.7.0 or higher
 - Rust v1.65.0 or higher
-- Linux: keybinder3
 
 #### Building🏗️
+
+You'll need your own **giphy** and **tenor** api keys. Create a `.env` file in the root of the
+project and fill following the `.env.example` file
 
 ```bash
 $ git clone https://github.com/KRTirtho/flemozi.git
 $ cd flemozi
 $ flutter pub get
 $ flutter config --enable-<linux/windows/macos>-desktop
+$ flutter pub run build_runner build --delete-conflicting-outputs
 $ flutter build <linux/windows/macos>
 ```
-
-**PS:** You can find the built binaries in `build/<linux/windows/macos>/<architecture>/release/bundle/`
 
 ## Credits🙇
 
