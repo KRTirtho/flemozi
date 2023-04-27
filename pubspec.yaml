@@ -67,7 +67,6 @@ flutter:
   assets:
     - assets/
     - assets/twemoji/
-    - .env
 
 flutter_icons:
   android: false
