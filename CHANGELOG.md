@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1](https://github.com/KRTirtho/flemozi/compare/v0.1.0...v0.1.1) (2023-04-27)
+
+
+### Features
+
+* custom shortcut manager and registry ([9f99216](https://github.com/KRTirtho/flemozi/commit/9f99216c35ae14c4a4871ee716ea1f69df277b0e))
+* shortcut edit dialog ([26d5f27](https://github.com/KRTirtho/flemozi/commit/26d5f27bcab72994b59e0887298ed4f7a1a068ae))
+* shortcut edit page ([681f1a8](https://github.com/KRTirtho/flemozi/commit/681f1a829c3fc17b3b107462665457314a01209d))
+* shortcut persistance ([1af0d53](https://github.com/KRTirtho/flemozi/commit/1af0d5368be21a625c874c6d9a3e4a20947eca04))
+
 ## 0.1.0 (2023-03-26)
 
 
