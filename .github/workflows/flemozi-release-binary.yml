@@ -127,17 +127,22 @@ jobs:
           dart pub global activate flutter_distributor
           flutter pub run build_runner build --delete-conflicting-outputs
           alias dpkg-deb="dpkg-deb -Zxz"
+          flutter_distributor package --platform=linux --targets=deb
           flutter_distributor package --platform=linux --targets=appimage
           flutter_distributor package --platform=linux --targets=rpm
-          flutter_distributor package --platform=linux --targets=deb
+          flutter clean
 
       - name: Create tar.xz (stable)
         if: ${{ inputs.channel == 'stable' }}
-        run: make tar VERSION=${{ env.BUILD_VERSION }}
+        run: |
+          flutter build linux
+          make tar VERSION=${{ env.BUILD_VERSION }}
       
       - name: Create tar.xz (nightly)
         if: ${{ inputs.channel == 'nightly' }}
-        run: make tar VERSION=nightly
+        run: |
+          flutter build linux
+          make tar VERSION=nightly
 
       - name: Move Files to dist
         run: |
