@@ -27,7 +27,7 @@ dependencies:
   alfred: ^1.1.0+1
   shared_preferences: ^2.1.0
   system_theme: ^2.1.0
-  flutter_svg: ^2.0.2
+  flutter_svg: ^2.0.5
   url_launcher: ^6.1.10
   fl_query: ^1.0.0-alpha.2
   fl_query_hooks: ^1.0.0-alpha.2
