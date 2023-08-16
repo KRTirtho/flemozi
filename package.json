@@ -39,6 +39,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@tauri-apps/api": "^1.4.0"
+		"@tauri-apps/api": "^1.4.0",
+		"tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
 	}
 }

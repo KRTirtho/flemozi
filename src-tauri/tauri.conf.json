@@ -74,7 +74,10 @@
         "width": 600,
         "minWidth": 400,
         "maxWidth": 800,
-        "alwaysOnTop": true
+        "alwaysOnTop": true,
+        "transparent": true,
+        "skipTaskbar": true,
+        "center": true
       }
     ]
   }

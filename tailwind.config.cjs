@@ -4,7 +4,7 @@ const skeleton = require('@skeletonlabs/skeleton/tailwind/skeleton.cjs');
 
 /** @type {import('tailwindcss').Config}*/
 const config = {
-	darkMode: 'class',
+	darkMode: 'media',
 	content: [
 		'./src/**/*.{html,js,svelte,ts}',
 		path.join(require.resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')

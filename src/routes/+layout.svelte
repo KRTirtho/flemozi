@@ -8,6 +8,7 @@
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { StateFlags, saveWindowState } from 'tauri-plugin-window-state-api';
 
 	onMount(() => {
 		(async () => {
@@ -29,15 +30,21 @@
 	<div
 		class="h-screen"
 		on:dragstart={async (event) => {
-      event.dataTransfer?.setDragImage(new Image(), -9999, -9999);
+			event.dataTransfer?.setDragImage(new Image(), -9999, -9999);
 			await appWindow.startDragging();
 			return false;
 		}}
 		draggable={true}
-    role="navigation"
+		role="navigation"
 	>
-		<button class="btn-icon" on:click={appWindow.hide}>
-			<Icon icon="pepicons-pop:times-circle" slot="lead" />
+		<button
+			class="btn-icon"
+			on:click={async () => {
+				await saveWindowState(StateFlags.ALL);
+				await appWindow.hide();
+			}}
+		>
+			<Icon icon="pepicons-pop:times-circle" />
 		</button>
 		<AppRail height="h-[87vh]" width="w-10" border="rounded-r-lg">
 			<AppRailAnchor href="/" selected={$page.url.pathname === '/'}>

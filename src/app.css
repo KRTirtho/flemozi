@@ -2,3 +2,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+	background-color: color-mix(in srgb, rgb(var(--color-surface-50)) 100%, transparent 60%);
+}
+
+.dark body {
+	background-color: color-mix(in srgb, rgb(var(--color-surface-900)) 100%, transparent 60%);
+}
