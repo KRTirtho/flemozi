@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Flemozi
-GenericName=Emoji Picker
-Icon=flemozi
-Exec=flemozi %U
-Categories=Utility;
-Keywords=Emoji;Clipboard;
-StartupNotify=true
