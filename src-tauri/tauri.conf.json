@@ -12,12 +12,21 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "all": false,
+      "window": {
+        "all": true
+      },
+      "clipboard": {
+        "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      }
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
+      "category": "Utility",
+      "copyright": "© Flemozi, 2023",
       "deb": {
         "depends": []
       },
@@ -29,7 +38,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "dev.krtirtho.flemozi",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -56,10 +65,16 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
         "resizable": true,
         "title": "Flemozi",
-        "width": 800
+        "decorations": false,
+        "height": 450,
+        "minHeight": 350,
+        "maxHeight": 600,
+        "width": 600,
+        "minWidth": 400,
+        "maxWidth": 800,
+        "alwaysOnTop": true
       }
     ]
   }
