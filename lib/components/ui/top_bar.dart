@@ -2,7 +2,7 @@ import 'package:flemozi/intents/close_window.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
-class TopBar extends StatelessWidget with PreferredSizeWidget {
+class TopBar extends StatelessWidget implements PreferredSizeWidget {
   const TopBar({super.key});
 
   @override
@@ -65,6 +65,5 @@ class TopBar extends StatelessWidget with PreferredSizeWidget {
     );
   }
 
-  @override
   Size get preferredSize => const Size.fromHeight(20);
 }

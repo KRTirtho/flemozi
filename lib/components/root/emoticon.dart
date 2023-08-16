@@ -144,7 +144,7 @@ class Emoticon extends HookWidget {
                         onPressed: () {
                           focusNode.requestFocus();
                           Clipboard.setData(
-                            ClipboardData(text: emoticon["emoticon"]),
+                            ClipboardData(text: emoticon["emoticon"]!),
                           );
                           SnackBar snackBar = SnackBar(
                             content: Row(
