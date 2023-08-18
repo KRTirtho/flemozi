@@ -10,7 +10,7 @@
 	import { onMount } from 'svelte';
 	import { StateFlags, saveWindowState } from 'tauri-plugin-window-state-api';
 	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-	import autoStart from 'tauri-plugin-autostart-api';
+	import * as autoStart from 'tauri-plugin-autostart-api';
 
 	onMount(() => {
 		let unsubscribe: UnlistenFn | null = null;
@@ -34,8 +34,16 @@
 			await autoStart.enable();
 		})();
 
+		function listener(e: KeyboardEvent) {
+			if (e.key === 'Escape') {
+				appWindow.hide();
+			}
+		}
+
+		document.addEventListener('keyup', listener);
 		return () => {
 			if (unsubscribe) unsubscribe();
+			document.removeEventListener('keyup', listener);
 		};
 	});
 </script>
