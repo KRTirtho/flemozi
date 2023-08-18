@@ -40,6 +40,7 @@
 	"type": "module",
 	"dependencies": {
 		"@tauri-apps/api": "^1.4.0",
+		"tauri-plugin-autostart-api": "github:tauri-apps/tauri-plugin-autostart#v1",
 		"tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
 	}
 }

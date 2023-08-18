@@ -56,6 +56,14 @@
         "timestampUrl": ""
       }
     },
+    "cli": {
+      "args": [
+        {
+          "name": "headless",
+          "description": "Run Flemozi in headless mode. No UI"
+        }
+      ]
+    },
     "security": {
       "csp": null
     },
@@ -77,7 +85,8 @@
         "alwaysOnTop": true,
         "transparent": true,
         "skipTaskbar": true,
-        "center": true
+        "center": true,
+        "maximizable": false
       }
     ]
   }

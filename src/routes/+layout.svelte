@@ -9,8 +9,11 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { StateFlags, saveWindowState } from 'tauri-plugin-window-state-api';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+	import autoStart from 'tauri-plugin-autostart-api';
 
 	onMount(() => {
+		let unsubscribe: UnlistenFn | null = null;
 		(async () => {
 			if (await isRegistered('CmdOrControl+Shift+/')) {
 				await unregister('CmdOrControl+Shift+/');
@@ -20,7 +23,20 @@
 				await appWindow.setAlwaysOnTop(true);
 				await appWindow.setFocus();
 			});
+
+			unsubscribe = await listen('showWindow', () => {
+				console.log('showWindow:');
+				appWindow.show();
+				appWindow.setAlwaysOnTop(true);
+				appWindow.setFocus();
+			});
+
+			await autoStart.enable();
 		})();
+
+		return () => {
+			if (unsubscribe) unsubscribe();
+		};
 	});
 </script>
 
