@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { toastStore } from '@skeletonlabs/skeleton';
+	import { popup, toastStore, type PopupSettings } from '@skeletonlabs/skeleton';
 	import { writeText } from '@tauri-apps/api/clipboard';
+	import type { UnlistenFn } from '@tauri-apps/api/event';
 	import { appWindow } from '@tauri-apps/api/window';
+	import { onMount } from 'svelte';
 
 	export let data: [string, any[]][];
-	export let compare: (data: any, search: string) => boolean;
-	export let getDataString: (data: any) => string;
 	export let display: 'grid' | 'flex' = 'grid';
+	export let compare: (data: any, search: string) => boolean;
+	export let getTooltip: ((data: any) => string) | undefined;
+	export let getDataString: (data: any) => string;
 
 	let searchInput: HTMLInputElement;
 	let searchValue: string;
@@ -41,6 +44,33 @@
 					.filter(([_, emojis]) => emojis.length > 0)
 			: data;
 	}
+
+	onMount(() => {
+		const subscriptions: Array<UnlistenFn> = [];
+
+		(async () => {
+			subscriptions.push(
+				await appWindow.listen('tauri://blur', () => {
+					searchValue = '';
+				}),
+				await appWindow.listen('tauri://focus', () => {
+					searchInput.focus();
+				})
+			);
+		})();
+
+		function listener() {
+			searchInput.focus();
+		}
+		window.addEventListener('focus', listener);
+
+		return () => {
+			window.removeEventListener('focus', listener);
+			for (const unsubscribe of subscriptions) {
+				unsubscribe();
+			}
+		};
+	});
 
 	function onEmojiKey(e: KeyboardEvent, data: any) {
 		const target = e.target as HTMLButtonElement;
@@ -97,7 +127,7 @@
 				break;
 			}
 			case 'Enter': {
-        e.preventDefault();
+				e.preventDefault();
 				buttons[0]?.focus();
 				break;
 			}
@@ -112,10 +142,17 @@
 			message: `Copied ${text} to clipboard`
 		});
 	}
+
+	const popupSettings: PopupSettings = {
+		event: 'focus-blur',
+		target: 'popupFocusBlur',
+		placement: 'bottom'
+	};
 </script>
 
 <div class="flex flex-col h-full">
 	<input
+		autofocus
 		bind:this={searchInput}
 		class="input"
 		type="search"
@@ -146,7 +183,20 @@
 								}
 							}}
 							on:keyup|preventDefault={(e) => onEmojiKey(e, child)}
+							use:popup={{
+								...popupSettings,
+								target: `tooltip-${getDataString(child)}`
+							}}
 						>
+							{#if getTooltip}
+								<div
+									class="text-sm card p-2 variant-filled"
+									data-popup={`tooltip-${getDataString(child)}`}
+								>
+									<p>{getTooltip(child)}</p>
+									<div class="arrow variant-filled" />
+								</div>
+							{/if}
 							{getDataString(child)}
 						</button>
 					{/each}

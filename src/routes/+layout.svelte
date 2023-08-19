@@ -11,6 +11,10 @@
 	import { StateFlags, saveWindowState } from 'tauri-plugin-window-state-api';
 	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import * as autoStart from 'tauri-plugin-autostart-api';
+	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
+	import { storePopup } from '@skeletonlabs/skeleton';
+
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
 	onMount(() => {
 		let unsubscribe: UnlistenFn | null = null;

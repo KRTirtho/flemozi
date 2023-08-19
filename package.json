@@ -41,6 +41,8 @@
   },
   "type": "module",
   "dependencies": {
+    "@floating-ui/dom": "^1.5.1",
+    "@giphy/js-fetch-api": "^5.1.0",
     "@tauri-apps/api": "^1.4.0",
     "tauri-plugin-autostart-api": "github:tauri-apps/tauri-plugin-autostart#v1",
     "tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"

@@ -24,6 +24,16 @@
 		const emoji = rawEmoji as Emoji;
 		return emoji.emoji;
 	}
+
+	function getTooltip(rawEmoji: any): string {
+		const emoji = rawEmoji as Emoji;
+		return emoji.description;
+	}
 </script>
 
-<NavigatableContiner data={categorizedEmoji} compare={emojiCompare} getDataString={getEmojiText} />
+<NavigatableContiner
+	data={categorizedEmoji}
+	compare={emojiCompare}
+	getDataString={getEmojiText}
+	{getTooltip}
+/>
