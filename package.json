@@ -21,6 +21,7 @@
     "@tauri-apps/api": "^1.4.0",
     "svelte-intersection-observer": "^0.10.1",
     "tauri-plugin-autostart-api": "github:tauri-apps/tauri-plugin-autostart#v1",
+    "tauri-plugin-clipboard-api": "^0.3.0",
     "tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
   },
   "devDependencies": {

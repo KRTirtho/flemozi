@@ -15,6 +15,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             app.emit_all("showWindow", ()).unwrap();
         }))
+        .plugin(tauri_plugin_clipboard::init())
         .setup(|app| {
             // hide the window if include --headless
             if let Ok(matches) = app.get_cli_matches() {
