@@ -119,7 +119,7 @@
 		}
 	}
 
-	function onInputKeyDown(e: KeyboardEvent) {
+	function onInputKeyUp(e: KeyboardEvent) {
 		switch (e.key) {
 			case 'ArrowDown': {
 				const el = emojiDiv!.querySelector('button') as HTMLButtonElement | null;
@@ -158,7 +158,7 @@
 		type="search"
 		placeholder="Search..."
 		bind:value={searchValue}
-		on:keyup={onInputKeyDown}
+		on:keyup={onInputKeyUp}
 	/>
 	<div class="mt-2 h-full overflow-auto space-y-2 scroll-smooth" bind:this={emojiDiv}>
 		{#each filteredData as [category, data]}

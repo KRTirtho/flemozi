@@ -23,4 +23,5 @@
 	compare={emojiCompare}
 	getDataString={getEmojiText}
 	display="flex"
+	getTooltip={undefined}
 />

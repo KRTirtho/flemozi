@@ -13,6 +13,8 @@
 	import * as autoStart from 'tauri-plugin-autostart-api';
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
+	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
+	import { browser } from '$app/environment';
 
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
@@ -50,43 +52,53 @@
 			document.removeEventListener('keyup', listener);
 		};
 	});
+
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				enabled: browser
+			}
+		}
+	});
 </script>
 
 <Toast padding="p-3" />
 
-<main class="flex items-start">
-	<div
-		class="h-screen"
-		on:dragstart={async (event) => {
-			event.dataTransfer?.setDragImage(new Image(), -9999, -9999);
-			await appWindow.startDragging();
-			return false;
-		}}
-		draggable={true}
-		role="navigation"
-	>
-		<button
-			class="btn-icon"
-			on:click={async () => {
-				await saveWindowState(StateFlags.ALL);
-				await appWindow.hide();
+<QueryClientProvider client={queryClient}>
+	<main class="flex items-start">
+		<div
+			class="h-screen"
+			on:dragstart={async (event) => {
+				event.dataTransfer?.setDragImage(new Image(), -9999, -9999);
+				await appWindow.startDragging();
+				return false;
 			}}
+			draggable={true}
+			role="navigation"
 		>
-			<Icon icon="pepicons-pop:times-circle" />
-		</button>
-		<AppRail height="h-[87vh]" width="w-10" border="rounded-r-lg">
-			<AppRailAnchor href="/" selected={$page.url.pathname === '/'}>
-				<Icon icon="bi:emoji-laughing" slot="lead" />
-			</AppRailAnchor>
-			<AppRailAnchor href="/emoticons" selected={$page.url.pathname === '/emoticons'}>
-				<span>:-&rpar;</span>
-			</AppRailAnchor>
-			<AppRailAnchor href="/gifs" selected={$page.url.pathname === '/gifs'}>
-				<Icon icon="bi:filetype-gif" slot="lead" />
-			</AppRailAnchor>
-		</AppRail>
-	</div>
-	<div class="p-2 w-full h-screen overflow-auto">
-		<slot />
-	</div>
-</main>
+			<button
+				class="btn-icon"
+				on:click={async () => {
+					await saveWindowState(StateFlags.ALL);
+					await appWindow.hide();
+				}}
+			>
+				<Icon icon="pepicons-pop:times-circle" />
+			</button>
+			<AppRail height="h-[87vh]" width="w-10" border="rounded-r-lg">
+				<AppRailAnchor href="/" selected={$page.url.pathname === '/'}>
+					<Icon icon="bi:emoji-laughing" slot="lead" />
+				</AppRailAnchor>
+				<AppRailAnchor href="/emoticons" selected={$page.url.pathname === '/emoticons'}>
+					<span>:-&rpar;</span>
+				</AppRailAnchor>
+				<AppRailAnchor href="/gifs" selected={$page.url.pathname === '/gifs'}>
+					<Icon icon="bi:filetype-gif" slot="lead" />
+				</AppRailAnchor>
+			</AppRail>
+		</div>
+		<div class="p-2 w-full h-screen overflow-auto scroll-smooth">
+			<slot />
+		</div>
+	</main>
+</QueryClientProvider>
