@@ -68,7 +68,6 @@
 				.split(' ').length;
 			numberOfCols = gridTemplateColumns;
 		}
-		console.log('RENDER');
 	}
 
 	function onInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
@@ -77,7 +76,6 @@
 		if (!target.value) {
 			searchValue = '';
 			query = trendingQuery;
-			console.log('trendingQuery:', trendingQuery);
 			return;
 		}
 		timer = setTimeout(() => {
@@ -88,10 +86,8 @@
 			}
 			if (searchValue === target?.value) return;
 			searchValue = target.value;
-			console.log('searchValue:', searchValue);
 			$searchQuery.remove();
 			$searchQuery.refetch();
-			console.log('searchQuery:', searchQuery);
 			query = searchQuery;
 		}, 2000);
 	}
@@ -202,7 +198,9 @@
 					alt={gif.title}
 					on:load={(e) => {
 						// @ts-ignore
-						e.target.parentElement?.classList.remove('min-h-[150px]');
+						const classList = e.target.parentElement?.classList;
+						classList.remove('min-h-[150px]');
+						classList.remove('bg-red-300');
 					}}
 					class="h-auto w-full rounded-lg select-none"
 				/>
