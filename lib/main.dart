@@ -49,7 +49,7 @@ Future<void> main(List<String> args) async {
     minimumSize: Size(400, 300),
     center: true,
     backgroundColor: Colors.transparent,
-    skipTaskbar: false,
+    skipTaskbar: true,
     titleBarStyle: TitleBarStyle.hidden,
     title: "Flemoji",
     maximumSize: Size(720, 480),

@@ -161,4 +161,14 @@ class _UseWindowListenersState extends HookState<void, UseWindowListeners>
   void onWindowUnmaximize() {
     hook.onWindowUnmaximize?.call();
   }
+
+  @override
+  void onWindowDocked() {
+    throw UnimplementedError();
+  }
+
+  @override
+  void onWindowUndocked() {
+    throw UnimplementedError();
+  }
 }
