@@ -2,3 +2,4 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   enable-experiment:
     - records
+    - patterns

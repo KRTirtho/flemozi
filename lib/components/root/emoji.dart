@@ -7,6 +7,18 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flemozi/collections/emojis.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
+typedef RatioEmojiType = ({
+  String emoji,
+  String description,
+  String category,
+  List<String> aliases,
+  List<String> tags,
+  String unicodeVersion,
+  String iosVersion,
+  bool skinTones,
+  int? ratio,
+});
+
 class Emoji extends HookWidget {
   const Emoji({Key? key}) : super(key: key);
 
@@ -19,23 +31,46 @@ class Emoji extends HookWidget {
     final filteredEmojis = useMemoized(
       () {
         if (searchTerm.value.isEmpty) {
-          return emojis;
+          return emojis
+              .map(
+                (emoji) => (
+                  emoji: emoji.emoji,
+                  description: emoji.description,
+                  category: emoji.category,
+                  aliases: emoji.aliases,
+                  tags: emoji.tags,
+                  unicodeVersion: emoji.unicodeVersion,
+                  iosVersion: emoji.iosVersion,
+                  skinTones: emoji.skinTones,
+                  ratio: null,
+                ),
+              )
+              .toList();
         } else {
-          final List<Map<String, Object>> map = [];
+          final List<RatioEmojiType> map = [];
           for (var emoji in emojis) {
-            final description = emoji["description"] as String;
-            final aliases = (emoji["aliases"] as List).join(" ");
-            final tags = (emoji["tags"] as List? ?? []).join(" ");
+            final aliases = emoji.aliases.join(" ");
+            final tags = emoji.tags.join(" ");
             final ratio = weightedRatio(
-              "$description $aliases $tags",
+              "${emoji.description} $aliases $tags",
               searchTerm.value,
             );
-            emoji["ratio"] = ratio;
+
             if (ratio > 50) {
-              map.add(emoji);
+              map.add((
+                emoji: emoji.emoji,
+                description: emoji.description,
+                category: emoji.category,
+                aliases: emoji.aliases,
+                tags: emoji.tags,
+                unicodeVersion: emoji.unicodeVersion,
+                iosVersion: emoji.iosVersion,
+                skinTones: emoji.skinTones,
+                ratio: ratio,
+              ));
             }
           }
-          map.sort((a, b) => (b["ratio"] as int) - (a["ratio"] as int));
+          map.sort((a, b) => b.ratio! - a.ratio!);
           return map;
         }
       },
@@ -113,7 +148,7 @@ class Emoji extends HookWidget {
                       },
                     },
                     child: Tooltip(
-                      message: emoji["description"] as String,
+                      message: emoji.description,
                       key: tooltipKey,
                       triggerMode: TooltipTriggerMode.manual,
                       child: MaterialButton(
@@ -128,7 +163,7 @@ class Emoji extends HookWidget {
                         onPressed: () {
                           focusNode.requestFocus();
                           Clipboard.setData(
-                            ClipboardData(text: emoji["emoji"] as String),
+                            ClipboardData(text: emoji.emoji),
                           );
                           SnackBar snackBar = SnackBar(
                             content: Row(
@@ -142,10 +177,10 @@ class Emoji extends HookWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  "Copied ${(emoji["aliases"] as List).first as String} ",
+                                  "Copied ${emoji.aliases.firstOrNull} ",
                                 ),
                                 Twemoji(
-                                  emoji: emoji["emoji"] as String,
+                                  emoji: emoji.emoji,
                                   height: 20,
                                   width: 20,
                                 ),
@@ -158,7 +193,7 @@ class Emoji extends HookWidget {
                           Actions.invoke(context, const CloseWindowIntent());
                         },
                         child: Twemoji(
-                          emoji: emoji["emoji"] as String,
+                          emoji: emoji.emoji,
                         ),
                       ),
                     ),
