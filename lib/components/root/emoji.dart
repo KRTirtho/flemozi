@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flemozi/components/root/twemoji.dart';
 import 'package:flemozi/hooks/use_window_listeners.dart';
 import 'package:flemozi/intents/close_window.dart';
@@ -83,6 +84,46 @@ class Emoji extends HookWidget {
       },
     );
 
+    final copyEmoji = useCallback((RatioEmojiType emoji, FocusNode focusNode) {
+      focusNode.requestFocus();
+      Clipboard.setData(
+        ClipboardData(text: emoji.emoji),
+      );
+      SnackBar snackBar = SnackBar(
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.copy,
+              color: Theme.of(context).colorScheme.background,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              "Copied ${emoji.aliases.firstOrNull} ",
+            ),
+            Twemoji(
+              emoji: emoji.emoji,
+              height: 20,
+              width: 20,
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      final keys = RawKeyboard.instance.keysPressed;
+      const controls = [
+        LogicalKeyboardKey.control,
+        LogicalKeyboardKey.controlLeft,
+        LogicalKeyboardKey.controlRight,
+      ];
+      if (controls.none((element) => keys.contains(element))) {
+        Actions.invoke(context, const CloseWindowIntent());
+      }
+    }, []);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -151,49 +192,27 @@ class Emoji extends HookWidget {
                       message: emoji.description,
                       key: tooltipKey,
                       triggerMode: TooltipTriggerMode.manual,
-                      child: MaterialButton(
+                      child: RawKeyboardListener(
                         focusNode: focusNode,
-                        padding: EdgeInsets.zero,
-                        focusColor: Theme.of(context).colorScheme.primary,
-                        highlightColor: Theme.of(context).colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        onPressed: () {
-                          focusNode.requestFocus();
-                          Clipboard.setData(
-                            ClipboardData(text: emoji.emoji),
-                          );
-                          SnackBar snackBar = SnackBar(
-                            content: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.copy,
-                                  color:
-                                      Theme.of(context).colorScheme.background,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  "Copied ${emoji.aliases.firstOrNull} ",
-                                ),
-                                Twemoji(
-                                  emoji: emoji.emoji,
-                                  height: 20,
-                                  width: 20,
-                                ),
-                              ],
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 2),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                          Actions.invoke(context, const CloseWindowIntent());
+                        onKey: (value) {
+                          if (value.isKeyPressed(LogicalKeyboardKey.enter)) {
+                            copyEmoji(emoji, focusNode);
+                          }
                         },
-                        child: Twemoji(
-                          emoji: emoji.emoji,
+                        child: MaterialButton(
+                          padding: EdgeInsets.zero,
+                          focusColor: Theme.of(context).colorScheme.primary,
+                          highlightColor: Theme.of(context).colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          onPressed: () {
+                            copyEmoji(emoji, focusNode);
+                          },
+                          child: Twemoji(
+                            emoji: emoji.emoji,
+                          ),
                         ),
                       ),
                     ),

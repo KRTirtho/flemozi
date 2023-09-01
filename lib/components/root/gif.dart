@@ -214,6 +214,52 @@ class Gif extends HookConsumerWidget {
                   fit: BoxFit.contain,
                   placeholder: (context, url) => placeholder,
                 );
+                Future<void> copyGif() async {
+                  final imageFile = await DefaultCacheManager()
+                      .getFileFromCache(gif)
+                      .then((s) async => await s?.file.readAsBytes());
+                  if (imageFile == null) {
+                    return;
+                  }
+                  await ClipboardWriter.instance.write([
+                    DataWriterItem(suggestedName: basename(gif))
+                      ..add(Formats.png(imageFile))
+                      ..add(Formats.bmp(imageFile))
+                      ..add(Formats.webp(imageFile))
+                      ..add(Formats.gif(imageFile))
+                      ..add(Formats.tiff(imageFile))
+                      ..add(
+                        Formats.htmlText(
+                          '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
+                        ),
+                      )
+                  ]);
+                  SnackBar snackBar = SnackBar(
+                    content: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(width: 35, child: image),
+                        const SizedBox(width: 10),
+                        const Text("Copied to clipboard!"),
+                      ],
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    final keys = RawKeyboard.instance.keysPressed;
+                    const controls = [
+                      LogicalKeyboardKey.control,
+                      LogicalKeyboardKey.controlLeft,
+                      LogicalKeyboardKey.controlRight,
+                    ];
+                    if (controls.none((element) => keys.contains(element))) {
+                      Actions.invoke(context, const CloseWindowIntent());
+                    }
+                  }
+                }
 
                 return CallbackShortcuts(
                   bindings: {
@@ -221,54 +267,26 @@ class Gif extends HookConsumerWidget {
                       FocusScope.of(context).requestFocus(searchFocusNode);
                     },
                   },
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: () async {
-                      final imageFile = await DefaultCacheManager()
-                          .getFileFromCache(gif)
-                          .then((s) async => await s?.file.readAsBytes());
-                      if (imageFile == null) {
-                        return;
-                      }
-                      await ClipboardWriter.instance.write([
-                        DataWriterItem(suggestedName: basename(gif))
-                          ..add(Formats.png(imageFile))
-                          ..add(Formats.bmp(imageFile))
-                          ..add(Formats.webp(imageFile))
-                          ..add(Formats.gif(imageFile))
-                          ..add(Formats.tiff(imageFile))
-                          ..add(
-                            Formats.htmlText(
-                              '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
-                            ),
-                          )
-                      ]);
-                      SnackBar snackBar = SnackBar(
-                        content: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 35, child: image),
-                            const SizedBox(width: 10),
-                            const Text("Copied to clipboard!"),
-                          ],
+                  child: HookBuilder(builder: (context) {
+                    return RawKeyboardListener(
+                      focusNode: index == 0 ? focusNode : useFocusNode(),
+                      onKey: (value) {
+                        if (value.isKeyPressed(LogicalKeyboardKey.enter)) {
+                          copyGif();
+                        }
+                      },
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: copyGif,
+                        canRequestFocus: true,
+                        focusColor: Theme.of(context).colorScheme.secondary,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: image,
                         ),
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        Actions.invoke(context, const CloseWindowIntent());
-                      }
-                    },
-                    focusNode: index == 0 ? focusNode : null,
-                    canRequestFocus: true,
-                    focusColor: Theme.of(context).colorScheme.secondary,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: image,
-                    ),
-                  ),
+                      ),
+                    );
+                  }),
                 );
               },
             ),
