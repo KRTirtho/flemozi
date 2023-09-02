@@ -24,7 +24,7 @@ permissions:
   contents: write
 
 env:
-  FLUTTER_VERSION: '3.10.6'
+  FLUTTER_VERSION: '3.13.2'
 
 jobs:
   windows:
@@ -60,7 +60,7 @@ jobs:
           flutter config --enable-windows-desktop
           flutter pub get
           make innoinstall
-          flutter pub run build_runner build --delete-conflicting-outputs
+          dart run build_runner build --delete-conflicting-outputs
           flutter_distributor package --platform=windows --targets=exe --skip-clean
           mv dist/**/flemozi-*+*-windows-setup.exe dist/Flemozi-windows-x86_64-setup.exe
 
@@ -130,7 +130,7 @@ jobs:
           flutter config --enable-linux-desktop
           flutter pub get
           dart pub global activate flutter_distributor
-          flutter pub run build_runner build --delete-conflicting-outputs
+          dart run build_runner build --delete-conflicting-outputs
           alias dpkg-deb="dpkg-deb -Zxz"
           flutter_distributor package --platform=linux --targets=deb
           flutter_distributor package --platform=linux --targets=appimage
@@ -192,7 +192,7 @@ jobs:
         run: |
           flutter config --enable-macos-desktop
           flutter pub get
-          flutter pub run build_runner build --delete-conflicting-outputs
+          dart run build_runner build --delete-conflicting-outputs
           flutter_distributor package --platform=macos --targets=dmg --skip-clean
 
       - name: Move files to dist
