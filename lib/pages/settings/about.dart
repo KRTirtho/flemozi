@@ -1,3 +1,4 @@
+import 'package:flemozi/components/ui/hyper_link.dart';
 import 'package:flemozi/components/ui/top_bar.dart';
 import 'package:flemozi/hooks/use_package_info.dart';
 import 'package:flemozi/utils/platform.dart';
@@ -13,13 +14,14 @@ class About extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final packageInfo = usePackageInfo();
+    const colon = Text(":");
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: const TopBar(),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Center(
           child: Column(
             children: [
               Image.asset(
@@ -36,69 +38,68 @@ class About extends HookConsumerWidget {
                     .headlineMedium
                     ?.copyWith(fontSize: 18),
               ),
-              Center(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Founder:   Kingkor Roy Tirtho",
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(width: 5),
-                        CircleAvatar(
-                          radius: 20,
-                          child: ClipOval(
-                            child: Image.network(
-                              "https://avatars.githubusercontent.com/u/61944859?v=4",
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Version:              v${packageInfo.version}",
-                    ),
-                    const SizedBox(height: 5),
-                    InkWell(
-                      onTap: () {
-                        launchUrlString(
-                          "https://github.com/KRTirtho/flemozi",
-                          mode: LaunchMode.externalApplication,
-                        );
-                      },
-                      child: const Text(
-                        "Repository:        https://github.com/KRTirtho/flemozi",
+              Table(
+                columnWidths: const {
+                  0: FixedColumnWidth(95),
+                  1: FixedColumnWidth(10),
+                  2: IntrinsicColumnWidth(),
+                },
+                children: [
+                  const TableRow(
+                    children: [
+                      Text("Founder"),
+                      colon,
+                      Hyperlink(
+                        "Kingkor Roy Tirtho",
+                        "https://github.com/KRTirtho",
+                      )
+                    ],
+                  ),
+                  TableRow(
+                    children: [
+                      const Text("Version"),
+                      colon,
+                      Text("v${packageInfo.version}")
+                    ],
+                  ),
+                  TableRow(
+                    children: [
+                      const Text("Build Number"),
+                      colon,
+                      Text(packageInfo.buildNumber.replaceAll(".", " "))
+                    ],
+                  ),
+                  const TableRow(
+                    children: [
+                      Text("Repository"),
+                      colon,
+                      Hyperlink(
+                        "github.com/KRTirtho/spotube",
+                        "https://github.com/KRTirtho/spotube",
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    InkWell(
-                      onTap: () {
-                        launchUrlString(
-                          "https://raw.githubusercontent.com/KRTirtho/flemozi/main/LICENSE",
-                          mode: LaunchMode.externalApplication,
-                        );
-                      },
-                      child: const Text("License:               GPLv3"),
-                    ),
-                    const SizedBox(height: 5),
-                    InkWell(
-                      onTap: () {
-                        launchUrlString(
-                          "https://github.com/KRTirtho/flemozi/issues",
-                          mode: LaunchMode.externalApplication,
-                        );
-                      },
-                      child: const Text(
-                        "Bugs+Issues:     https://github.com/KRTirtho/flemozi/issues",
+                    ],
+                  ),
+                  const TableRow(
+                    children: [
+                      Text("LICENSE"),
+                      colon,
+                      Hyperlink(
+                        "GPLv3",
+                        "https://raw.githubusercontent.com/KRTirtho/spotube/master/LICENSE",
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const TableRow(
+                    children: [
+                      Text("Bug+Issues"),
+                      colon,
+                      Hyperlink(
+                        "github.com/KRTirtho/spotube/issues",
+                        "https://github.com/KRTirtho/spotube/issues",
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Wrap(
