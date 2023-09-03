@@ -268,22 +268,29 @@ class Gif extends HookConsumerWidget {
                     },
                   },
                   child: HookBuilder(builder: (context) {
-                    return RawKeyboardListener(
-                      focusNode: index == 0 ? focusNode : useFocusNode(),
-                      onKey: (value) {
-                        if (value.isKeyPressed(LogicalKeyboardKey.enter)) {
+                    useEffect(() {
+                      focusNode.onKeyEvent = (node, event) {
+                        if (event.logicalKey == LogicalKeyboardKey.enter) {
                           copyGif();
+                          return KeyEventResult.handled;
                         }
-                      },
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: copyGif,
-                        canRequestFocus: true,
-                        focusColor: Theme.of(context).colorScheme.secondary,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: image,
-                        ),
+                        return KeyEventResult.ignored;
+                      };
+
+                      return () {
+                        focusNode.onKeyEvent = null;
+                      };
+                    }, [focusNode]);
+
+                    return InkWell(
+                      focusNode: index == 0 ? focusNode : useFocusNode(),
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: copyGif,
+                      canRequestFocus: true,
+                      focusColor: Theme.of(context).colorScheme.secondary,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: image,
                       ),
                     );
                   }),

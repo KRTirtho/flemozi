@@ -168,17 +168,16 @@ class Emoji extends HookWidget {
                   final tooltipKey = GlobalKey<TooltipState>();
 
                   useEffect(() {
-                    listener() {
-                      if (focusNode.hasFocus) {
-                        tooltipKey.currentState?.ensureTooltipVisible();
-                      } else {
-                        tooltipKey.currentState?.deactivate();
+                    focusNode.onKeyEvent = (node, event) {
+                      if (event.logicalKey == LogicalKeyboardKey.enter) {
+                        copyEmoji(emoji, focusNode);
+                        return KeyEventResult.handled;
                       }
-                    }
+                      return KeyEventResult.ignored;
+                    };
 
-                    focusNode.addListener(listener);
                     return () {
-                      focusNode.removeListener(listener);
+                      focusNode.onKeyEvent = null;
                     };
                   }, [focusNode]);
 
@@ -192,27 +191,20 @@ class Emoji extends HookWidget {
                       message: emoji.description,
                       key: tooltipKey,
                       triggerMode: TooltipTriggerMode.manual,
-                      child: RawKeyboardListener(
+                      child: MaterialButton(
                         focusNode: focusNode,
-                        onKey: (value) {
-                          if (value.isKeyPressed(LogicalKeyboardKey.enter)) {
-                            copyEmoji(emoji, focusNode);
-                          }
+                        padding: EdgeInsets.zero,
+                        focusColor: Theme.of(context).colorScheme.primary,
+                        highlightColor: Theme.of(context).colorScheme.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        onPressed: () {
+                          copyEmoji(emoji, focusNode);
                         },
-                        child: MaterialButton(
-                          padding: EdgeInsets.zero,
-                          focusColor: Theme.of(context).colorScheme.primary,
-                          highlightColor: Theme.of(context).colorScheme.primary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          onPressed: () {
-                            copyEmoji(emoji, focusNode);
-                          },
-                          child: Twemoji(
-                            emoji: emoji.emoji,
-                          ),
+                        child: Twemoji(
+                          emoji: emoji.emoji,
                         ),
                       ),
                     ),

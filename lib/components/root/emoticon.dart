@@ -109,56 +109,58 @@ class Emoticon extends HookWidget {
                   final emoticon = filteredEmoticons.elementAt(index);
                   final tooltipKey = GlobalKey<TooltipState>();
 
-                  useEffect(() {
-                    listener() {
-                      if (focusNode.hasFocus) {
-                        tooltipKey.currentState?.ensureTooltipVisible();
-                      } else {
-                        tooltipKey.currentState?.deactivate();
-                      }
-                    }
+                  final copyEmoticon = useCallback(
+                    () {
+                      focusNode.requestFocus();
+                      Clipboard.setData(
+                        ClipboardData(text: emoticon["emoticon"]!),
+                      );
+                      SnackBar snackBar = SnackBar(
+                        content: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.copy,
+                              color: Theme.of(context).colorScheme.background,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              "${emoticon["emoticon"]} was copied to clipboard",
+                            ),
+                          ],
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-                    focusNode.addListener(listener);
+                      final keys = RawKeyboard.instance.keysPressed;
+                      const controls = [
+                        LogicalKeyboardKey.control,
+                        LogicalKeyboardKey.controlLeft,
+                        LogicalKeyboardKey.controlRight,
+                      ];
+                      if (controls.none((element) => keys.contains(element))) {
+                        Actions.invoke(context, const CloseWindowIntent());
+                      }
+                    },
+                    [focusNode, emoticon["emoticon"]],
+                  );
+
+                  useEffect(() {
+                    focusNode.onKeyEvent = (node, event) {
+                      if (event.logicalKey == LogicalKeyboardKey.enter) {
+                        copyEmoticon();
+                        return KeyEventResult.handled;
+                      }
+                      return KeyEventResult.ignored;
+                    };
+
                     return () {
-                      focusNode.removeListener(listener);
+                      focusNode.onKeyEvent = null;
                     };
                   }, [focusNode]);
-
-                  void copyEmoticon() {
-                    focusNode.requestFocus();
-                    Clipboard.setData(
-                      ClipboardData(text: emoticon["emoticon"]!),
-                    );
-                    SnackBar snackBar = SnackBar(
-                      content: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.copy,
-                            color: Theme.of(context).colorScheme.background,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            "${emoticon["emoticon"]} was copied to clipboard",
-                          ),
-                        ],
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-
-                    final keys = RawKeyboard.instance.keysPressed;
-                    const controls = [
-                      LogicalKeyboardKey.control,
-                      LogicalKeyboardKey.controlLeft,
-                      LogicalKeyboardKey.controlRight,
-                    ];
-                    if (controls.none((element) => keys.contains(element))) {
-                      Actions.invoke(context, const CloseWindowIntent());
-                    }
-                  }
 
                   return CallbackShortcuts(
                     bindings: {
@@ -169,28 +171,21 @@ class Emoticon extends HookWidget {
                     child: Tooltip(
                       key: tooltipKey,
                       message: emoticon["description"]!,
-                      child: RawKeyboardListener(
+                      child: MaterialButton(
                         focusNode: focusNode,
-                        onKey: (value) {
-                          if (value.isKeyPressed(LogicalKeyboardKey.enter)) {
-                            copyEmoticon();
-                          }
-                        },
-                        child: MaterialButton(
-                          padding: EdgeInsets.zero,
-                          focusColor: Theme.of(context).colorScheme.primary,
-                          highlightColor: Theme.of(context).colorScheme.primary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          onPressed: copyEmoticon,
-                          child: AutoSizeText(
-                            emoticon["emoticon"]!,
-                            maxLines: 1,
-                            minFontSize: 5,
-                            maxFontSize: 20,
-                          ),
+                        padding: EdgeInsets.zero,
+                        focusColor: Theme.of(context).colorScheme.primary,
+                        highlightColor: Theme.of(context).colorScheme.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        onPressed: copyEmoticon,
+                        child: AutoSizeText(
+                          emoticon["emoticon"]!,
+                          maxLines: 1,
+                          minFontSize: 5,
+                          maxFontSize: 20,
                         ),
                       ),
                     ),
