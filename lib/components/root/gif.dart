@@ -55,7 +55,7 @@ class Gif extends HookConsumerWidget {
     final giphyPagesToStrings = useCallback(
       (List<GiphyCollection> pages) => pages
           .expand((page) => (page.data ?? []).map(
-                (e) => e?.images?.fixedWidthDownsampled?.url
+                (e) => e?.images?.fixedWidth?.url
                     ?.replaceAll(RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
                     .split("?")[0],
               ))
