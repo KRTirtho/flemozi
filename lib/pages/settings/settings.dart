@@ -20,7 +20,6 @@ class Settings extends StatelessWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(5)),
         ),
-        horizontalTitleGap: 0,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [

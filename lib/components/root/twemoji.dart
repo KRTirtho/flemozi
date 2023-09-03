@@ -1,5 +1,6 @@
 import 'package:flemozi/collections/twemoji_regex.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ignore_for_file: prefer_final_locals
@@ -32,7 +33,7 @@ String _toCodePoint(String input, {String sep = '-'}) {
   return r.join(sep);
 }
 
-class Twemoji extends StatelessWidget {
+class Twemoji extends HookWidget {
   const Twemoji({
     Key? key,
     required this.emoji,
@@ -49,14 +50,20 @@ class Twemoji extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var cleanEmoji = '';
-    emoji.splitMapJoin(
-      regex,
-      onMatch: (m) => cleanEmoji = m.input.substring(m.start, m.end),
-    );
-    final unicode = emojiToUnicode(cleanEmoji);
+    final unicode = useMemoized(() {
+      var cleanEmoji = '';
+      emoji.splitMapJoin(
+        regex,
+        onMatch: (m) => cleanEmoji = m.input.substring(m.start, m.end),
+      );
+      return emojiToUnicode(cleanEmoji);
+    }, [emoji]);
+
     if (unicode == '') {
-      return const SizedBox.shrink();
+      return Text(
+        emoji,
+        style: GoogleFonts.notoColorEmoji(fontSize: 24),
+      );
     }
     return Image.asset(
       'assets/twemoji/$unicode.png',
@@ -66,9 +73,7 @@ class Twemoji extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) {
         return Text(
           emoji,
-          style: GoogleFonts.notoColorEmoji(
-            fontSize: 24,
-          ),
+          style: GoogleFonts.notoColorEmoji(fontSize: 24),
         );
       },
     );
