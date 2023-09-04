@@ -43,14 +43,7 @@ jobs:
       - name: Create Nightly .env
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
-
-      - name: Replace version in files
-        run: |
-          choco install sed make -y
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/tools/VERIFICATION.txt
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/flemozi.nuspec
-
+      
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
@@ -63,7 +56,13 @@ jobs:
         if: ${{ inputs.channel == 'stable' }}
         run: |
           "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
-          
+
+      - name: Replace version in files
+        run: |
+          choco install sed make -y
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/tools/VERIFICATION.txt
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/flemozi.nuspec
 
       - name: Build Windows Executable
         run: |
@@ -111,9 +110,7 @@ jobs:
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
-      - name: Replace Version in files
-        run: |
-          sed -i 's|%{{APPDATA_RELEASE}}%|<release version="${{ env.BUILD_VERSION }}" date="${{ env.CurrentDate }}" />|' linux/dev.krtirtho.Flemozi.appdata.xml
+      
 
       - name: Install Dependencies
         run: |
@@ -153,7 +150,11 @@ jobs:
       - name: BUILD_VERSION Env (stable)
         if: ${{ inputs.channel == 'stable' }}
         run: |
-          "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+      - name: Replace Version in files
+        run: |
+          sed -i 's|%{{APPDATA_RELEASE}}%|<release version="${{ env.BUILD_VERSION }}" date="${{ env.CurrentDate }}" />|' linux/dev.krtirtho.Flemozi.appdata.xml
       
 
       ### Running flutter_distributor 3 times to mitigate a bug in flutter_distributor
@@ -231,7 +232,7 @@ jobs:
       - name: BUILD_VERSION Env (stable)
         if: ${{ inputs.channel == 'stable' }}
         run: |
-          "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Build Macos Package
         run: |
