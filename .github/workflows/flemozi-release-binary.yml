@@ -146,14 +146,15 @@ jobs:
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
+          curl -sS https://webi.sh/yq | sh
           yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: BUILD_VERSION Env (stable)
         if: ${{ inputs.channel == 'stable' }}
         run: |
-          "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
+          "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
       
 
       ### Running flutter_distributor 3 times to mitigate a bug in flutter_distributor
@@ -226,12 +227,12 @@ jobs:
         run: |
           yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: BUILD_VERSION Env (stable)
         if: ${{ inputs.channel == 'stable' }}
         run: |
-          "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
+          "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
 
       - name: Build Macos Package
         run: |
