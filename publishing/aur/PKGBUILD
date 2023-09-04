@@ -1,0 +1,40 @@
+# Maintainer: Kingkor Roy Tirtho <krtirho@gmail.com>
+pkgname=flemozi-bin
+pkgver=%{{VERSION}}%
+pkgrel=%{{PKGREL}}%
+epoch=
+pkgdesc="Advanced⚡ Emoji Picker😀 for Linux🐧, Windows🪟 and macOS🍎"
+arch=(x86_64)
+url="https://github.com/KRTirtho/flemozi/"
+license=('GPLv3')
+groups=()
+depends=()
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("https://github.com/KRTirtho/flemozi/releases/download/v${pkgver}/flemozi-linux-${pkgver}-x86_64.tar.xz")
+noextract=()
+md5sums=(%{{LINUX_MD5}}%)
+validpgpkeys=()
+
+package() {
+  install -dm755 "${pkgdir}/usr/share/icons/flemozi"
+  install -dm755 "${pkgdir}/usr/share/applications"
+  install -dm755 "${pkgdir}/usr/share/appdata"
+  install -dm755 "${pkgdir}/usr/share/${pkgname}"
+  install -dm755 "${pkgdir}/usr/bin"
+
+  mv ./flemozi.desktop "${pkgdir}/usr/share/applications"
+  mv ./flemozi-logo.png "${pkgdir}/usr/share/icons/flemozi/"
+  mv ./dev.krtirtho.Flemozi.appdata.xml "${pkgdir}/usr/share/appdata/flemozi.appdata.xml"
+  cp -ra ./data ./lib ./flemozi "${pkgdir}/usr/share/${pkgname}"
+  sed -i 's|dev.krtirtho.Flemozi|flemozi|' "${pkgdir}/usr/share/appdata/flemozi.appdata.xml"
+  ln -s "/usr/share/${pkgname}/flemozi" "${pkgdir}/usr/bin/flemozi"
+}

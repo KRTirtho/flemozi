@@ -13,13 +13,13 @@ tar:
 		&& rm -rf $(TEMP_DIR)
 
 aursrcinfo:
-					 docker run -e EXPORT_SRC=1 -v ${PWD}/aur-struct:/pkg -v ${MIRRORLIST}:/etc/pacman.d/mirrorlist:ro whynothugo/makepkg
+					 docker run -e EXPORT_SRC=1 -v ${PWD}/publishing/aur:/pkg -v ${MIRRORLIST}:/etc/pacman.d/mirrorlist:ro whynothugo/makepkg
 
 publishaur: 
 					 echo '[Warning!]: you need SSH paired with AUR'\
 					 && rm -rf build/flemozi\
 					 && git clone ssh://aur@aur.archlinux.org/flemozi-bin.git build/flemozi\
-					 && cp aur-struct/PKGBUILD aur-struct/.SRCINFO build/flemozi\
+					 && cp publishing/aur/PKGBUILD publishing/aur/.SRCINFO build/flemozi\
 					 && cd build/flemozi\
 					 && git add .\
 					 && git commit -m "${MSG}"\
@@ -33,8 +33,8 @@ inno:
 		 powershell .\build\iscc\iscc.exe scripts\windows-setup-creator.iss
 
 choco:
-			powershell cp dist\Spotube-windows-x86_64-setup.exe choco-struct\tools
-			powershell choco pack .\choco-struct\spotube.nuspec  --outputdirectory dist
+			powershell cp dist\Flemozi-windows-x86_64-setup.exe publishing\chocolatey\tools
+			powershell choco pack .\publishing\chocolatey\flemozi.nuspec  --outputdirectory dist
 
 gensums:
 				sh -c scripts/gensums.sh

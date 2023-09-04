@@ -1,0 +1,23 @@
+VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+1. The embedded files are also available as a release in GitHub.
+
+Please go to releases page
+https://github.com/KRTirtho/flemozi/releases
+
+Download same version as this choco package (example for v%{{VERSION}}%)
+https://github.com/KRTirtho/flemozi/releases/tag/v%{{VERSION}}%
+
+1. get hashes. Run:
+powershell -command Get-FileHash tools\Flemozi-windows-x86_64-setup.exe
+
+2. The checksums should match the following:
+--- 
+Version Hashes for v%{{VERSION}}%
+
+
+Algorithm  Hash                                                              Path
+---------  ----                                                              ----
+SHA256     %{{WIN_SHA256}}%  tools\Flemozi-windows-x86_64-setup.exe

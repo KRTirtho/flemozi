@@ -148,7 +148,7 @@ $ flutter build <linux/windows/macos>
       <a href="https://github.com/MixinNetwork/flutter-plugins/tree/main/packages/pasteboard">pasteboard</a> - A flutter plugin which could read image,files from clipboard and write files to clipboard.
     </li>
     <li>
-      <a href="https://github.com/Baseflow/flutter_cache_manager/tree/master/flutter_cache_manager">flutter_cache_manager</a> - Generic cache manager for flutter. Saves web files on the storages of the device and saves the cache info using sqflite.
+      <a href="https://github.com/Baseflow/flutter_cache_manager/tree/main/flutter_cache_manager">flutter_cache_manager</a> - Generic cache manager for flutter. Saves web files on the storages of the device and saves the cache info using sqflite.
     </li>
     <li>
       <a href="https://github.com/superlistapp/super_native_extensions">super_clipboard</a> - Comprehensive clipboard access package for Flutter. Supports reading and writing of rich text, images and other formats.
@@ -166,7 +166,7 @@ $ flutter build <linux/windows/macos>
       <a href="https://github.com/hnvn/flutter_shimmer">shimmer</a> - A package provides an easy way to add shimmer effect in Flutter project
     </li>
     <li>
-      <a href="https://github.com/hivedb/hive/tree/master/hive_flutter">hive_flutter</a> - Extension for Hive. Makes it easier to use Hive in Flutter apps.
+      <a href="https://github.com/hivedb/hive/tree/main/hive_flutter">hive_flutter</a> - Extension for Hive. Makes it easier to use Hive in Flutter apps.
     </li>
     <li>
       <a href="https://github.com/leisim/auto_size_text">auto_size_text</a> - Flutter widget that automatically resizes text to fit perfectly within its bounds.

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter
+enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <!-- == PACKAGE SPECIFIC SECTION == -->
+    <id>flemozi</id>
+    <version>%{{VERSION}}%</version>
+    <packageSourceUrl>https://github.com/KRTirtho/flemozi/tree/main/publishing/chocolatey</packageSourceUrl>
+    <owners>Kingkor Roy Tirtho</owners>
+    <!-- ============================== -->
+
+    <!-- == SOFTWARE SPECIFIC SECTION == -->
+    <title>flemozi (Install)</title>
+    <authors>Kingkor Roy Tirtho</authors>
+    <projectUrl>https://github.com/KRTirtho/flemozi/</projectUrl>
+    <iconUrl>
+      https://rawcdn.githack.com/KRTirtho/flemozi/c38d39076980e0ef2203f90434b945654b14f63e/assets/logo.png
+    </iconUrl>
+    <copyright>2023 Flemozi</copyright>
+    <!-- If there is a license Url available, it is required for the community feed -->
+    <licenseUrl>https://github.com/KRTirtho/flemozi/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/KRTirtho/flemozi</projectSourceUrl>
+    <docsUrl>https://github.com/KRTirtho/flemozi#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/KRTirtho/flemozi/issues/new</bugTrackerUrl>
+    <tags>flemozi emoji utility keyboard gifs meme emoticon text</tags>
+    <summary>Advanced⚡ Emoji Picker😀 for Linux🐧, Windows🪟 and macOS🍎</summary>
+    <description>
+      A simple✨, fast⚡ and lightweight🪶 emoji picker for desktop operating systems🫶
+      Available for Linux🐧, Windows🪟 and macOS🍎.
+
+      ## Highlights🚀
+
+      - Not Electron based🙃
+      - Configurable Global🪩 shortcut🩳✂️ to open the emoji picker
+      - Launches on system startup, runs in the background and can invoked from anywhere👻
+      - Supports GIFs📼, stickers🎟️ and ASCII emojis👴 too
+      - Copies the selected emoji to the clipboard📋 and automatically closes the picker
+      obviously🤦‍♂️
+    </description>
+    <releaseNotes>https://github.com/KRTirtho/flemozi/releases/tag/v%{{VERSION}}%</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

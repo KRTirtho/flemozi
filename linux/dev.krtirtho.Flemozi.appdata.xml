@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.krtirtho.Flemozi</id>
+  <name>Flemozi</name>
+  <summary>
+    Advanced⚡ Emoji Picker😀 for Linux🐧, Windows🪟 and macOS🍎
+  </summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPLv3</project_license>
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+  <developer_name>Kingkor Roy Tirtho</developer_name>
+  <url type="homepage">https://github.com/krtirtho/flemozi</url>
+  <description>
+    <p>
+      A simple✨, fast⚡ and lightweight🪶 emoji picker for desktop operating systems🫶
+      Available for Linux🐧, Windows🪟 and macOS🍎.
+    </p>
+    <p>Highlights🚀</p>
+
+    <ul>
+      <li>Not Electron based🙃</li>
+      <li>Configurable Global🪩 shortcut🩳✂️ to open the emoji picker</li>
+      <li>Launches on system startup, runs in the background and can invoked from anywhere👻</li>
+      <li>Supports GIFs📼, stickers🎟️ and ASCII emojis👴 too</li>
+      <li>
+        Copies the selected emoji to the clipboard📋 and automatically closes the picker
+        obviously🤦‍♂️
+      </li>
+    </ul>
+  </description>
+  <screenshots>
+    <screenshot>
+      <image type="source">
+        https://rawcdn.githack.com/KRTirtho/flemozi/c38d39076980e0ef2203f90434b945654b14f63e/assets/logo.png
+      </image>
+    </screenshot>
+  </screenshots>
+  <launchable type="desktop-id">dev.krtirtho.Flemozi.desktop</launchable>
+  <releases> 
+    %{{APPDATA_RELEASE}}% 
+    <release version="0.1.0" date="2023-03-26" />
+    <release version="0.1.1" date="2022-04-27" />
+  </releases>
+  <content_rating type="oars-1.1" />
+  <update_contact>krtirtho@gmail.com</update_contact>
+</component>

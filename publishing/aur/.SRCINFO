@@ -1,0 +1,11 @@
+pkgbase = flemozi-bin
+	pkgdesc = Advanced⚡ Emoji Picker😀 for Linux🐧, Windows🪟 and macOS🍎
+	pkgver = %{{VERSION}}%
+	pkgrel = %{{PKGREL}}%
+	url = https://github.com/KRTirtho/flemozi/
+	arch = x86_64
+	license = GPLv3
+	source = https://github.com/KRTirtho/flemozi/releases/download/v%{{VERSION}}%/flemozi-linux-v%{{VERSION}}%-x86_64.tar.xz
+	md5sums = %{{LINUX_MD5}}%
+
+pkgname = flemozi-bin

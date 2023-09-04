@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class About extends HookConsumerWidget {
   const About({Key? key}) : super(key: key);
@@ -74,8 +73,8 @@ class About extends HookConsumerWidget {
                       Text("Repository"),
                       colon,
                       Hyperlink(
-                        "github.com/KRTirtho/spotube",
-                        "https://github.com/KRTirtho/spotube",
+                        "github.com/KRTirtho/flemozi",
+                        "https://github.com/KRTirtho/flemozi",
                       ),
                     ],
                   ),
@@ -85,7 +84,7 @@ class About extends HookConsumerWidget {
                       colon,
                       Hyperlink(
                         "GPLv3",
-                        "https://raw.githubusercontent.com/KRTirtho/spotube/master/LICENSE",
+                        "https://raw.githubusercontent.com/KRTirtho/flemozi/main/LICENSE",
                       ),
                     ],
                   ),
@@ -94,8 +93,8 @@ class About extends HookConsumerWidget {
                       Text("Bug+Issues"),
                       colon,
                       Hyperlink(
-                        "github.com/KRTirtho/spotube/issues",
-                        "https://github.com/KRTirtho/spotube/issues",
+                        "github.com/KRTirtho/flemozi/issues",
+                        "https://github.com/KRTirtho/flemozi/issues",
                       ),
                     ],
                   ),
