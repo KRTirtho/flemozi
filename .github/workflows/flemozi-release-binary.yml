@@ -44,7 +44,16 @@ jobs:
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
-      - name: BUILD_VERSION Env
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: |
+          choco install sed make yq -y
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
         run: |
           "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
 
@@ -52,6 +61,9 @@ jobs:
         run: |
           choco install sed make -y
           sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" choco-struct/tools/VERIFICATION.txt
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" choco-struct/flemozi.nuspec
           
 
       - name: Build Windows Executable
@@ -63,6 +75,14 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           flutter_distributor package --platform=windows --targets=exe --skip-clean
           mv dist/**/flemozi-*+*-windows-setup.exe dist/Flemozi-windows-x86_64-setup.exe
+
+      - name: Create Chocolatey Package and set hash
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          Set-Variable -Name HASH -Value (Get-FileHash dist\Flemozi-windows-x86_64-setup.exe).Hash
+          sed -i "s/%{{WIN_SHA256}}%/$HASH/" choco-struct/tools/VERIFICATION.txt
+          make choco
+          mv dist/flemozi.*.nupkg dist/Flemozi-windows-x86_64.nupkg
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
@@ -79,6 +99,11 @@ jobs:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
+      - name: Get Current Date
+        id: current-date
+        run: |
+          echo "CurrentDate=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
       - name: Create Stable .env
         if: ${{ inputs.channel == 'stable' }}
         run: echo '${{ secrets.DOTENV_RELEASE }}' > .env
@@ -86,6 +111,10 @@ jobs:
       - name: Create Nightly .env
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
+
+      - name: Replace Version in files
+        run: |
+          sed -i 's|%{{APPDATA_RELEASE}}%|<release version="${{ env.BUILD_VERSION }}" date="${{ env.CurrentDate }}" />|' linux/dev.krtirtho.Flemozi.appdata.xml
 
       - name: Install Dependencies
         run: |
@@ -114,9 +143,18 @@ jobs:
           chmod +x appimagetool
           mv appimagetool /usr/local/bin/
 
-      - name: BUILD_VERSION Env
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
         run: |
-          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          choco install sed make yq -y
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
       
 
       ### Running flutter_distributor 3 times to mitigate a bug in flutter_distributor
@@ -184,9 +222,18 @@ jobs:
           npm install -g appdmg
           dart pub global activate flutter_distributor
 
-      - name: BUILD_VERSION Env
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
         run: |
-          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          choco install sed make yq -y
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
 
       - name: Build Macos Package
         run: |

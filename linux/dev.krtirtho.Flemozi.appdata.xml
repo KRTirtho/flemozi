@@ -42,8 +42,8 @@
   <launchable type="desktop-id">dev.krtirtho.Flemozi.desktop</launchable>
   <releases> 
     %{{APPDATA_RELEASE}}% 
-    <release version="0.1.0" date="2023-03-26" />
     <release version="0.1.1" date="2022-04-27" />
+    <release version="0.1.0" date="2023-03-26" />
   </releases>
   <content_rating type="oars-1.1" />
   <update_contact>krtirtho@gmail.com</update_contact>
