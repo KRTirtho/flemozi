@@ -48,7 +48,6 @@ jobs:
         run: |
           choco install sed make -y
           sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
           sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/tools/VERIFICATION.txt
           sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/flemozi.nuspec
 
