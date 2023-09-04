@@ -44,10 +44,18 @@ jobs:
         if: ${{ inputs.channel == 'nightly' }}
         run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
 
+      - name: Replace version in files
+        run: |
+          choco install sed make -y
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/tools/VERIFICATION.txt
+          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" publishing/chocolatey/flemozi.nuspec
+
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
-          choco install sed make yq -y
+          choco install yq -y
           yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
           "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
@@ -56,14 +64,6 @@ jobs:
         if: ${{ inputs.channel == 'stable' }}
         run: |
           "BUILD_VERSION=${{ inputs.version }}" >> $env:GITHUB_ENV
-
-      - name: Replace version in files
-        run: |
-          choco install sed make -y
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" windows/runner/Runner.rc
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" choco-struct/tools/VERIFICATION.txt
-          sed -i "s/%{{VERSION}}%/${{ env.BUILD_VERSION }}/" choco-struct/flemozi.nuspec
           
 
       - name: Build Windows Executable
@@ -80,7 +80,7 @@ jobs:
         if: ${{ inputs.channel == 'stable' }}
         run: |
           Set-Variable -Name HASH -Value (Get-FileHash dist\Flemozi-windows-x86_64-setup.exe).Hash
-          sed -i "s/%{{WIN_SHA256}}%/$HASH/" choco-struct/tools/VERIFICATION.txt
+          sed -i "s/%{{WIN_SHA256}}%/$HASH/" publishing/chocolatey/tools/VERIFICATION.txt
           make choco
           mv dist/flemozi.*.nupkg dist/Flemozi-windows-x86_64.nupkg
 
@@ -146,7 +146,6 @@ jobs:
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
-          choco install sed make yq -y
           yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
           "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
@@ -225,7 +224,6 @@ jobs:
       - name: Replace pubspec version and BUILD_VERSION Env (nightly)
         if: ${{ inputs.channel == 'nightly' }}
         run: |
-          choco install sed make yq -y
           yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
           "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel }}.${{ github.run_number }}" >> $env:GITHUB_ENV
