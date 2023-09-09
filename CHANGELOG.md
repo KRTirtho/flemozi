@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.0](https://github.com/KRTirtho/flemozi/compare/v0.1.1...v0.2.0) (2023-09-09)
+
+
+### Features
+
+* Flutter 3.13 support ([c7f8766](https://github.com/KRTirtho/flemozi/commit/c7f8766cea52957c4c832271b7587fc7ecc75074))
+* ctrl + click or ctrl + enter copies without closing window ([f040556](https://github.com/KRTirtho/flemozi/commit/f040556b6bccb49a2a8870385a7a7d6f60482c45))
+* use more fps gifs ([800c9b9](https://github.com/KRTirtho/flemozi/commit/800c9b9cb47940d818e4de80c604c7519c864123))
+* use table for about page ([c38d390](https://github.com/KRTirtho/flemozi/commit/c38d39076980e0ef2203f90434b945654b14f63e))
+
+
+### Bug Fixes
+
+* settings page list tile no title gap & show character for invalid emoji at least ([a815e62](https://github.com/KRTirtho/flemozi/commit/a815e6273149945c097a6379d3d8d5dd6fa103b6))
+* window closing on focus change ([53b3f29](https://github.com/KRTirtho/flemozi/commit/53b3f29525424cf50c8a9acc9ca1c068a3b3cdf0))
+
 ### [0.1.1](https://github.com/KRTirtho/flemozi/compare/v0.1.0...v0.1.1) (2023-04-27)
 
 
