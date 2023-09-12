@@ -22,7 +22,7 @@
 | Linux                                                                   | Windows                                                       | macOS                                               |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
 | [AppImage⚙️][AppImage]                                                   | [exe🪟][exe]                                                   | [DMG💿][dmg]                                         |
-| [Debian🍥/Ubuntu⭕][deb]                                                | WinGet🪟🌈 (Soon)<!-- <br>`winget install KRTirtho.flemozi` --> | Homebrew🍺 (Soon)<!-- <br>`brew install flemozi` --> |
+| [Debian🍥/Ubuntu⭕][deb]                                                | WinGet🪟🌈 <br>`winget install KRTirtho.flemozi` | Homebrew🍺 (Soon)<!-- <br>`brew install flemozi` --> |
 | [Fedora🎩/OpenSuse🦎][rpm]                                              | Chocolatey🍫 (Soon)<!-- <br>`choco install flemozi`  -->       |                                                     |
 | [Tarball][tar]                                                          |                                                               |                                                     |
 | [Flatpak📦][Flatpak] <br>`flatpak install dev.krtirtho.Flemozi`                    |                                                               |                                                     |
