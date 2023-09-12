@@ -25,7 +25,7 @@
 | [Debian🍥/Ubuntu⭕][deb]                                                | WinGet🪟🌈 (Soon)<!-- <br>`winget install KRTirtho.flemozi` --> | Homebrew🍺 (Soon)<!-- <br>`brew install flemozi` --> |
 | [Fedora🎩/OpenSuse🦎][rpm]                                              | Chocolatey🍫 (Soon)<!-- <br>`choco install flemozi`  -->       |                                                     |
 | [Tarball][tar]                                                          |                                                               |                                                     |
-| Flatpak📦 (Soon)<!-- <br>`flatpak install dev.krtirtho.Flemozi` -->     |                                                               |                                                     |
+| [Flatpak📦][Flatpak] <br>`flatpak install dev.krtirtho.Flemozi`                    |                                                               |                                                     |
 | [AUR🌁][AUR] <br>`yay -S flemozi`                                       |                                                               |                                                     |
 
 ## Sponsor☕💘
@@ -220,3 +220,4 @@ This project is licensed under the [GPLv3](LICENSE) license.
 [exe]: https://github.com/KRTirtho/flemozi/releases/latest/download/Flemozi-windows-x86_64-setup.exe
 [dmg]: https://github.com/KRTirtho/flemozi/releases/latest/download/Flemozi-macos-universal.dmg
 [AUR]: https://aur.archlinux.org/packages/flemozi
+[Flatpak]: https://flathub.org/apps/dev.krtirtho.Flemozi
