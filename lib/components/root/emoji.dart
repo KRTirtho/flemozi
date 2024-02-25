@@ -1,11 +1,11 @@
 import 'package:collection/collection.dart';
+import 'package:flemozi/collections/emojis.dart';
 import 'package:flemozi/components/root/twemoji.dart';
 import 'package:flemozi/hooks/use_window_listeners.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flemozi/collections/emojis.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
 typedef RatioEmojiType = ({
@@ -21,13 +21,15 @@ typedef RatioEmojiType = ({
 });
 
 class Emoji extends HookWidget {
-  const Emoji({Key? key}) : super(key: key);
+  const Emoji({super.key});
 
   @override
   Widget build(BuildContext context) {
     final searchFocusNode = useFocusNode();
     final searchTerm = useState("");
     final firstEmojiFocusNode = useFocusNode();
+
+    FocusScope.of(context).requestFocus(searchFocusNode);
 
     final filteredEmojis = useMemoized(
       () {
@@ -80,7 +82,7 @@ class Emoji extends HookWidget {
 
     useWindowListeners(
       onWindowFocus: () {
-        searchFocusNode.requestFocus();
+        FocusScope.of(context).requestFocus(searchFocusNode);
       },
     );
 
@@ -128,28 +130,36 @@ class Emoji extends HookWidget {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          CallbackShortcuts(
-            bindings: {
-              LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-                FocusScope.of(context).requestFocus(firstEmojiFocusNode);
+          Padding(
+            padding: const EdgeInsets.only( bottom: 12.0),
+            child: CallbackShortcuts(
+              bindings: {
+                LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
+                  if (filteredEmojis.isNotEmpty) {
+                    FocusScope.of(context).requestFocus(firstEmojiFocusNode);
+                  }
+                },
               },
-            },
-            child: TextField(
-              autofocus: true,
-              focusNode: searchFocusNode,
-              decoration: const InputDecoration(
-                hintText: "Search",
-                prefixIcon: Icon(Icons.search),
+              child: TextField(
+                autofocus: true,
+                focusNode: searchFocusNode,
+                decoration: const InputDecoration(
+                  hintText: "Search",
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) {
+                  searchTerm.value = value;
+                },
+                onSubmitted: (value) {
+                  if (filteredEmojis.isNotEmpty) {
+                    FocusScope.of(context).requestFocus(firstEmojiFocusNode);
+                  } else {
+                    FocusScope.of(context).requestFocus(searchFocusNode);
+                  }
+                },
               ),
-              onChanged: (value) {
-                searchTerm.value = value;
-              },
-              onSubmitted: (value) {
-                searchFocusNode.nextFocus();
-              },
             ),
           ),
-          const SizedBox(height: 10),
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -163,7 +173,7 @@ class Emoji extends HookWidget {
                 return HookBuilder(builder: (context) {
                   final focusnodeUn = useFocusNode();
                   final focusNode =
-                      index == 0 ? firstEmojiFocusNode : focusnodeUn;
+                  index == 0 ? firstEmojiFocusNode : focusnodeUn;
                   final emoji = filteredEmojis.elementAt(index);
                   final tooltipKey = GlobalKey<TooltipState>();
 
@@ -184,7 +194,7 @@ class Emoji extends HookWidget {
                   return CallbackShortcuts(
                     bindings: {
                       LogicalKeySet(LogicalKeyboardKey.escape): () {
-                        searchFocusNode.requestFocus();
+                        FocusScope.of(context).requestFocus(searchFocusNode);
                       },
                     },
                     child: Tooltip(

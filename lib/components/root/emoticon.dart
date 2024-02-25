@@ -9,13 +9,15 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
 class Emoticon extends HookWidget {
-  const Emoticon({Key? key}) : super(key: key);
+  const Emoticon({super.key});
 
   @override
   Widget build(BuildContext context) {
     final searchFocusNode = useFocusNode();
     final searchTerm = useState("");
     final firstEmoticonFocusNode = useFocusNode();
+
+    FocusScope.of(context).requestFocus(searchFocusNode);
 
     final List<Map<String, String>> filteredEmoticons = useMemoized(
       () {
@@ -70,28 +72,36 @@ class Emoticon extends HookWidget {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          CallbackShortcuts(
-            bindings: {
-              LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-                FocusScope.of(context).requestFocus(firstEmoticonFocusNode);
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: CallbackShortcuts(
+              bindings: {
+                LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
+                  if (filteredEmoticons.isNotEmpty) {
+                    FocusScope.of(context).requestFocus(firstEmoticonFocusNode);
+                  }
+                },
               },
-            },
-            child: TextField(
-              autofocus: true,
-              focusNode: searchFocusNode,
-              decoration: const InputDecoration(
-                hintText: "Search",
-                prefixIcon: Icon(Icons.search),
+              child: TextField(
+                autofocus: true,
+                focusNode: searchFocusNode,
+                decoration: const InputDecoration(
+                  hintText: "Search",
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) {
+                  searchTerm.value = value;
+                },
+                onSubmitted: (value) {
+                  if (filteredEmoticons.isNotEmpty) {
+                    firstEmoticonFocusNode.requestFocus();
+                  } else {
+                    FocusScope.of(context).requestFocus(searchFocusNode);
+                  }
+                },
               ),
-              onChanged: (value) {
-                searchTerm.value = value;
-              },
-              onSubmitted: (value) {
-                searchFocusNode.nextFocus();
-              },
             ),
           ),
-          const SizedBox(height: 10),
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -165,7 +175,7 @@ class Emoticon extends HookWidget {
                   return CallbackShortcuts(
                     bindings: {
                       LogicalKeySet(LogicalKeyboardKey.escape): () {
-                        searchFocusNode.requestFocus();
+                        FocusScope.of(context).requestFocus(searchFocusNode);
                       },
                     },
                     child: Tooltip(
