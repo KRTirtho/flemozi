@@ -29,7 +29,7 @@ const placeholder = SizedBox(
 );
 
 class Gif extends HookConsumerWidget {
-  const Gif({Key? key}) : super(key: key);
+  const Gif({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
@@ -86,6 +86,8 @@ class Gif extends HookConsumerWidget {
     final gifs =
         text.value.isEmpty || searchGifs.isEmpty ? displayGifs : searchGifs;
 
+    FocusScope.of(context).requestFocus(searchFocusNode);
+
     useEffect(() {
       if (text.value.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -120,18 +122,28 @@ class Gif extends HookConsumerWidget {
 
     return Column(
       children: [
-        CallbackShortcuts(
-          bindings: {
-            LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
-              FocusScope.of(context).requestFocus(focusNode);
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: CallbackShortcuts(
+            bindings: {
+              LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
+                FocusScope.of(context).requestFocus(focusNode);
+              },
             },
-          },
-          child: TextField(
-            autofocus: true,
-            focusNode: searchFocusNode,
-            onChanged: (value) => text.value = value,
-            decoration: const InputDecoration(
-              hintText: 'Search GIFs and Stickers',
+            child: TextField(
+              autofocus: true,
+              focusNode: searchFocusNode,
+              onChanged: (value) => text.value = value,
+              onSubmitted: (_) => {
+                if (gifs.isNotEmpty) {
+                  FocusScope.of(context).requestFocus(focusNode),
+                } else {
+                  FocusScope.of(context).requestFocus(searchFocusNode),
+                }
+              },
+              decoration: const InputDecoration(
+                hintText: 'Search GIFs and Stickers',
+              ),
             ),
           ),
         ),
@@ -194,8 +206,8 @@ class Gif extends HookConsumerWidget {
                         }
                       }
                     },
-                    child: Stack(
-                      children: const [
+                    child: const Stack(
+                      children: [
                         Center(
                           child: SizedBox(
                             height: 50,
@@ -221,7 +233,7 @@ class Gif extends HookConsumerWidget {
                   if (imageFile == null) {
                     return;
                   }
-                  await ClipboardWriter.instance.write([
+                  await SystemClipboard.instance?.write([
                     DataWriterItem(suggestedName: basename(gif))
                       ..add(Formats.png(imageFile))
                       ..add(Formats.bmp(imageFile))
