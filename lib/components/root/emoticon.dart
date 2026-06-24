@@ -19,48 +19,42 @@ class Emoticon extends HookWidget {
 
     FocusScope.of(context).requestFocus(searchFocusNode);
 
-    final List<Map<String, String>> filteredEmoticons = useMemoized(
-      () {
-        if (searchTerm.value.isEmpty) {
-          return emoticons.entries
-              .map(
-                (e) => e.value.map(
-                  (f) => {
-                    "emoticon": f,
-                    "description": e.key,
-                  },
-                ),
-              )
-              .expand((e) => e)
-              .toList();
-        } else {
-          final List<Map<String, dynamic>> map = [];
-          for (var group in emoticons.entries) {
-            final description = group.key;
-            final ratio = weightedRatio(
-              "$description ${group.value.join(" ")}",
-              searchTerm.value,
-            );
+    final List<Map<String, String>> filteredEmoticons = useMemoized(() {
+      if (searchTerm.value.isEmpty) {
+        return emoticons.entries
+            .map(
+              (e) => e.value.map((f) => {"emoticon": f, "description": e.key}),
+            )
+            .expand((e) => e)
+            .toList();
+      } else {
+        final List<Map<String, dynamic>> map = [];
+        for (var group in emoticons.entries) {
+          final description = group.key;
+          final ratio = weightedRatio(
+            "$description ${group.value.join(" ")}",
+            searchTerm.value,
+          );
 
-            if (ratio > 50) {
-              map.addAll(group.value.map(
+          if (ratio > 50) {
+            map.addAll(
+              group.value.map(
                 (e) => {
                   "emoticon": e,
                   "description": description,
                   "ratio": ratio,
                 },
-              ));
-            }
+              ),
+            );
           }
-          map.sort((a, b) => (b["ratio"] as int) - (a["ratio"] as int));
-          return map.map((e) {
-            e.remove("ratio");
-            return e.cast<String, String>();
-          }).toList();
         }
-      },
-      [searchTerm.value],
-    );
+        map.sort((a, b) => (b["ratio"] as int) - (a["ratio"] as int));
+        return map.map((e) {
+          e.remove("ratio");
+          return e.cast<String, String>();
+        }).toList();
+      }
+    }, [searchTerm.value]);
 
     useWindowListeners(
       onWindowFocus: () {
@@ -112,15 +106,16 @@ class Emoticon extends HookWidget {
               ),
               itemCount: filteredEmoticons.length,
               itemBuilder: (context, index) {
-                return HookBuilder(builder: (context) {
-                  final focusnodeUn = useFocusNode();
-                  final focusNode =
-                      index == 0 ? firstEmoticonFocusNode : focusnodeUn;
-                  final emoticon = filteredEmoticons.elementAt(index);
-                  final tooltipKey = GlobalKey<TooltipState>();
+                return HookBuilder(
+                  builder: (context) {
+                    final focusnodeUn = useFocusNode();
+                    final focusNode = index == 0
+                        ? firstEmoticonFocusNode
+                        : focusnodeUn;
+                    final emoticon = filteredEmoticons.elementAt(index);
+                    final tooltipKey = GlobalKey<TooltipState>();
 
-                  final copyEmoticon = useCallback(
-                    () {
+                    final copyEmoticon = useCallback(() {
                       focusNode.requestFocus();
                       Clipboard.setData(
                         ClipboardData(text: emoticon["emoticon"]!),
@@ -132,7 +127,7 @@ class Emoticon extends HookWidget {
                           children: [
                             Icon(
                               Icons.copy,
-                              color: Theme.of(context).colorScheme.background,
+                              color: Theme.of(context).colorScheme.surface,
                             ),
                             const SizedBox(width: 10),
                             Text(
@@ -154,53 +149,52 @@ class Emoticon extends HookWidget {
                       if (controls.none((element) => keys.contains(element))) {
                         Actions.invoke(context, const CloseWindowIntent());
                       }
-                    },
-                    [focusNode, emoticon["emoticon"]],
-                  );
+                    }, [focusNode, emoticon["emoticon"]]);
 
-                  useEffect(() {
-                    focusNode.onKeyEvent = (node, event) {
-                      if (event.logicalKey == LogicalKeyboardKey.enter) {
-                        copyEmoticon();
-                        return KeyEventResult.handled;
-                      }
-                      return KeyEventResult.ignored;
-                    };
+                    useEffect(() {
+                      focusNode.onKeyEvent = (node, event) {
+                        if (event.logicalKey == LogicalKeyboardKey.enter) {
+                          copyEmoticon();
+                          return KeyEventResult.handled;
+                        }
+                        return KeyEventResult.ignored;
+                      };
 
-                    return () {
-                      focusNode.onKeyEvent = null;
-                    };
-                  }, [focusNode]);
+                      return () {
+                        focusNode.onKeyEvent = null;
+                      };
+                    }, [focusNode]);
 
-                  return CallbackShortcuts(
-                    bindings: {
-                      LogicalKeySet(LogicalKeyboardKey.escape): () {
-                        FocusScope.of(context).requestFocus(searchFocusNode);
+                    return CallbackShortcuts(
+                      bindings: {
+                        LogicalKeySet(LogicalKeyboardKey.escape): () {
+                          FocusScope.of(context).requestFocus(searchFocusNode);
+                        },
                       },
-                    },
-                    child: Tooltip(
-                      key: tooltipKey,
-                      message: emoticon["description"]!,
-                      child: MaterialButton(
-                        focusNode: focusNode,
-                        padding: EdgeInsets.zero,
-                        focusColor: Theme.of(context).colorScheme.primary,
-                        highlightColor: Theme.of(context).colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        onPressed: copyEmoticon,
-                        child: AutoSizeText(
-                          emoticon["emoticon"]!,
-                          maxLines: 1,
-                          minFontSize: 5,
-                          maxFontSize: 20,
+                      child: Tooltip(
+                        key: tooltipKey,
+                        message: emoticon["description"]!,
+                        child: MaterialButton(
+                          focusNode: focusNode,
+                          padding: EdgeInsets.zero,
+                          focusColor: Theme.of(context).colorScheme.primary,
+                          highlightColor: Theme.of(context).colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          onPressed: copyEmoticon,
+                          child: AutoSizeText(
+                            emoticon["emoticon"]!,
+                            maxLines: 1,
+                            minFontSize: 5,
+                            maxFontSize: 20,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                });
+                    );
+                  },
+                );
               },
             ),
           ),

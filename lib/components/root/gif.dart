@@ -23,11 +23,7 @@ const placeholder = SizedBox(
   width: 200,
   child: ColoredBox(
     color: Color(0xFF2F3136),
-    child: Icon(
-      Icons.image_rounded,
-      size: 50,
-      color: Color(0xFF8E9297),
-    ),
+    child: Icon(Icons.image_rounded, size: 50, color: Color(0xFF8E9297)),
   ),
 );
 
@@ -57,37 +53,36 @@ class Gif extends HookConsumerWidget {
 
     final giphyPagesToStrings = useCallback(
       (List<GiphyCollection> pages) => pages
-          .expand((page) => (page.data ?? []).map(
-                (e) => e?.images?.fixedWidth?.url
-                    ?.replaceAll(RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
-                    .split("?")[0],
-              ))
+          .expand(
+            (page) => (page.data ?? []).map(
+              (e) => e?.images?.fixedWidth?.url
+                  ?.replaceAll(RegExp(r"media\d+\.giphy\.com"), "i.giphy.com")
+                  .split("?")[0],
+            ),
+          )
           .whereNotNull(),
       [],
     );
 
     final displayGifs = useMemoized(
-        () => [
-              ...tenorPagesToStrings(tenorTrending.value?.pages ?? []),
-              ...giphyPagesToStrings(giphyTrending.value?.pages ?? []),
-            ],
-        [
-          tenorTrending.value?.pages,
-          giphyTrending.value?.pages,
-        ]);
+      () => [
+        ...tenorPagesToStrings(tenorTrending.value?.pages ?? []),
+        ...giphyPagesToStrings(giphyTrending.value?.pages ?? []),
+      ],
+      [tenorTrending.value?.pages, giphyTrending.value?.pages],
+    );
 
     final searchGifs = useMemoized(
-        () => [
-              ...tenorPagesToStrings(tenorSearch.value?.pages ?? []),
-              ...giphyPagesToStrings(giphySearch.value?.pages ?? []),
-            ],
-        [
-          tenorSearch.value?.pages,
-          giphySearch.value?.pages,
-        ]);
+      () => [
+        ...tenorPagesToStrings(tenorSearch.value?.pages ?? []),
+        ...giphyPagesToStrings(giphySearch.value?.pages ?? []),
+      ],
+      [tenorSearch.value?.pages, giphySearch.value?.pages],
+    );
 
-    final gifs =
-        text.value.isEmpty || searchGifs.isEmpty ? displayGifs : searchGifs;
+    final gifs = text.value.isEmpty || searchGifs.isEmpty
+        ? displayGifs
+        : searchGifs;
 
     FocusScope.of(context).requestFocus(searchFocusNode);
 
@@ -105,26 +100,20 @@ class Gif extends HookConsumerWidget {
     }, [text.value]);
 
     final tenorImg = useMemoized(
-        () => Image.asset(
-              "assets/tenor.png",
-              height: 20,
-              width: 20,
-            ),
-        []);
+      () => Image.asset("assets/tenor.png", height: 20, width: 20),
+      [],
+    );
 
     final giphyImg = useMemoized(
-        () => Image.asset(
-              "assets/giphy.png",
-              height: 40,
-              width: 40,
-            ),
-        []);
+      () => Image.asset("assets/giphy.png", height: 40, width: 40),
+      [],
+    );
 
     final isEverythingLoading = text.value.isEmpty || searchGifs.isEmpty
         ? (!(tenorTrending.value?.hasPageData == true) &&
-            !(giphyTrending.value?.hasPageData == true))
+              !(giphyTrending.value?.hasPageData == true))
         : (!(tenorSearch.value?.hasPageData == true) &&
-            !(giphySearch.value?.hasPageData == true));
+              !(giphySearch.value?.hasPageData == true));
 
     return Column(
       children: [
@@ -141,11 +130,10 @@ class Gif extends HookConsumerWidget {
               focusNode: searchFocusNode,
               onChanged: (value) => text.value = value,
               onSubmitted: (_) => {
-                if (gifs.isNotEmpty) {
-                  FocusScope.of(context).requestFocus(focusNode),
-                } else {
-                  FocusScope.of(context).requestFocus(searchFocusNode),
-                }
+                if (gifs.isNotEmpty)
+                  {FocusScope.of(context).requestFocus(focusNode)}
+                else
+                  {FocusScope.of(context).requestFocus(searchFocusNode)},
               },
               decoration: const InputDecoration(
                 hintText: 'Search GIFs and Stickers',
@@ -258,7 +246,7 @@ class Gif extends HookConsumerWidget {
                         Formats.htmlText(
                           '<meta http-equiv="content-type" content="text/html; charset=utf-8"><img src="$gif">',
                         ),
-                      )
+                      ),
                   ]);
                   SnackBar snackBar = SnackBar(
                     content: Row(
@@ -293,33 +281,35 @@ class Gif extends HookConsumerWidget {
                       FocusScope.of(context).requestFocus(searchFocusNode);
                     },
                   },
-                  child: HookBuilder(builder: (context) {
-                    useEffect(() {
-                      focusNode.onKeyEvent = (node, event) {
-                        if (event.logicalKey == LogicalKeyboardKey.enter) {
-                          copyGif();
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      };
+                  child: HookBuilder(
+                    builder: (context) {
+                      useEffect(() {
+                        focusNode.onKeyEvent = (node, event) {
+                          if (event.logicalKey == LogicalKeyboardKey.enter) {
+                            copyGif();
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        };
 
-                      return () {
-                        focusNode.onKeyEvent = null;
-                      };
-                    }, [focusNode]);
+                        return () {
+                          focusNode.onKeyEvent = null;
+                        };
+                      }, [focusNode]);
 
-                    return InkWell(
-                      focusNode: index == 0 ? focusNode : useFocusNode(),
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: copyGif,
-                      canRequestFocus: true,
-                      focusColor: Theme.of(context).colorScheme.secondary,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: image,
-                      ),
-                    );
-                  }),
+                      return InkWell(
+                        focusNode: index == 0 ? focusNode : useFocusNode(),
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: copyGif,
+                        canRequestFocus: true,
+                        focusColor: Theme.of(context).colorScheme.secondary,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: image,
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -329,22 +319,16 @@ class Gif extends HookConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                "Powered by",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text("Powered by", style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(width: 5),
               giphyImg,
               const SizedBox(width: 5),
-              Text(
-                "and",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text("and", style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(width: 5),
               tenorImg,
             ],
           ),
-        )
+        ),
       ],
     );
   }

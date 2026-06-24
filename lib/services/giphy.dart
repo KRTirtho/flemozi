@@ -13,11 +13,9 @@ class GiphyClient {
   final String _apiKey;
   final Client _client;
 
-  GiphyClient({
-    required String apiKey,
-    Client? client,
-  })  : _apiKey = apiKey,
-        _client = client ?? Client();
+  GiphyClient({required String apiKey, Client? client})
+    : _apiKey = apiKey,
+      _client = client ?? Client();
 
   Future<GiphyCollection> trending({
     int offset = 0,
@@ -57,17 +55,11 @@ class GiphyClient {
     );
   }
 
-  Future<GiphyGif> random({
-    String? tag,
-    String rating = GiphyRating.g,
-  }) async {
+  Future<GiphyGif> random({String? tag, String rating = GiphyRating.g}) async {
     return _fetchGif(
       baseUri.replace(
         path: 'v1/gifs/random',
-        queryParameters: <String, String?>{
-          'tag': tag,
-          'rating': rating,
-        },
+        queryParameters: <String, String?>{'tag': tag, 'rating': rating},
       ),
     );
   }
@@ -78,15 +70,18 @@ class GiphyClient {
   Future<GiphyGif> _fetchGif(Uri uri) async {
     final response = await _getWithAuthorization(uri);
 
-    return GiphyGif.fromJson((json.decode(response.body)
-        as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+    return GiphyGif.fromJson(
+      (json.decode(response.body) as Map<String, dynamic>)['data']
+          as Map<String, dynamic>,
+    );
   }
 
   Future<GiphyCollection> _fetchCollection(Uri uri) async {
     final response = await _getWithAuthorization(uri);
 
     return GiphyCollection.fromJson(
-        json.decode(response.body) as Map<String, dynamic>);
+      json.decode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<Response> _getWithAuthorization(Uri uri) async {

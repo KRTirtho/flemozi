@@ -42,6 +42,9 @@ dependencies:
   super_hot_key: ^0.9.1
   super_keyboard_layout: ^0.9.1
   envied: ^1.3.6
+  rust_lib_flemozi:
+    path: rust_builder
+  flutter_rust_bridge: 2.12.0
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +59,7 @@ dev_dependencies:
   html: ^0.15.6
   pub_api_client: ^3.2.0
 
+  pubspec_parse: any
 flutter:
   uses-material-design: true
   assets:

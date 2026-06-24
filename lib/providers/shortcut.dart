@@ -39,13 +39,11 @@ class ShortcutNotifier
     }
   }
 
-  static final provider = StateNotifierProvider<ShortcutNotifier,
-      Map<FlemoziShortcuts, FlemoziShortcutDef>>(
-    (ref) => ShortcutNotifier(
-      defaultFlemoziShortcuts,
-      ref,
-    ),
-  );
+  static final provider =
+      StateNotifierProvider<
+        ShortcutNotifier,
+        Map<FlemoziShortcuts, FlemoziShortcutDef>
+      >((ref) => ShortcutNotifier(defaultFlemoziShortcuts, ref));
 
   Future<void> updateShortcut(
     FlemoziShortcuts shortcutAction,
@@ -53,10 +51,7 @@ class ShortcutNotifier
     BuildContext? context,
   ]) async {
     if (shortcutAction.type == ShortcutType.system) {
-      assert(
-        context != null,
-        "Context is required for global shortcuts",
-      );
+      assert(context != null, "Context is required for global shortcuts");
       await _hotKeys[shortcutAction]?.dispose();
       final hotKey = await HotKey.create(
         definition: await keyDef.toHotKeyDefinition(),

@@ -46,20 +46,14 @@ abstract class ShortcutActions {
   }
 
   static void openSettings(ProviderReader read, BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const Settings(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const Settings()));
   }
 }
 
 enum FlemoziShortcuts {
-  openFlemozi(
-    "Open Flemozi",
-    ShortcutActions.openFlemozi,
-    ShortcutType.system,
-  ),
+  openFlemozi("Open Flemozi", ShortcutActions.openFlemozi, ShortcutType.system),
 
   switchTabs(
     "Switch Tabs",
@@ -76,11 +70,7 @@ enum FlemoziShortcuts {
   final String title;
   final void Function(ProviderReader read, BuildContext context) action;
   final ShortcutType type;
-  const FlemoziShortcuts(
-    this.title,
-    this.action,
-    this.type,
-  );
+  const FlemoziShortcuts(this.title, this.action, this.type);
 }
 
 final Map<FlemoziShortcuts, FlemoziShortcutDef> defaultFlemoziShortcuts = {

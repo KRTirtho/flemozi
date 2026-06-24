@@ -7,15 +7,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 final _u200D = String.fromCharCode(0x200D);
 
-final _uFE0Fg = RegExp(
-  r'\uFE0F',
-  unicode: true,
-);
+final _uFE0Fg = RegExp(r'\uFE0F', unicode: true);
 
 /// Converts emoji to unicode 😀 => "1F600"
 String emojiToUnicode(String rawText) => _toCodePoint(
-      !rawText.contains(_u200D) ? rawText.replaceAll(_uFE0Fg, '') : rawText,
-    );
+  !rawText.contains(_u200D) ? rawText.replaceAll(_uFE0Fg, '') : rawText,
+);
 
 String _toCodePoint(String input, {String sep = '-'}) {
   var r = [], c = 0, p = 0, i = 0;
@@ -35,12 +32,12 @@ String _toCodePoint(String input, {String sep = '-'}) {
 
 class Twemoji extends HookWidget {
   const Twemoji({
-    Key? key,
+    super.key,
     required this.emoji,
     this.height = 30,
     this.width = 30,
     this.fit,
-  }) : super(key: key);
+  });
 
   final String emoji;
   final double? height;
@@ -60,10 +57,7 @@ class Twemoji extends HookWidget {
     }, [emoji]);
 
     if (unicode == '') {
-      return Text(
-        emoji,
-        style: GoogleFonts.notoColorEmoji(fontSize: 24),
-      );
+      return Text(emoji, style: GoogleFonts.notoColorEmoji(fontSize: 24));
     }
     return Image.asset(
       'assets/twemoji/$unicode.png',
@@ -71,10 +65,7 @@ class Twemoji extends HookWidget {
       height: height,
       width: width,
       errorBuilder: (context, error, stackTrace) {
-        return Text(
-          emoji,
-          style: GoogleFonts.notoColorEmoji(fontSize: 24),
-        );
+        return Text(emoji, style: GoogleFonts.notoColorEmoji(fontSize: 24));
       },
     );
   }

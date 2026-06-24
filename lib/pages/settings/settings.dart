@@ -12,7 +12,7 @@ class Settings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: const TopBar(),
       body: ListTileTheme(
         dense: true,
@@ -49,9 +49,11 @@ class Settings extends StatelessWidget {
               title: const Text('Keyboard shortcuts'),
               leading: const Icon(Icons.keyboard_rounded),
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const KeyboardShortcutsPage(),
-                ));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const KeyboardShortcutsPage(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 5),
@@ -59,9 +61,9 @@ class Settings extends StatelessWidget {
               title: const Text('About'),
               leading: const Icon(Icons.info),
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const About(),
-                ));
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => const About()));
               },
             ),
           ],

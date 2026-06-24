@@ -20,14 +20,15 @@ class GiphyFullImage {
   });
 
   factory GiphyFullImage.fromJson(Map<String, dynamic> json) => GiphyFullImage(
-      url: json['url'] as String?,
-      width: json['width'] as String?,
-      height: json['height'] as String?,
-      size: json['size'] as String?,
-      mp4: json['mp4'] as String?,
-      mp4Size: json['mp4_size'] as String?,
-      webp: json['webp'] as String?,
-      webpSize: json['webp_size'] as String?);
+    url: json['url'] as String?,
+    width: json['width'] as String?,
+    height: json['height'] as String?,
+    size: json['size'] as String?,
+    mp4: json['mp4'] as String?,
+    mp4Size: json['mp4_size'] as String?,
+    webp: json['webp'] as String?,
+    webpSize: json['webp_size'] as String?,
+  );
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -38,7 +39,7 @@ class GiphyFullImage {
       'mp4': mp4,
       'mp4_size': mp4Size,
       'webp': webp,
-      'webp_size': webpSize
+      'webp_size': webpSize,
     };
   }
 
@@ -100,16 +101,17 @@ class GiphyOriginalImage {
 
   factory GiphyOriginalImage.fromJson(Map<String, dynamic> json) {
     return GiphyOriginalImage(
-        url: json['url'] as String?,
-        width: json['width'] as String?,
-        height: json['height'] as String?,
-        size: json['size'] as String?,
-        frames: json['frames'] as String?,
-        mp4: json['mp4'] as String?,
-        mp4Size: json['mp4_size'] as String?,
-        webp: json['webp'] as String?,
-        webpSize: json['webp_size'] as String?,
-        hash: json['hash'] as String?);
+      url: json['url'] as String?,
+      width: json['width'] as String?,
+      height: json['height'] as String?,
+      size: json['size'] as String?,
+      frames: json['frames'] as String?,
+      mp4: json['mp4'] as String?,
+      mp4Size: json['mp4_size'] as String?,
+      webp: json['webp'] as String?,
+      webpSize: json['webp_size'] as String?,
+      hash: json['hash'] as String?,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -123,7 +125,7 @@ class GiphyOriginalImage {
       'mp4_size': mp4Size,
       'webp': webp,
       'webp_size': webpSize,
-      'hash': hash
+      'hash': hash,
     };
   }
 
@@ -168,26 +170,22 @@ class GiphyStillImage {
   final String? height;
   final String? size;
 
-  GiphyStillImage({
-    this.url,
-    this.width,
-    this.height,
-    this.size,
-  });
+  GiphyStillImage({this.url, this.width, this.height, this.size});
 
   factory GiphyStillImage.fromJson(Map<String, dynamic> json) =>
       GiphyStillImage(
-          url: json['url'] as String?,
-          width: json['width'] as String?,
-          height: json['height'] as String?,
-          size: json['size'] as String?);
+        url: json['url'] as String?,
+        width: json['width'] as String?,
+        height: json['height'] as String?,
+        size: json['size'] as String?,
+      );
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'url': url,
       'width': width,
       'height': height,
-      'size': size
+      'size': size,
     };
   }
 
@@ -230,12 +228,13 @@ class GiphyDownsampledImage {
 
   factory GiphyDownsampledImage.fromJson(Map<String, dynamic> json) {
     return GiphyDownsampledImage(
-        url: json['url'] as String?,
-        width: json['width'] as String?,
-        height: json['height'] as String?,
-        size: json['size'] as String?,
-        webp: json['webp'] as String?,
-        webpSize: json['webp_size'] as String?);
+      url: json['url'] as String?,
+      width: json['width'] as String?,
+      height: json['height'] as String?,
+      size: json['size'] as String?,
+      webp: json['webp'] as String?,
+      webpSize: json['webp_size'] as String?,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -245,7 +244,7 @@ class GiphyDownsampledImage {
       'height': height,
       'size': size,
       'webp': webp,
-      'webp_size': webpSize
+      'webp_size': webpSize,
     };
   }
 
@@ -280,17 +279,18 @@ class GiphyLoopingImage {
   final String? mp4;
   final String? mp4Size;
 
-  GiphyLoopingImage({
-    this.mp4,
-    this.mp4Size,
-  });
+  GiphyLoopingImage({this.mp4, this.mp4Size});
 
   factory GiphyLoopingImage.fromJson(Map<String, dynamic> json) =>
       GiphyLoopingImage(
-          mp4: json['mp4'] as String?, mp4Size: json['mp4_size'] as String?);
+        mp4: json['mp4'] as String?,
+        mp4Size: json['mp4_size'] as String?,
+      );
 
-  Map<String, dynamic> toJson() =>
-      <String, dynamic>{'mp4': mp4, 'mp4_size': mp4Size};
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'mp4': mp4,
+    'mp4_size': mp4Size,
+  };
 
   @override
   String toString() {
@@ -315,12 +315,7 @@ class GiphyPreviewImage {
   final String? mp4;
   final String? mp4Size;
 
-  GiphyPreviewImage({
-    this.width,
-    this.height,
-    this.mp4,
-    this.mp4Size,
-  });
+  GiphyPreviewImage({this.width, this.height, this.mp4, this.mp4Size});
 
   factory GiphyPreviewImage.fromJson(Map<String, dynamic> json) {
     return GiphyPreviewImage(
@@ -336,7 +331,7 @@ class GiphyPreviewImage {
       'width': width,
       'height': height,
       'mp4': mp4,
-      'mp4_size': mp4Size
+      'mp4_size': mp4Size,
     };
   }
 
@@ -366,12 +361,7 @@ class GiphyDownsizedImage {
   final String? height;
   final String? size;
 
-  GiphyDownsizedImage({
-    this.url,
-    this.width,
-    this.height,
-    this.size,
-  });
+  GiphyDownsizedImage({this.url, this.width, this.height, this.size});
 
   factory GiphyDownsizedImage.fromJson(Map<String, dynamic> json) {
     return GiphyDownsizedImage(
@@ -387,7 +377,7 @@ class GiphyDownsizedImage {
       'url': url,
       'width': width,
       'height': height,
-      'size': size
+      'size': size,
     };
   }
 
@@ -417,12 +407,7 @@ class GiphyWebPImage {
   final String? height;
   final String? size;
 
-  GiphyWebPImage({
-    this.url,
-    this.width,
-    this.height,
-    this.size,
-  });
+  GiphyWebPImage({this.url, this.width, this.height, this.size});
 
   factory GiphyWebPImage.fromJson(Map<String, dynamic> json) {
     return GiphyWebPImage(
@@ -438,7 +423,7 @@ class GiphyWebPImage {
       'url': url,
       'width': width,
       'height': height,
-      'size': size
+      'size': size,
     };
   }
 

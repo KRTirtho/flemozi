@@ -27,7 +27,7 @@ const emoticons = {
     ":c)",
     ":^)",
     "=]",
-    "=)"
+    "=)",
   ],
   "Laughing, big grin, grinning with glasses": [
     ":‑D",
@@ -38,7 +38,7 @@ const emoticons = {
     "=3",
     "B^D",
     "c:",
-    "C:"
+    "C:",
   ],
   "Laughing": ["x‑D", "xD", "X‑D", "XD"],
   "Very happy or double chin": [":-))"],
@@ -55,7 +55,7 @@ const emoticons = {
     ":{",
     ":@",
     ":(",
-    ";("
+    ";(",
   ],
   "Crying": [":'‑(", ":'(", ":=(", "QQ", "qq", "Qq", "( ༎ຶ ۝ ༎ຶ )"],
   "Tears of happiness": [":'‑)", ":')", ":\"D"],
@@ -67,14 +67,14 @@ const emoticons = {
     "D8",
     "D;",
     "D=",
-    "DX"
+    "DX",
   ],
   "Cat face, curled mouth, cutesy, playful, mischievous": [
     ":-3",
     ":3",
     "=3",
     "x3",
-    "X3"
+    "X3",
   ],
   "Lion smile, evil cat": [">:3"],
   "Kiss": [":-*", ":*", ":×", "(๑ˇεˇ๑)"],
@@ -89,7 +89,7 @@ const emoticons = {
     ";>",
     ":‑,",
     ";D",
-    ";3"
+    ";3",
   ],
   "Tongue sticking out, cheeky/playful, blowing a raspberry": [
     ":‑P",
@@ -108,7 +108,7 @@ const emoticons = {
     ":b",
     "d:",
     "=p",
-    ">:P"
+    ">:P",
   ],
   "Skeptical, annoyed, undecided, uneasy, hesitant": [
     ":-/",
@@ -133,7 +133,7 @@ const emoticons = {
     ":‑#",
     ":#",
     ":‑&",
-    ":&"
+    ":&",
   ],
   "Angel, halo, saint, innocent": [
     "O:‑)",
@@ -142,7 +142,7 @@ const emoticons = {
     "0:3",
     "0:‑)",
     "0:)",
-    "0;^)"
+    "0;^)",
   ],
   "Evil, devilish": [
     ">:‑)",
@@ -154,7 +154,7 @@ const emoticons = {
     ">;‑)",
     ">;)",
     ">:3",
-    ";3"
+    ";3",
   ],
   "Cool, bored, yawning": ["|;‑)", "|‑O", "B-)"],
   "Tongue-in-cheek": [":‑J"],
@@ -179,7 +179,7 @@ const emoticons = {
     "><>",
     "<><",
     "<*)))‑{",
-    "><(((*>"
+    "><(((*>",
   ],
   "Cheer, Yay, yay.": ["\\o/"],
   "Cheerleader": ["*\\0/*"],
@@ -192,7 +192,7 @@ const emoticons = {
     "<_<",
     ">_>",
     "<.<",
-    ">.>"
+    ">.>",
   ],
   "Surprise, shock, yawn": ["O_O", "o_o", "O-O", "o‑o", "O_o", "o_O"],
   "High five": ["^5", "o/\\o", ">_>^ ^<_<"],
@@ -205,13 +205,13 @@ const emoticons = {
     "ӽd̲̅a̲̅r̲̅w̲̅i̲̅ɳ̲̅ᕗ",
     "Ӽd̲̅a̲̅r̲̅w̲̅i̲̅ɳ̲̅ᕗ",
     "ӽe̲̅v̲̅o̲̅l̲̅u̲̅t̲̅i̲̅o̲̅ɳ̲̅ᕗ",
-    "Ӽe̲̅v̲̅o̲̅l̲̅u̲̅t̲̅i̲̅o̲̅ɳ̲̅ᕗ"
+    "Ӽe̲̅v̲̅o̲̅l̲̅u̲̅t̲̅i̲̅o̲̅ɳ̲̅ᕗ",
   ],
   "Dollar notes": [
     "[̲̅\$̲̅(̲̅1̲̅)̲̅\$̲̅]",
     "[̲̅\$̲̅(̲̅5̲̅)̲̅\$̲̅]",
     "[̲̅\$̲̅(̲̅1̲̅0̲̅)̲̅\$̲̅]",
-    "[̲̅\$̲̅(̲̅ιοο̲̅)̲̅\$̲̅]"
+    "[̲̅\$̲̅(̲̅ιοο̲̅)̲̅\$̲̅]",
   ],
   "Lenny Face": ["( ͡° ͜ʖ ͡°)"],
   "Raise Your Dongers": ["ヽ༼ຈل͜ຈ༽ﾉ"],
@@ -231,7 +231,7 @@ const emoticons = {
     "^_^;",
     "(#^.^#)",
     "(^",
-    "^;)"
+    "^;)",
   ],
   "Embarrassed, flushed": ["(⁄ ⁄•⁄ω⁄•⁄ ⁄)"],
   "Smoking": ["(^.^)y-.o○", "(-.-)y-°°°"],
@@ -251,7 +251,7 @@ const emoticons = {
     "(^o^)丿",
     "∩(·ω·)∩",
     "(·ω·)",
-    "^ω^"
+    "^ω^",
   ],
   "Kowtow as a sign of respect, or dogeza for apology": [
     "(__)",
@@ -259,7 +259,7 @@ const emoticons = {
     "_(_^_)_",
     "<(_ _)>",
     "m(__)m",
-    "m(_ _)m"
+    "m(_ _)m",
   ],
   "Middle fingers": ["(凸ಠ益ಠ)凸"],
   "Questioning": ["＼(°ロ＼)", "(／ロ°)／"],
@@ -280,7 +280,7 @@ const emoticons = {
     "T.T",
     "TnT",
     "QQ",
-    "Q_Q"
+    "Q_Q",
   ],
   "Shame": ["(ー_ー)!!", "(-.-)", "(-_-)", "(一一)", "(；一_一)"],
   "Tired": ["(=_=)"],
@@ -305,7 +305,7 @@ const emoticons = {
     "(*^.^*)",
     "^_^",
     "(#^.^#)",
-    "（^—^）"
+    "（^—^）",
   ],
   "Waving": [
     "(^^)/~~~",
@@ -315,7 +315,7 @@ const emoticons = {
     "(-_-)/~~~",
     "(@^^)/~~~",
     "(T_T)/~~~",
-    "(ToT)/~~~"
+    "(ToT)/~~~",
   ],
   "Alien Baltan": ["(V)o￥o(V)"],
   "Excited": ["＼(~o~)／", "＼(^o^)／", "＼(-o-)／", "ヽ(^o^)丿", "(*^0^*)"],
@@ -328,7 +328,7 @@ const emoticons = {
     "(＾▽＾)",
     "(・∀・)",
     "(´∀`)",
-    "(⌒▽⌒）"
+    "(⌒▽⌒）",
   ],
   "Hopeless": ["＼(^o^)／", "\\(^o^)/"],
   "Calmness": ["ˊ＿>ˋ"],
@@ -343,7 +343,7 @@ const emoticons = {
     "(｀´)",
     "<`～´>",
     "<`ヘ´>",
-    "(ーー;)"
+    "(ーー;)",
   ],
   "Eyeglasses": ["(^0_0^)"],
   "Jotting note": ["( ..)φ", "φ(..)"],
@@ -356,7 +356,7 @@ const emoticons = {
     "(^o^)",
     "(^○^)",
     ")^o^(",
-    "(✿◠‿◠)"
+    "(✿◠‿◠)",
   ],
   "Grinning": ["(￣ー￣)"],
   "Surprised": ["(￣□￣;)", "°o°", "°O°", ":O", "o_0", "o.O", "(o.o)", "oO"],
@@ -382,6 +382,6 @@ const emoticons = {
   "Bomb": ["●～*"],
   "Despair": ["￣|○STOOTZOTLorz囧rz"],
   "Table flip": [
-    "(╯°□°）╯︵ ┻━┻┬──┬ ¯\\_(ツ) ┻━┻︵ヽ(`Д´)ﾉ︵ ┻━┻┬─┬ノ( º _ ºノ) (ノಠ益ಠ)ノ彡┻━┻"
+    "(╯°□°）╯︵ ┻━┻┬──┬ ¯\\_(ツ) ┻━┻︵ヽ(`Д´)ﾉ︵ ┻━┻┬─┬ノ( º _ ºノ) (ノಠ益ಠ)ノ彡┻━┻",
   ],
 };

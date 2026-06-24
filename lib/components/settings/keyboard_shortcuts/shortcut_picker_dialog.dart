@@ -5,12 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-const modifiers = [
-  "Control",
-  "Alt",
-  "Shift",
-  "Meta",
-];
+const modifiers = ["Control", "Alt", "Shift", "Meta"];
 
 class ShortcutPickerDialog extends HookConsumerWidget {
   final FlemoziShortcutDef? initialSelection;
@@ -18,16 +13,15 @@ class ShortcutPickerDialog extends HookConsumerWidget {
   const ShortcutPickerDialog({
     required this.title,
     this.initialSelection,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, ref) {
     final logicalTrigger = useFuture(
-      useMemoized(
-        () => initialSelection?.triggerAsLogicalKey(),
-        [initialSelection],
-      ),
+      useMemoized(() => initialSelection?.triggerAsLogicalKey(), [
+        initialSelection,
+      ]),
     );
 
     final trigger = useState<LogicalKeyboardKey?>(logicalTrigger.data);
@@ -61,20 +55,14 @@ class ShortcutPickerDialog extends HookConsumerWidget {
             onSelected: (value) {
               trigger.value = value;
               if (logicalKeyListWithShift.contains(value)) {
-                modifiers.value = {
-                  ...modifiers.value,
-                  "Shift": true,
-                };
+                modifiers.value = {...modifiers.value, "Shift": true};
               }
             },
             label: const Text('Select a Trigger'),
             menuHeight: 150,
             enableFilter: true,
             dropdownMenuEntries: logicalKeys.map((key) {
-              return DropdownMenuEntry(
-                value: key,
-                label: key.keyLabel,
-              );
+              return DropdownMenuEntry(value: key, label: key.keyLabel);
             }).toList(),
           ),
           const SizedBox(height: 10),
@@ -109,14 +97,14 @@ class ShortcutPickerDialog extends HookConsumerWidget {
           onPressed: !isValid
               ? null
               : () => Navigator.of(context).pop(
-                    FlemoziShortcutDef(
-                      trigger.value!,
-                      alt: modifiers.value["Alt"]!,
-                      control: modifiers.value["Control"]!,
-                      shift: modifiers.value["Shift"]!,
-                      meta: modifiers.value["Meta"]!,
-                    ),
+                  FlemoziShortcutDef(
+                    trigger.value!,
+                    alt: modifiers.value["Alt"]!,
+                    control: modifiers.value["Control"]!,
+                    shift: modifiers.value["Shift"]!,
+                    meta: modifiers.value["Meta"]!,
                   ),
+                ),
           child: const Text('Ok'),
         ),
       ],

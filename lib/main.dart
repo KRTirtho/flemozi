@@ -6,6 +6,7 @@ import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/providers/shortcut.dart';
 import 'package:flemozi/services/preferences.dart';
+import 'package:flemozi/src/rust/frb_generated.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,6 +77,8 @@ Future<void> main(List<String> args) async {
       await api();
     }
   }
+
+  await RustLib.init();
 
   runApp(
     ProviderScope(
@@ -180,7 +183,7 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
             )),
             [shortcuts],
           ));
-    
+
           return CallbackShortcuts(
             bindings: {
               ...Map.fromEntries(appShortcuts.data ?? []),

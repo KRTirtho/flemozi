@@ -19,9 +19,9 @@ class VerticalTabs extends HookConsumerWidget {
     this.controller,
     super.key,
   }) : assert(
-          tabs.length == children.length,
-          'tabs and children must have the same length',
-        );
+         tabs.length == children.length,
+         'tabs and children must have the same length',
+       );
 
   @override
   Widget build(BuildContext context, ref) {
@@ -65,7 +65,9 @@ class VerticalTabs extends HookConsumerWidget {
                         : BorderRadius.circular(8);
                     return Container(
                       decoration: BoxDecoration(
-                        color: active ? theme.cardColor.withOpacity(.5) : null,
+                        color: active
+                            ? theme.cardColor.withValues(alpha: .5)
+                            : null,
                         borderRadius: radius,
                       ),
                       width: 40,
@@ -109,7 +111,7 @@ class VerticalTabs extends HookConsumerWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.cardColor.withOpacity(.5),
+                      backgroundColor: theme.cardColor.withValues(alpha: .5),
                       foregroundColor: theme.colorScheme.primary,
                       shape: const CircleBorder(),
                       minimumSize: const Size(20, 20),
@@ -124,12 +126,13 @@ class VerticalTabs extends HookConsumerWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: theme.cardColor.withOpacity(0.5),
+                color: theme.cardColor.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.only(
                   topRight: const Radius.circular(8),
                   bottomRight: const Radius.circular(8),
-                  topLeft:
-                      activeIndex > 0 ? const Radius.circular(8) : Radius.zero,
+                  topLeft: activeIndex > 0
+                      ? const Radius.circular(8)
+                      : Radius.zero,
                   bottomLeft: const Radius.circular(8),
                 ),
               ),
@@ -143,10 +146,7 @@ class VerticalTabs extends HookConsumerWidget {
                         end: const Offset(0, 0),
                       ),
                     ),
-                    child: FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    ),
+                    child: FadeTransition(opacity: animation, child: child),
                   );
                 },
                 child: children[activeIndex],

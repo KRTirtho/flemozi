@@ -20,18 +20,20 @@ class RootPage extends HookConsumerWidget {
     final theme = Theme.of(context);
     final windowIsShowing = useState(true);
 
-    useWindowListeners(onWindowEvent: (String eventName) {
-      switch (eventName) {
-        case "hide":
-          windowIsShowing.value = false;
-          break;
-        case "show":
-          windowIsShowing.value = true;
-          break;
-        default:
-          break;
-      }
-    });
+    useWindowListeners(
+      onWindowEvent: (String eventName) {
+        switch (eventName) {
+          case "hide":
+            windowIsShowing.value = false;
+            break;
+          case "show":
+            windowIsShowing.value = true;
+            break;
+          default:
+            break;
+        }
+      },
+    );
 
     useEffect(() {
       final prefs = ref.read(preferencesProvider);
@@ -43,26 +45,28 @@ class RootPage extends HookConsumerWidget {
               return AlertDialog(
                 title: const Text("You're using Wayland"),
                 content: RichText(
-                  text: TextSpan(children: [
-                    const TextSpan(
-                      text:
-                          "Wayland currently doesn't allow applications to set custom global shortcut\n"
-                          "So user has to manually set custom keyboard shortcut to launch Flemozi\n\n",
-                    ),
-                    const TextSpan(text: "Learn more about it here:\n"),
-                    TextSpan(
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        decoration: TextDecoration.underline,
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text:
+                            "Wayland currently doesn't allow applications to set custom global shortcut\n"
+                            "So user has to manually set custom keyboard shortcut to launch Flemozi\n\n",
                       ),
-                      text:
-                          "https://github.com/KRTirtho/flemozi/wiki/Setup-on-Wayland",
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => launchUrlString(
-                              "https://github.com/KRTirtho/flemozi/wiki/Setup-on-Wayland",
-                            ),
-                    ),
-                  ]),
+                      const TextSpan(text: "Learn more about it here:\n"),
+                      TextSpan(
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                        text:
+                            "https://github.com/KRTirtho/flemozi/wiki/Setup-on-Wayland",
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => launchUrlString(
+                            "https://github.com/KRTirtho/flemozi/wiki/Setup-on-Wayland",
+                          ),
+                      ),
+                    ],
+                  ),
                 ),
                 actions: [
                   OutlinedButton(
@@ -97,24 +101,11 @@ class RootPage extends HookConsumerWidget {
       body: windowIsShowing.value
           ? VerticalTabs(
               tabs: const [
-                Tooltip(
-                  message: 'Emoji',
-                  child: Icon(Icons.emoji_emotions),
-                ),
-                Tooltip(
-                  message: 'GIFs',
-                  child: Icon(Icons.gif_rounded),
-                ),
-                Tooltip(
-                  message: 'Emoticons',
-                  child: Text(':)'),
-                ),
+                Tooltip(message: 'Emoji', child: Icon(Icons.emoji_emotions)),
+                Tooltip(message: 'GIFs', child: Icon(Icons.gif_rounded)),
+                Tooltip(message: 'Emoticons', child: Text(':)')),
               ],
-              children: const [
-                Emoji(),
-                Gif(),
-                Emoticon(),
-              ],
+              children: const [Emoji(), Gif(), Emoticon()],
             )
           : const SizedBox.shrink(),
     );

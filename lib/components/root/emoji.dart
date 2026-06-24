@@ -31,36 +31,11 @@ class Emoji extends HookWidget {
 
     FocusScope.of(context).requestFocus(searchFocusNode);
 
-    final filteredEmojis = useMemoized(
-      () {
-        if (searchTerm.value.isEmpty) {
-          return emojis
-              .map(
-                (emoji) => (
-                  emoji: emoji.emoji,
-                  description: emoji.description,
-                  category: emoji.category,
-                  aliases: emoji.aliases,
-                  tags: emoji.tags,
-                  unicodeVersion: emoji.unicodeVersion,
-                  iosVersion: emoji.iosVersion,
-                  skinTones: emoji.skinTones,
-                  ratio: null,
-                ),
-              )
-              .toList();
-        } else {
-          final List<RatioEmojiType> map = [];
-          for (var emoji in emojis) {
-            final aliases = emoji.aliases.join(" ");
-            final tags = emoji.tags.join(" ");
-            final ratio = weightedRatio(
-              "${emoji.description} $aliases $tags",
-              searchTerm.value,
-            );
-
-            if (ratio > 50) {
-              map.add((
+    final filteredEmojis = useMemoized(() {
+      if (searchTerm.value.isEmpty) {
+        return emojis
+            .map(
+              (emoji) => (
                 emoji: emoji.emoji,
                 description: emoji.description,
                 category: emoji.category,
@@ -69,16 +44,38 @@ class Emoji extends HookWidget {
                 unicodeVersion: emoji.unicodeVersion,
                 iosVersion: emoji.iosVersion,
                 skinTones: emoji.skinTones,
-                ratio: ratio,
-              ));
-            }
+                ratio: null,
+              ),
+            )
+            .toList();
+      } else {
+        final List<RatioEmojiType> map = [];
+        for (var emoji in emojis) {
+          final aliases = emoji.aliases.join(" ");
+          final tags = emoji.tags.join(" ");
+          final ratio = weightedRatio(
+            "${emoji.description} $aliases $tags",
+            searchTerm.value,
+          );
+
+          if (ratio > 50) {
+            map.add((
+              emoji: emoji.emoji,
+              description: emoji.description,
+              category: emoji.category,
+              aliases: emoji.aliases,
+              tags: emoji.tags,
+              unicodeVersion: emoji.unicodeVersion,
+              iosVersion: emoji.iosVersion,
+              skinTones: emoji.skinTones,
+              ratio: ratio,
+            ));
           }
-          map.sort((a, b) => b.ratio! - a.ratio!);
-          return map;
         }
-      },
-      [searchTerm.value],
-    );
+        map.sort((a, b) => b.ratio! - a.ratio!);
+        return map;
+      }
+    }, [searchTerm.value]);
 
     useWindowListeners(
       onWindowFocus: () {
@@ -88,27 +85,16 @@ class Emoji extends HookWidget {
 
     final copyEmoji = useCallback((RatioEmojiType emoji, FocusNode focusNode) {
       focusNode.requestFocus();
-      Clipboard.setData(
-        ClipboardData(text: emoji.emoji),
-      );
+      Clipboard.setData(ClipboardData(text: emoji.emoji));
       SnackBar snackBar = SnackBar(
         content: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.copy,
-              color: Theme.of(context).colorScheme.background,
-            ),
+            Icon(Icons.copy, color: Theme.of(context).colorScheme.surface),
             const SizedBox(width: 10),
-            Text(
-              "Copied ${emoji.aliases.firstOrNull} ",
-            ),
-            Twemoji(
-              emoji: emoji.emoji,
-              height: 20,
-              width: 20,
-            ),
+            Text("Copied ${emoji.aliases.firstOrNull} "),
+            Twemoji(emoji: emoji.emoji, height: 20, width: 20),
           ],
         ),
         behavior: SnackBarBehavior.floating,
@@ -131,7 +117,7 @@ class Emoji extends HookWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only( bottom: 12.0),
+            padding: const EdgeInsets.only(bottom: 12.0),
             child: CallbackShortcuts(
               bindings: {
                 LogicalKeySet(LogicalKeyboardKey.arrowDown): () {
@@ -170,56 +156,57 @@ class Emoji extends HookWidget {
               ),
               itemCount: filteredEmojis.length,
               itemBuilder: (context, index) {
-                return HookBuilder(builder: (context) {
-                  final focusnodeUn = useFocusNode();
-                  final focusNode =
-                  index == 0 ? firstEmojiFocusNode : focusnodeUn;
-                  final emoji = filteredEmojis.elementAt(index);
-                  final tooltipKey = GlobalKey<TooltipState>();
+                return HookBuilder(
+                  builder: (context) {
+                    final focusnodeUn = useFocusNode();
+                    final focusNode = index == 0
+                        ? firstEmojiFocusNode
+                        : focusnodeUn;
+                    final emoji = filteredEmojis.elementAt(index);
+                    final tooltipKey = GlobalKey<TooltipState>();
 
-                  useEffect(() {
-                    focusNode.onKeyEvent = (node, event) {
-                      if (event.logicalKey == LogicalKeyboardKey.enter) {
-                        copyEmoji(emoji, focusNode);
-                        return KeyEventResult.handled;
-                      }
-                      return KeyEventResult.ignored;
-                    };
-
-                    return () {
-                      focusNode.onKeyEvent = null;
-                    };
-                  }, [focusNode]);
-
-                  return CallbackShortcuts(
-                    bindings: {
-                      LogicalKeySet(LogicalKeyboardKey.escape): () {
-                        FocusScope.of(context).requestFocus(searchFocusNode);
-                      },
-                    },
-                    child: Tooltip(
-                      message: emoji.description,
-                      key: tooltipKey,
-                      triggerMode: TooltipTriggerMode.manual,
-                      child: MaterialButton(
-                        focusNode: focusNode,
-                        padding: EdgeInsets.zero,
-                        focusColor: Theme.of(context).colorScheme.primary,
-                        highlightColor: Theme.of(context).colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        onPressed: () {
+                    useEffect(() {
+                      focusNode.onKeyEvent = (node, event) {
+                        if (event.logicalKey == LogicalKeyboardKey.enter) {
                           copyEmoji(emoji, focusNode);
+                          return KeyEventResult.handled;
+                        }
+                        return KeyEventResult.ignored;
+                      };
+
+                      return () {
+                        focusNode.onKeyEvent = null;
+                      };
+                    }, [focusNode]);
+
+                    return CallbackShortcuts(
+                      bindings: {
+                        LogicalKeySet(LogicalKeyboardKey.escape): () {
+                          FocusScope.of(context).requestFocus(searchFocusNode);
                         },
-                        child: Twemoji(
-                          emoji: emoji.emoji,
+                      },
+                      child: Tooltip(
+                        message: emoji.description,
+                        key: tooltipKey,
+                        triggerMode: TooltipTriggerMode.manual,
+                        child: MaterialButton(
+                          focusNode: focusNode,
+                          padding: EdgeInsets.zero,
+                          focusColor: Theme.of(context).colorScheme.primary,
+                          highlightColor: Theme.of(context).colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          onPressed: () {
+                            copyEmoji(emoji, focusNode);
+                          },
+                          child: Twemoji(emoji: emoji.emoji),
                         ),
                       ),
-                    ),
-                  );
-                });
+                    );
+                  },
+                );
               },
             ),
           ),

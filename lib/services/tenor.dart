@@ -45,20 +45,15 @@ class Tenor {
 
   final String baseUrl = 'https://tenor.googleapis.com/v2';
 
-  Tenor({
-    required this.apiKey,
-  }) : client = Client();
+  Tenor({required this.apiKey}) : client = Client();
 
   Future<Response> _request(
-      String path, Map<String, String> queryParameters) async {
+    String path,
+    Map<String, String> queryParameters,
+  ) async {
     final uri = Uri.parse(
       '$baseUrl/$path',
-    ).replace(
-      queryParameters: {
-        ...queryParameters,
-        'key': apiKey,
-      },
-    );
+    ).replace(queryParameters: {...queryParameters, 'key': apiKey});
     final response = await client.get(uri);
     return response;
   }
@@ -79,22 +74,19 @@ class Tenor {
       pos == null || pos is String || pos is int,
       'pos must be either a String or an int',
     );
-    final response = await _request(
-      'search',
-      {
-        'key': apiKey,
-        'q': query,
-        if (clientKey != null) 'client_key': clientKey,
-        if (searchFilter != null) 'searchfilter': searchFilter.originalValues,
-        if (contentFilter != null) 'contentfilter': contentFilter.name,
-        if (arRange != null) 'ar_range': arRange.name,
-        if (random != null) 'random': random.toString(),
-        if (limit != null) 'limit': limit.toString(),
-        if (pos != null) 'pos': pos.toString(),
-        if (locale != null) 'locale': locale,
-        if (country != null) 'country': country,
-      },
-    );
+    final response = await _request('search', {
+      'key': apiKey,
+      'q': query,
+      'client_key': ?clientKey,
+      if (searchFilter != null) 'searchfilter': searchFilter.originalValues,
+      if (contentFilter != null) 'contentfilter': contentFilter.name,
+      if (arRange != null) 'ar_range': arRange.name,
+      if (random != null) 'random': random.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (pos != null) 'pos': pos.toString(),
+      'locale': ?locale,
+      'country': ?country,
+    });
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       return TenorResponsePage.fromJson(body);
@@ -109,16 +101,13 @@ class Tenor {
     int? limit,
     String? locale,
   }) async {
-    final response = await _request(
-      'search_suggestions',
-      {
-        'key': apiKey,
-        'q': query,
-        if (limit != null) 'limit': limit.toString(),
-        if (locale != null) 'locale': locale,
-        if (country != null) 'country': country,
-      },
-    );
+    final response = await _request('search_suggestions', {
+      'key': apiKey,
+      'q': query,
+      if (limit != null) 'limit': limit.toString(),
+      'locale': ?locale,
+      'country': ?country,
+    });
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       return List<String>.from(body['results']);
@@ -134,17 +123,14 @@ class Tenor {
     String? locale,
     String? clientKey,
   }) async {
-    final response = await _request(
-      'autocomplete',
-      {
-        'key': apiKey,
-        'q': query,
-        if (limit != null) 'limit': limit.toString(),
-        if (locale != null) 'locale': locale,
-        if (country != null) 'country': country,
-        if (clientKey != null) 'client_key': clientKey,
-      },
-    );
+    final response = await _request('autocomplete', {
+      'key': apiKey,
+      'q': query,
+      if (limit != null) 'limit': limit.toString(),
+      'locale': ?locale,
+      'country': ?country,
+      'client_key': ?clientKey,
+    });
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       return List<String>.from(body['results']);
@@ -160,17 +146,14 @@ class Tenor {
     String? locale,
     String? country,
   }) async {
-    final response = await _request(
-      'share',
-      {
-        'key': apiKey,
-        'id': id,
-        if (clientKey != null) 'client_key': clientKey,
-        if (query != null) 'q': query,
-        if (locale != null) 'locale': locale,
-        if (country != null) 'country': country,
-      },
-    );
+    final response = await _request('share', {
+      'key': apiKey,
+      'id': id,
+      'client_key': ?clientKey,
+      'q': ?query,
+      'locale': ?locale,
+      'country': ?country,
+    });
     if (response.statusCode != 200) {
       throw TenorException.fromResponse(response);
     }
@@ -192,23 +175,20 @@ class Tenor {
       pos == null || pos is String || pos is int,
       'pos must be either a String or an int',
     );
-    final response = await _request(
-      'featured',
-      {
-        'key': apiKey,
-        if (clientKey != null) 'client_key': clientKey,
-        if (searchFilter != null) 'searchfilter': searchFilter.originalValues,
-        if (contentFilter != null) 'contentfilter': contentFilter.name,
-        if (arRange != null) 'ar_range': arRange.name,
-        if (random != null) 'random': random.toString(),
-        if (limit != null) 'limit': limit.toString(),
-        if (pos != null) 'pos': pos.toString(),
-        if (locale != null) 'locale': locale,
-        if (country != null) 'country': country,
-        if (mediaFilter != null)
-          'media_filter': mediaFilter.map((e) => e.name).join(','),
-      },
-    );
+    final response = await _request('featured', {
+      'key': apiKey,
+      'client_key': ?clientKey,
+      if (searchFilter != null) 'searchfilter': searchFilter.originalValues,
+      if (contentFilter != null) 'contentfilter': contentFilter.name,
+      if (arRange != null) 'ar_range': arRange.name,
+      if (random != null) 'random': random.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (pos != null) 'pos': pos.toString(),
+      'locale': ?locale,
+      'country': ?country,
+      if (mediaFilter != null)
+        'media_filter': mediaFilter.map((e) => e.name).join(','),
+    });
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       return TenorResponsePage.fromJson(body);

@@ -6,10 +6,7 @@ class GiphyTrendingData {
   final List<GiphyCollection> pages;
   final int? nextOffset;
 
-  const GiphyTrendingData({
-    this.pages = const [],
-    this.nextOffset,
-  });
+  const GiphyTrendingData({this.pages = const [], this.nextOffset});
 
   bool get hasPageData => pages.isNotEmpty;
   bool get hasNextPage => nextOffset != null;
@@ -38,17 +35,16 @@ class GiphyTrendingNotifier extends AsyncNotifier<GiphyTrendingData> {
 
     try {
       final service = ref.read(giphyProvider);
-      final page =
-          await service.trending(offset: data.nextOffset!, limit: 10);
+      final page = await service.trending(offset: data.nextOffset!, limit: 10);
 
       if (generation != _fetchGeneration) return;
 
-      final nextOffset =
-          (page.data?.length ?? 0) < 10 ? null : data.nextOffset! + 10;
-      state = AsyncData(GiphyTrendingData(
-        pages: [...data.pages, page],
-        nextOffset: nextOffset,
-      ));
+      final nextOffset = (page.data?.length ?? 0) < 10
+          ? null
+          : data.nextOffset! + 10;
+      state = AsyncData(
+        GiphyTrendingData(pages: [...data.pages, page], nextOffset: nextOffset),
+      );
     } catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -71,10 +67,9 @@ class GiphyTrendingNotifier extends AsyncNotifier<GiphyTrendingData> {
       if (generation != _fetchGeneration) return;
 
       final nextOffset = (page.data?.length ?? 0) < 10 ? null : 10;
-      state = AsyncData(GiphyTrendingData(
-        pages: [page],
-        nextOffset: nextOffset,
-      ));
+      state = AsyncData(
+        GiphyTrendingData(pages: [page], nextOffset: nextOffset),
+      );
     } catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -86,5 +81,5 @@ class GiphyTrendingNotifier extends AsyncNotifier<GiphyTrendingData> {
 
 final giphyTrendingProvider =
     AsyncNotifierProvider<GiphyTrendingNotifier, GiphyTrendingData>(
-  GiphyTrendingNotifier.new,
-);
+      GiphyTrendingNotifier.new,
+    );

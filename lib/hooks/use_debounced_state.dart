@@ -5,8 +5,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 
 const uuid = Uuid();
 
-ValueNotifier<T> useDebouncedState<T>(T initialValue,
-    {Duration duration = const Duration(milliseconds: 500)}) {
+ValueNotifier<T> useDebouncedState<T>(
+  T initialValue, {
+  Duration duration = const Duration(milliseconds: 500),
+}) {
   final valueNotifier = useValueNotifier<T>(initialValue);
   final value = useState<T>(initialValue);
 

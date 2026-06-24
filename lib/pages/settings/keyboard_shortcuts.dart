@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class KeyboardShortcutsPage extends HookConsumerWidget {
-  const KeyboardShortcutsPage({Key? key}) : super(key: key);
+  const KeyboardShortcutsPage({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
@@ -15,7 +15,7 @@ class KeyboardShortcutsPage extends HookConsumerWidget {
     final shortcutsNotifier = ref.watch(ShortcutNotifier.provider.notifier);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: const TopBar(),
       body: ListTileTheme(
         dense: true,
@@ -33,15 +33,14 @@ class KeyboardShortcutsPage extends HookConsumerWidget {
             return ListTile(
               title: Text(shortcut.key.title),
               trailing: FutureBuilder<Set<String>>(
-                  future: shortcut.value.keyLabels,
-                  builder: (context, snapshot) {
-                    return Text(
-                      snapshot.data?.join(' + ') ?? 'Calculating...',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                      ),
-                    );
-                  }),
+                future: shortcut.value.keyLabels,
+                builder: (context, snapshot) {
+                  return Text(
+                    snapshot.data?.join(' + ') ?? 'Calculating...',
+                    style: const TextStyle(color: Colors.grey),
+                  );
+                },
+              ),
               onTap: () async {
                 final shortcutDef = await showDialog<FlemoziShortcutDef?>(
                   context: context,

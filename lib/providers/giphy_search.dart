@@ -41,11 +41,9 @@ class GiphySearchNotifier extends AsyncNotifier<GiphySearchData> {
       if (generation != _fetchGeneration) return;
 
       final nextOffset = (page.data?.length ?? 0) < 10 ? null : 10;
-      state = AsyncData(GiphySearchData(
-        query: query,
-        pages: [page],
-        nextOffset: nextOffset,
-      ));
+      state = AsyncData(
+        GiphySearchData(query: query, pages: [page], nextOffset: nextOffset),
+      );
     } catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -71,13 +69,16 @@ class GiphySearchNotifier extends AsyncNotifier<GiphySearchData> {
 
       if (generation != _fetchGeneration) return;
 
-      final nextOffset =
-          (page.data?.length ?? 0) < 10 ? null : data.nextOffset! + 10;
-      state = AsyncData(GiphySearchData(
-        query: data.query,
-        pages: [...data.pages, page],
-        nextOffset: nextOffset,
-      ));
+      final nextOffset = (page.data?.length ?? 0) < 10
+          ? null
+          : data.nextOffset! + 10;
+      state = AsyncData(
+        GiphySearchData(
+          query: data.query,
+          pages: [...data.pages, page],
+          nextOffset: nextOffset,
+        ),
+      );
     } catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -95,5 +96,5 @@ class GiphySearchNotifier extends AsyncNotifier<GiphySearchData> {
 
 final giphySearchProvider =
     AsyncNotifierProvider<GiphySearchNotifier, GiphySearchData>(
-  GiphySearchNotifier.new,
-);
+      GiphySearchNotifier.new,
+    );

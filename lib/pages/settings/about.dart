@@ -8,7 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class About extends HookConsumerWidget {
-  const About({Key? key}) : super(key: key);
+  const About({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
@@ -16,26 +16,21 @@ class About extends HookConsumerWidget {
     const colon = Text(":");
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: const TopBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Center(
           child: Column(
             children: [
-              Image.asset(
-                "assets/logo.png",
-                height: 200,
-                width: 200,
-              ),
+              Image.asset("assets/logo.png", height: 200, width: 200),
               Text(
                 kIsLinux
                     ? "The missing emoji picker for Linux"
                     : "A powerful emoji picker",
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontSize: 18),
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 18),
               ),
               Table(
                 columnWidths: const {
@@ -51,21 +46,21 @@ class About extends HookConsumerWidget {
                       Hyperlink(
                         "Kingkor Roy Tirtho",
                         "https://github.com/KRTirtho",
-                      )
+                      ),
                     ],
                   ),
                   TableRow(
                     children: [
                       const Text("Version"),
                       colon,
-                      Text("v${packageInfo.version}")
+                      Text("v${packageInfo.version}"),
                     ],
                   ),
                   TableRow(
                     children: [
                       const Text("Build Number"),
                       colon,
-                      Text(packageInfo.buildNumber.replaceAll(".", " "))
+                      Text(packageInfo.buildNumber.replaceAll(".", " ")),
                     ],
                   ),
                   const TableRow(

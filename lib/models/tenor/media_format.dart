@@ -6,11 +6,7 @@ part 'media_format.g.dart';
 
 @JsonSerializable()
 class TenorMediaFormat {
-  @JsonKey(
-    name: 'url',
-    fromJson: Uri.parse,
-    toJson: uriToString,
-  )
+  @JsonKey(name: 'url', fromJson: Uri.parse, toJson: uriToString)
   final Uri url;
   @JsonKey(
     name: 'duration',
@@ -20,11 +16,7 @@ class TenorMediaFormat {
   final Duration duration;
   final String preview;
 
-  @JsonKey(
-    name: 'dims',
-    fromJson: dimsFromJson,
-    toJson: dimsToJson,
-  )
+  @JsonKey(name: 'dims', fromJson: dimsFromJson, toJson: dimsToJson)
   final Size dims;
   final int size;
 

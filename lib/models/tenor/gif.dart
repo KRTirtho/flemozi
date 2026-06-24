@@ -9,20 +9,12 @@ class TenorGif {
   final String id;
   final String title;
   final String url;
-  @JsonKey(
-    name: 'itemurl',
-    fromJson: Uri.parse,
-    toJson: uriToString,
-  )
+  @JsonKey(name: 'itemurl', fromJson: Uri.parse, toJson: uriToString)
   final Uri itemUrl;
   @JsonKey(name: 'content_description')
   final String contentDescription;
 
-  @JsonKey(
-    name: 'created',
-    fromJson: unixToDateTime,
-    toJson: dateTimeToUnix,
-  )
+  @JsonKey(name: 'created', fromJson: unixToDateTime, toJson: dateTimeToUnix)
   final DateTime created;
   final List<String> tags;
   final List<String> flags;

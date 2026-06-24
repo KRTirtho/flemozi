@@ -8,10 +8,7 @@ class TenorResponsePage {
   final List<TenorGif> results;
   final String next;
 
-  TenorResponsePage({
-    required this.results,
-    required this.next,
-  });
+  TenorResponsePage({required this.results, required this.next});
 
   factory TenorResponsePage.fromJson(Map<String, dynamic> json) =>
       _$TenorResponsePageFromJson(json);

@@ -3,10 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:super_hot_key/super_hot_key.dart';
 import 'package:super_keyboard_layout/super_keyboard_layout.dart';
 
-enum ShortcutType {
-  application,
-  system,
-}
+enum ShortcutType { application, system }
 
 class FlemoziShortcutDef {
   final KeyboardKey trigger;
@@ -59,8 +56,9 @@ class FlemoziShortcutDef {
     if (trigger is LogicalKeyboardKey) {
       return trigger as LogicalKeyboardKey;
     } else {
-      final layout =
-          await KeyboardLayoutManager.instance().then((v) => v.currentLayout);
+      final layout = await KeyboardLayoutManager.instance().then(
+        (v) => v.currentLayout,
+      );
 
       return layout.getLogicalKeyForPhysicalKey(trigger as PhysicalKeyboardKey);
     }
@@ -70,8 +68,9 @@ class FlemoziShortcutDef {
     if (trigger is PhysicalKeyboardKey) {
       return trigger as PhysicalKeyboardKey;
     } else {
-      final layout =
-          await KeyboardLayoutManager.instance().then((v) => v.currentLayout);
+      final layout = await KeyboardLayoutManager.instance().then(
+        (v) => v.currentLayout,
+      );
 
       return layout.getPhysicalKeyForLogicalKey(trigger as LogicalKeyboardKey);
     }
@@ -93,7 +92,7 @@ class FlemoziShortcutDef {
         if (trigger is LogicalKeyboardKey)
           'keyId': (trigger as LogicalKeyboardKey).keyId
         else
-          'usbHidUsage': (trigger as PhysicalKeyboardKey).usbHidUsage
+          'usbHidUsage': (trigger as PhysicalKeyboardKey).usbHidUsage,
       },
       'alt': alt,
       'shift': shift,

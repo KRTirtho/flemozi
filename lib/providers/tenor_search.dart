@@ -8,11 +8,7 @@ class TenorSearchData {
   final List<TenorResponsePage> pages;
   final String? nextPos;
 
-  const TenorSearchData({
-    this.query = '',
-    this.pages = const [],
-    this.nextPos,
-  });
+  const TenorSearchData({this.query = '', this.pages = const [], this.nextPos});
 
   bool get hasPageData => pages.isNotEmpty;
   bool get hasNextPage => nextPos != null;
@@ -42,11 +38,9 @@ class TenorSearchNotifier extends AsyncNotifier<TenorSearchData> {
       if (generation != _fetchGeneration) return;
 
       final next = page.results.length < 10 ? null : page.next;
-      state = AsyncData(TenorSearchData(
-        query: query,
-        pages: [page],
-        nextPos: next,
-      ));
+      state = AsyncData(
+        TenorSearchData(query: query, pages: [page], nextPos: next),
+      );
     } on TenorException catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -64,17 +58,22 @@ class TenorSearchNotifier extends AsyncNotifier<TenorSearchData> {
 
     try {
       final service = ref.read(tenorProvider);
-      final page =
-          await service.search(data.query, limit: 10, pos: data.nextPos!);
+      final page = await service.search(
+        data.query,
+        limit: 10,
+        pos: data.nextPos!,
+      );
 
       if (generation != _fetchGeneration) return;
 
       final next = page.results.length < 10 ? null : page.next;
-      state = AsyncData(TenorSearchData(
-        query: data.query,
-        pages: [...data.pages, page],
-        nextPos: next,
-      ));
+      state = AsyncData(
+        TenorSearchData(
+          query: data.query,
+          pages: [...data.pages, page],
+          nextPos: next,
+        ),
+      );
     } on TenorException catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -92,5 +91,5 @@ class TenorSearchNotifier extends AsyncNotifier<TenorSearchData> {
 
 final tenorSearchProvider =
     AsyncNotifierProvider<TenorSearchNotifier, TenorSearchData>(
-  TenorSearchNotifier.new,
-);
+      TenorSearchNotifier.new,
+    );

@@ -7,10 +7,7 @@ class TenorFeaturedData {
   final List<TenorResponsePage> pages;
   final String? nextPos;
 
-  const TenorFeaturedData({
-    this.pages = const [],
-    this.nextPos,
-  });
+  const TenorFeaturedData({this.pages = const [], this.nextPos});
 
   bool get hasPageData => pages.isNotEmpty;
   bool get hasNextPage => nextPos != null;
@@ -44,10 +41,9 @@ class TenorFeaturedNotifier extends AsyncNotifier<TenorFeaturedData> {
       if (generation != _fetchGeneration) return;
 
       final next = page.results.length < 10 ? null : page.next;
-      state = AsyncData(TenorFeaturedData(
-        pages: [...data.pages, page],
-        nextPos: next,
-      ));
+      state = AsyncData(
+        TenorFeaturedData(pages: [...data.pages, page], nextPos: next),
+      );
     } on TenorException catch (e) {
       if (generation != _fetchGeneration) return;
       state = AsyncError(e, StackTrace.current);
@@ -82,5 +78,5 @@ class TenorFeaturedNotifier extends AsyncNotifier<TenorFeaturedData> {
 
 final tenorFeaturedProvider =
     AsyncNotifierProvider<TenorFeaturedNotifier, TenorFeaturedData>(
-  TenorFeaturedNotifier.new,
-);
+      TenorFeaturedNotifier.new,
+    );

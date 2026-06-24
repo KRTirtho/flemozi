@@ -14,5 +14,6 @@ final kIsAndroid = kIsWeb ? false : Platform.isAndroid;
 final kIsIOS = kIsWeb ? false : Platform.isIOS;
 final kIsWindows = kIsWeb ? false : Platform.isWindows;
 
-final kIsWayland =
-    kIsLinux ? Platform.environment["XDG_SESSION_TYPE"] == "wayland" : false;
+final kIsWayland = kIsLinux
+    ? Platform.environment["XDG_SESSION_TYPE"] == "wayland"
+    : false;

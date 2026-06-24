@@ -57,7 +57,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
                     child: const Icon(Icons.close, size: 14),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -65,5 +65,6 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  @override
   Size get preferredSize => const Size.fromHeight(20);
 }
