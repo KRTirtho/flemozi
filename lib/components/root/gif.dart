@@ -1,15 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
-import 'package:flemozi/caching/queries.dart';
 import 'package:flemozi/components/ui/waypoint.dart';
 import 'package:flemozi/hooks/use_debounced_state.dart';
 import 'package:flemozi/intents/close_window.dart';
+import 'package:flemozi/models/giphy/collection.dart';
 import 'package:flemozi/models/tenor/response_page.dart';
+import 'package:flemozi/providers/giphy_search.dart';
+import 'package:flemozi/providers/giphy_trending.dart';
+import 'package:flemozi/providers/tenor_search.dart';
+import 'package:flemozi/providers/tenor_featured.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:giphy_api_client/giphy_api_client.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:shimmer/shimmer.dart';
@@ -37,13 +40,13 @@ class Gif extends HookConsumerWidget {
     final focusNode = useFocusNode();
     final searchFocusNode = useFocusNode();
 
-    final tenorTrending = Queries.useTenorGet(ref);
-    final giphyTrending = Queries.useGiphyGet(ref);
+    final tenorTrending = ref.watch(tenorFeaturedProvider);
+    final giphyTrending = ref.watch(giphyTrendingProvider);
 
     final text = useDebouncedState('');
 
-    final tenorSearch = Queries.useTenorSearch(ref, text.value);
-    final giphySearch = Queries.useGiphySearch(ref, text.value);
+    final tenorSearch = ref.watch(tenorSearchProvider);
+    final giphySearch = ref.watch(giphySearchProvider);
 
     final tenorPagesToStrings = useCallback(
       (List<TenorResponsePage> pages) => pages
@@ -65,22 +68,22 @@ class Gif extends HookConsumerWidget {
 
     final displayGifs = useMemoized(
         () => [
-              ...tenorPagesToStrings(tenorTrending.pages),
-              ...giphyPagesToStrings(giphyTrending.pages),
+              ...tenorPagesToStrings(tenorTrending.value?.pages ?? []),
+              ...giphyPagesToStrings(giphyTrending.value?.pages ?? []),
             ],
         [
-          tenorTrending.pages,
-          giphyTrending.pages,
+          tenorTrending.value?.pages,
+          giphyTrending.value?.pages,
         ]);
 
     final searchGifs = useMemoized(
         () => [
-              ...tenorPagesToStrings(tenorSearch.pages),
-              ...giphyPagesToStrings(giphySearch.pages),
+              ...tenorPagesToStrings(tenorSearch.value?.pages ?? []),
+              ...giphyPagesToStrings(giphySearch.value?.pages ?? []),
             ],
         [
-          tenorSearch.pages,
-          giphySearch.pages,
+          tenorSearch.value?.pages,
+          giphySearch.value?.pages,
         ]);
 
     final gifs =
@@ -92,9 +95,10 @@ class Gif extends HookConsumerWidget {
       if (text.value.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           controller.jumpTo(0);
-          await Future.wait(
-            [giphySearch.refreshAll(), tenorSearch.refreshAll()],
-          );
+          await Future.wait([
+            ref.read(giphySearchProvider.notifier).search(text.value),
+            ref.read(tenorSearchProvider.notifier).search(text.value),
+          ]);
         });
       }
       return null;
@@ -117,8 +121,10 @@ class Gif extends HookConsumerWidget {
         []);
 
     final isEverythingLoading = text.value.isEmpty || searchGifs.isEmpty
-        ? (!tenorTrending.hasPageData && !giphyTrending.hasPageData)
-        : (!tenorSearch.hasPageData && !giphySearch.hasPageData);
+        ? (!(tenorTrending.value?.hasPageData == true) &&
+            !(giphyTrending.value?.hasPageData == true))
+        : (!(tenorSearch.value?.hasPageData == true) &&
+            !(giphySearch.value?.hasPageData == true));
 
     return Column(
       children: [
@@ -191,18 +197,26 @@ class Gif extends HookConsumerWidget {
                     controller: controller,
                     onTouchEdge: () async {
                       if (text.value.isEmpty || searchGifs.isEmpty) {
-                        if (giphyTrending.hasNextPage) {
-                          await giphyTrending.fetchNext();
+                        if (giphyTrending.value?.hasNextPage == true) {
+                          await ref
+                              .read(giphyTrendingProvider.notifier)
+                              .fetchNext();
                         }
-                        if (tenorTrending.hasNextPage) {
-                          await tenorTrending.fetchNext();
+                        if (tenorTrending.value?.hasNextPage == true) {
+                          await ref
+                              .read(tenorFeaturedProvider.notifier)
+                              .fetchNext();
                         }
                       } else {
-                        if (giphySearch.hasNextPage) {
-                          await giphySearch.fetchNext();
+                        if (giphySearch.value?.hasNextPage == true) {
+                          await ref
+                              .read(giphySearchProvider.notifier)
+                              .fetchNext();
                         }
-                        if (tenorSearch.hasNextPage) {
-                          await tenorSearch.fetchNext();
+                        if (tenorSearch.value?.hasNextPage == true) {
+                          await ref
+                              .read(tenorSearchProvider.notifier)
+                              .fetchNext();
                         }
                       }
                     },

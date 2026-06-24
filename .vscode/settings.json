@@ -1,7 +1,8 @@
 {
   "svg.preview.background": "black",
   "cSpell.words": [
-    "Emojicon"
+    "Emojicon",
+    "flemozi"
   ],
   "dart.flutterSdkPath": ".fvm/versions/3.44.3"
 }

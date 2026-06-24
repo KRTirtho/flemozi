@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flemozi/collections/shortcuts.dart';
 import 'package:flemozi/models/shortcut_def.dart';
+import 'package:flemozi/services/preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/legacy.dart';
 import 'package:super_hot_key/super_hot_key.dart';
@@ -9,18 +11,13 @@ import 'package:super_hot_key/super_hot_key.dart';
 class ShortcutNotifier
     extends StateNotifier<Map<FlemoziShortcuts, FlemoziShortcutDef>> {
   final Ref ref;
-  Box box;
-  ShortcutNotifier(super.state, this.ref) : box = Hive.box('flemozi.config') {
-    final shortcuts = box.get('shortcuts') as Map?;
-    state = shortcuts?.map(
-          (key, value) => MapEntry(
-            FlemoziShortcuts.values[key],
-            FlemoziShortcutDef.fromJson(
-              Map.castFrom<dynamic, dynamic, String, dynamic>(value),
-            ),
-          ),
-        ) ??
-        state;
+
+  ShortcutNotifier(super.state, this.ref) {
+    final prefs = ref.read(preferencesProvider);
+    final saved = prefs.getShortcuts();
+    if (saved != null) {
+      super.state = saved;
+    }
   }
 
   final Map<FlemoziShortcuts, HotKey> _hotKeys = {};
@@ -75,9 +72,6 @@ class ShortcutNotifier
   @override
   set state(Map<FlemoziShortcuts, FlemoziShortcutDef> value) {
     super.state = value;
-    box.put(
-      'shortcuts',
-      value.map((key, value) => MapEntry(key.index, value.toJson())),
-    );
+    unawaited(ref.read(preferencesProvider).setShortcuts(value));
   }
 }

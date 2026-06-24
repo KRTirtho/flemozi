@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flemozi/api/api.dart';
@@ -6,16 +5,15 @@ import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flemozi/pages/root.dart';
 import 'package:flemozi/providers/shortcut.dart';
+import 'package:flemozi/services/preferences.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
@@ -53,14 +51,14 @@ Future<void> main(List<String> args) async {
     maximumSize: Size(720, 480),
   );
 
+  final preferencesService = await SharedPreferencesService.init();
+
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    final localStorage = await SharedPreferences.getInstance();
-    final rawSize = localStorage.getString('window_size');
-    final savedSize = rawSize != null ? json.decode(rawSize) : null;
-    final double? height = savedSize?["height"];
-    final double? width = savedSize?["width"];
-    if (height != null && width != null) {
-      await windowManager.setSize(Size(width, height));
+    final windowSize = preferencesService.getWindowSize();
+    if (windowSize != null) {
+      await windowManager.setSize(
+        Size(windowSize.width, windowSize.height),
+      );
     }
     await windowManager.setAsFrameless();
 
@@ -79,8 +77,14 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  await Hive.openBox('flemozi.config');
-  runApp(const ProviderScope(child: Flemozi()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        preferencesProvider.overrideWithValue(preferencesService),
+      ],
+      child: const Flemozi(),
+    ),
+  );
 }
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -110,19 +114,13 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
   @override
   void didChangeMetrics() async {
     super.didChangeMetrics();
-    final localStorage = await SharedPreferences.getInstance();
+    final prefs = ref.read(preferencesProvider);
     final size = await windowManager.getSize();
     final windowSameDimension =
         prevSize?.width == size.width && prevSize?.height == size.height;
 
     if (windowSameDimension) return;
-    localStorage.setString(
-      'window_size',
-      jsonEncode({
-        'width': size.width,
-        'height': size.height,
-      }),
-    );
+    await prefs.setWindowSize(size.width, size.height);
     prevSize = size;
   }
 
