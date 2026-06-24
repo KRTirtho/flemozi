@@ -3,6 +3,7 @@ import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/legacy.dart';
 import 'package:super_hot_key/super_hot_key.dart';
 
 class ShortcutNotifier
@@ -32,7 +33,7 @@ class ShortcutNotifier
     for (var shortcut in globalShortcuts) {
       final hotKey = await HotKey.create(
         definition: await state[shortcut]!.toHotKeyDefinition(),
-        callback: () {
+        onPressed: () {
           return shortcut.action(ref.read, context);
         },
       );
@@ -62,7 +63,7 @@ class ShortcutNotifier
       await _hotKeys[shortcutAction]?.dispose();
       final hotKey = await HotKey.create(
         definition: await keyDef.toHotKeyDefinition(),
-        callback: () {
+        onPressed: () {
           return shortcutAction.action(ref.read, context!);
         },
       );

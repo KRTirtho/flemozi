@@ -15,7 +15,4 @@ TenorResponsePage _$TenorResponsePageFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$TenorResponsePageToJson(TenorResponsePage instance) =>
-    <String, dynamic>{
-      'results': instance.results,
-      'next': instance.next,
-    };
+    <String, dynamic>{'results': instance.results, 'next': instance.next};

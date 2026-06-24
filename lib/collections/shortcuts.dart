@@ -4,7 +4,7 @@ import 'package:flemozi/pages/settings/settings.dart';
 import 'package:flemozi/utils/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/misc.dart';
 import 'package:window_manager/window_manager.dart';
 
 typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);

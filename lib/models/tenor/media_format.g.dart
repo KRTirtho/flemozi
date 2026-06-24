@@ -12,7 +12,7 @@ TenorMediaFormat _$TenorMediaFormatFromJson(Map<String, dynamic> json) =>
       duration: secondsToDuration(json['duration'] as num),
       preview: json['preview'] as String,
       dims: dimsFromJson(json['dims'] as List),
-      size: json['size'] as int,
+      size: (json['size'] as num).toInt(),
     );
 
 Map<String, dynamic> _$TenorMediaFormatToJson(TenorMediaFormat instance) =>

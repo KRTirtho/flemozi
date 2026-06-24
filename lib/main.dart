@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fl_query/fl_query.dart';
 import 'package:flemozi/api/api.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/models/shortcut_def.dart';
@@ -20,7 +19,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart' as window_size;
-import 'package:path_provider/path_provider.dart';
 
 Future<void> main(List<String> args) async {
   final isHeadless = args.contains("--headless");
@@ -81,12 +79,6 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  final appDataDir = await getApplicationSupportDirectory();
-
-  await QueryClient.initialize(
-    cachePrefix: 'flemoji',
-    cacheDir: appDataDir.path,
-  );
   await Hive.openBox('flemozi.config');
   runApp(const ProviderScope(child: Flemozi()));
 }
@@ -144,83 +136,81 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
       return null;
     }, const []);
 
-    return QueryClientProvider(
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        navigatorKey: navigatorKey,
-        theme: ThemeData.light(useMaterial3: true),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorSchemeSeed: SystemTheme.accentColor.accent,
-          splashFactory: NoSplash.splashFactory,
-          scaffoldBackgroundColor: Colors.transparent,
-          tabBarTheme: TabBarTheme(
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            indicator: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(5),
-                topRight: Radius.circular(5),
-              ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.dark,
+      navigatorKey: navigatorKey,
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorSchemeSeed: SystemTheme.accentColor.accent,
+        splashFactory: NoSplash.splashFactory,
+        scaffoldBackgroundColor: Colors.transparent,
+        tabBarTheme: TabBarThemeData(
+          indicatorSize: TabBarIndicatorSize.tab,
+          dividerColor: Colors.transparent,
+          indicator: BoxDecoration(
+            color: Colors.grey[850],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(5),
+              topRight: Radius.circular(5),
             ),
           ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.grey[850]?.withOpacity(.5),
-          ),
         ),
-        builder: (context, child) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return HookBuilder(builder: (context) {
-            final appShortcuts = useFuture(useMemoized(
-              () => Future.wait(shortcuts.entries
-                  .where((entry) => entry.key.type == ShortcutType.application)
-                  .map(
-                (entry) async {
-                  return MapEntry(
-                    await entry.value.toSingleActivator(),
-                    () => entry.key.action(
-                      ref.read,
-                      navigatorKey.currentContext ?? context,
-                    ),
-                  );
-                },
-              )),
-              [shortcuts],
-            ));
-
-            return CallbackShortcuts(
-              bindings: {
-                ...Map.fromEntries(appShortcuts.data ?? []),
-                LogicalKeySet(LogicalKeyboardKey.escape): () =>
-                    CloseWindowAction().invoke(const CloseWindowIntent())
-              },
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.grey[900]!.withOpacity(.5)
-                      : Colors.white60,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: DragToResizeArea(child: child!),
-              ),
-            );
-          });
-        },
-        home: const RootPage(),
-        shortcuts: {
-          ...WidgetsApp.defaultShortcuts,
-          LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
-        },
-        actions: {
-          ...WidgetsApp.defaultActions,
-          CloseWindowIntent: CloseWindowAction(),
-        },
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[850]?.withOpacity(.5),
+        ),
       ),
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return HookBuilder(builder: (context) {
+          final appShortcuts = useFuture(useMemoized(
+            () => Future.wait(shortcuts.entries
+                .where((entry) => entry.key.type == ShortcutType.application)
+                .map(
+              (entry) async {
+                return MapEntry(
+                  await entry.value.toSingleActivator(),
+                  () => entry.key.action(
+                    ref.read,
+                    navigatorKey.currentContext ?? context,
+                  ),
+                );
+              },
+            )),
+            [shortcuts],
+          ));
+    
+          return CallbackShortcuts(
+            bindings: {
+              ...Map.fromEntries(appShortcuts.data ?? []),
+              LogicalKeySet(LogicalKeyboardKey.escape): () =>
+                  CloseWindowAction().invoke(const CloseWindowIntent())
+            },
+            child: Container(
+              margin: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.grey[900]!.withOpacity(.5)
+                    : Colors.white60,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: DragToResizeArea(child: child!),
+            ),
+          );
+        });
+      },
+      home: const RootPage(),
+      shortcuts: {
+        ...WidgetsApp.defaultShortcuts,
+        LogicalKeySet(LogicalKeyboardKey.escape): const CloseWindowIntent(),
+      },
+      actions: {
+        ...WidgetsApp.defaultActions,
+        CloseWindowIntent: CloseWindowAction(),
+      },
     );
   }
 }
