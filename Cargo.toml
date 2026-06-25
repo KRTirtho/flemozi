@@ -18,3 +18,5 @@ global-hotkey = "0.8"
 tray-icon = { version = "0.24", default-features = false }
 arboard = { version = "3", default-features = false }
 image = "0.25"
+windows = { version = "0.62.2", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
+raw-window-handle = "0.6.2"

@@ -44,6 +44,8 @@ pub struct State {
     pub scroll_id: widget::Id,
     pub tab: Tab,
     pub window_id: Option<window::Id>,
+    pub our_hwnd: Option<isize>,
+    pub last_foreground: Option<isize>,
 }
 
 #[derive(Debug, Clone)]
@@ -60,6 +62,9 @@ pub enum Message {
     HotkeyPressed(GlobalHotKeyEvent),
     MenuActivated(MenuEvent),
     Init(Option<window::Id>),
+    Setup(isize),
+    DoType(isize, String),
+    Noop,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -86,6 +91,8 @@ impl Flemozi {
             scroll_id: "grid-scroll".into(),
             tab: Tab::Emojis,
             window_id: None,
+            our_hwnd: None,
+            last_foreground: None,
         };
 
         let cmd = Command::batch([
@@ -106,7 +113,28 @@ impl Flemozi {
         match message {
             Message::Init(id) => {
                 state.window_id = id;
-                let cmds: Vec<Command<Message>> = Vec::new();
+                if let Some(wid) = id {
+                    return window::run(wid, |w| {
+                        let hwnd = w
+                            .window_handle()
+                            .ok()
+                            .and_then(|h| match h.as_raw() {
+                                raw_window_handle::RawWindowHandle::Win32(h) => {
+                                    Some(h.hwnd.get() as isize)
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or(0);
+                        Message::Setup(hwnd)
+                    });
+                }
+                Command::none()
+            }
+            Message::Setup(hwnd) => {
+                state.our_hwnd = Some(hwnd);
+                if hwnd != 0 {
+                    unsafe { crate::win32::set_window_style(hwnd); }
+                }
 
                 let manager = GlobalHotKeyManager::new();
                 if let Ok(manager) = manager {
@@ -135,7 +163,7 @@ impl Flemozi {
                     }
                 }
 
-                Command::batch(cmds)
+                Command::none()
             }
             Message::TabSelected(tab) => {
                 state.tab = tab;
@@ -156,6 +184,14 @@ impl Flemozi {
                 }
             }
             Message::HotkeyPressed(_event) => {
+                state.last_foreground = Some(crate::win32::foreground_window());
+                if let Some(hwnd) = state.our_hwnd.filter(|&h| h != 0) {
+                    return Command::future(async move {
+                        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                        unsafe { crate::win32::show_no_activate(hwnd); }
+                    })
+                    .map(|_| Message::Noop);
+                }
                 if let Some(id) = state.window_id {
                     Command::batch([
                         window::set_mode::<Message>(id, window::Mode::Windowed),
@@ -173,6 +209,14 @@ impl Flemozi {
                         Command::none()
                     }
                 } else if event.id().0 == "show-window" {
+                    state.last_foreground = Some(crate::win32::foreground_window());
+                    if let Some(hwnd) = state.our_hwnd.filter(|&h| h != 0) {
+                        return Command::future(async move {
+                            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                            unsafe { crate::win32::show_no_activate(hwnd); }
+                        })
+                        .map(|_| Message::Noop);
+                    }
                     if let Some(id) = state.window_id {
                         Command::batch([
                             window::set_mode::<Message>(id, window::Mode::Windowed),
@@ -184,6 +228,14 @@ impl Flemozi {
                 } else {
                     Command::none()
                 }
+            }
+            Message::DoType(hwnd, emoji) => {
+                if hwnd != 0 {
+                    unsafe { crate::win32::paste_emoji(hwnd, &emoji); }
+                } else {
+                    return clipboard::write::<Message>(emoji);
+                }
+                Command::none()
             }
             Message::SearchChanged(query) => {
                 state.query = query;
@@ -226,6 +278,7 @@ impl Flemozi {
                 state.visible.insert(i);
                 Command::none()
             }
+            Message::Noop => Command::none(),
         }
     }
 
@@ -375,12 +428,18 @@ impl State {
         let emoji = entry.emoji.to_owned();
         self.copied = Some(emoji.clone());
 
-        let mut cmds = vec![clipboard::write::<Message>(emoji)];
+        let hwnd = self.last_foreground.unwrap_or(0);
 
         if let Some(id) = self.window_id {
-            cmds.push(window::set_mode::<Message>(id, window::Mode::Hidden));
+            Command::batch([
+                window::set_mode::<Message>(id, window::Mode::Hidden),
+                Command::future(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                    Message::DoType(hwnd, emoji)
+                }),
+            ])
+        } else {
+            clipboard::write::<Message>(emoji)
         }
-
-        Command::batch(cmds)
     }
 }

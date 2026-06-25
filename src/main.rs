@@ -4,6 +4,7 @@ mod emoji;
 mod search;
 mod twemoji_stems;
 mod ui;
+mod win32;
 
 use app::Flemozi;
 

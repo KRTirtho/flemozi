@@ -1064,9 +1064,11 @@ dependencies = [
  "global-hotkey",
  "iced",
  "image",
+ "raw-window-handle",
  "tokio",
  "tracing-subscriber",
  "tray-icon",
+ "windows 0.62.2",
 ]
 
 [[package]]
