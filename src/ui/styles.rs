@@ -1,5 +1,5 @@
-use iced::widget::{container, text};
-use iced::{Background, Color, Theme};
+use iced::widget::{button, container, text};
+use iced::{Background, Color, Theme, border};
 
 pub fn subtle(theme: &Theme) -> text::Style {
     text::Style {
@@ -21,5 +21,29 @@ pub fn preview_style(theme: &Theme) -> container::Style {
         border: iced::border::rounded(8),
         text_color: Some(pair.text),
         ..container::Style::default()
+    }
+}
+
+pub fn sidebar_active_style(theme: &Theme, _status: button::Status) -> button::Style {
+    let palette = theme.extended_palette().background;
+    button::Style {
+        background: Some(Background::Color(palette.weak.color)),
+        text_color: palette.weak.text,
+        ..button::Style::default()
+    }
+}
+
+pub fn sidebar_inactive_style(theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Some(Background::Color(
+            theme.palette().background.scale_alpha(0.3),
+        )),
+        _ => None,
+    };
+    button::Style {
+        background: bg,
+        border: border::rounded(0),
+        text_color: theme.palette().text,
+        ..button::Style::default()
     }
 }

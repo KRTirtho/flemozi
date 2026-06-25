@@ -1,9 +1,16 @@
 use std::collections::HashSet;
+use std::sync::Mutex;
 
 use iced::event;
 use iced::keyboard;
+use iced::mouse;
+use iced::stream;
 use iced::widget::{self, operation, scrollable};
-use iced::{clipboard, Element, Subscription, Task as Command};
+use iced::{clipboard, window, Element, Point, Subscription, Task as Command};
+use global_hotkey::hotkey::{Code, HotKey, Modifiers};
+use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager};
+use tray_icon::menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
+use tray_icon::TrayIconBuilder;
 
 use crate::assets::emojis::EMOJIS;
 use crate::emoji::EmojiEntry;
@@ -13,12 +20,19 @@ use crate::ui::main_view;
 pub(crate) const COLUMNS: usize = 10;
 pub(crate) const SPACING: f32 = 4.0;
 
-#[derive(Debug)]
+static LAST_CURSOR: Mutex<Option<Point>> = Mutex::new(None);
+static LOGO_BYTES: &[u8] = include_bytes!("../assets/logo.png");
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tab {
+    Emojis,
+    Settings,
+}
+
 pub enum Flemozi {
     Loaded(State),
 }
 
-#[derive(Debug, Clone)]
 pub struct State {
     pub query: String,
     pub entries: Vec<EmojiEntry>,
@@ -28,6 +42,8 @@ pub struct State {
     pub visible: HashSet<usize>,
     pub search_id: widget::Id,
     pub scroll_id: widget::Id,
+    pub tab: Tab,
+    pub window_id: Option<window::Id>,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +54,12 @@ pub enum Message {
     CopySelected,
     ClearSearch,
     Shown(usize),
+    TabSelected(Tab),
+    TitleBarDrag,
+    TitleBarClose,
+    HotkeyPressed(GlobalHotKeyEvent),
+    MenuActivated(MenuEvent),
+    Init(Option<window::Id>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -62,9 +84,16 @@ impl Flemozi {
             visible: HashSet::new(),
             search_id: "search".into(),
             scroll_id: "grid-scroll".into(),
+            tab: Tab::Emojis,
+            window_id: None,
         };
 
-        (Self::Loaded(state), operation::focus("search"))
+        let cmd = Command::batch([
+            operation::focus("search"),
+            window::latest().map(Message::Init),
+        ]);
+
+        (Self::Loaded(state), cmd)
     }
 
     pub fn title(&self) -> String {
@@ -75,6 +104,87 @@ impl Flemozi {
         let Flemozi::Loaded(state) = self;
 
         match message {
+            Message::Init(id) => {
+                state.window_id = id;
+                let cmds: Vec<Command<Message>> = Vec::new();
+
+                let manager = GlobalHotKeyManager::new();
+                if let Ok(manager) = manager {
+                    let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Period);
+                    let _ = manager.register(hotkey);
+                    std::mem::forget(manager);
+                }
+
+                let icon = {
+                    let img = image::load_from_memory(LOGO_BYTES).expect("Failed to load logo");
+                    let rgba = img.to_rgba8();
+                    tray_icon::Icon::from_rgba(rgba.into_raw(), img.width(), img.height())
+                        .expect("Failed to create tray icon")
+                };
+
+                let show = MenuItem::with_id(MenuId::new("show-window"), "Show Window", true, None);
+                let exit = MenuItem::with_id(MenuId::new("exit"), "Exit", true, None);
+                if let Ok(menu) = Menu::with_items(&[&show, &PredefinedMenuItem::separator(), &exit]) {
+                    if let Ok(tray) = TrayIconBuilder::new()
+                        .with_icon(icon)
+                        .with_tooltip("Flemozi")
+                        .with_menu(Box::new(menu))
+                        .build()
+                    {
+                        std::mem::forget(tray);
+                    }
+                }
+
+                Command::batch(cmds)
+            }
+            Message::TabSelected(tab) => {
+                state.tab = tab;
+                Command::none()
+            }
+            Message::TitleBarDrag => {
+                if let Some(id) = state.window_id {
+                    window::drag::<Message>(id)
+                } else {
+                    Command::none()
+                }
+            }
+            Message::TitleBarClose => {
+                if let Some(id) = state.window_id {
+                    window::set_mode::<Message>(id, window::Mode::Hidden)
+                } else {
+                    Command::none()
+                }
+            }
+            Message::HotkeyPressed(_event) => {
+                if let Some(id) = state.window_id {
+                    Command::batch([
+                        window::set_mode::<Message>(id, window::Mode::Windowed),
+                        window::gain_focus::<Message>(id),
+                    ])
+                } else {
+                    Command::none()
+                }
+            }
+            Message::MenuActivated(event) => {
+                if event.id().0 == "exit" {
+                    if let Some(id) = state.window_id {
+                        window::close::<Message>(id)
+                    } else {
+                        Command::none()
+                    }
+                } else if event.id().0 == "show-window" {
+                    if let Some(id) = state.window_id {
+                        Command::batch([
+                            window::set_mode::<Message>(id, window::Mode::Windowed),
+                            window::gain_focus::<Message>(id),
+                        ])
+                    } else {
+                        Command::none()
+                    }
+                } else {
+                    Command::none()
+                }
+            }
             Message::SearchChanged(query) => {
                 state.query = query;
                 state.filtered = filter(&state.entries, &state.query);
@@ -127,7 +237,7 @@ impl Flemozi {
     pub fn subscription(&self) -> Subscription<Message> {
         use keyboard::key;
 
-        event::listen_raw(|event, _status, _window| {
+        let keyboard = event::listen_raw(|event, _status, _window| {
             let event::Event::Keyboard(event) = event else {
                 return None;
             };
@@ -149,8 +259,56 @@ impl Flemozi {
                 key::Named::Escape => Some(Message::ClearSearch),
                 _ => None,
             }
-        })
+        });
+
+        Subscription::batch([
+            keyboard,
+            window::close_requests().map(|_id| Message::TitleBarClose),
+            titlebar_drag_subscription(),
+            Subscription::run(external_events),
+        ])
     }
+}
+
+fn cursor_pos() -> Option<Point> {
+    LAST_CURSOR.lock().ok().and_then(|guard| *guard)
+}
+
+fn titlebar_drag_subscription() -> Subscription<Message> {
+    event::listen_raw(|event, _status, _window| match event {
+        iced::Event::Mouse(mouse::Event::CursorMoved { position }) => {
+            if let Ok(mut pos) = LAST_CURSOR.lock() {
+                *pos = Some(position);
+            }
+            None
+        }
+        iced::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
+            if let Some(pos) = cursor_pos() {
+                if pos.y > 0.0 && pos.y < 22.0 && pos.x < 460.0 {
+                    return Some(Message::TitleBarDrag);
+                }
+            }
+            None
+        }
+        _ => None,
+    })
+}
+
+fn external_events() -> impl iced::futures::Stream<Item = Message> {
+    stream::channel(64, async move |mut output| {
+        let hotkey_rx = GlobalHotKeyEvent::receiver();
+        let menu_rx = MenuEvent::receiver();
+
+        loop {
+            while let Ok(event) = hotkey_rx.try_recv() {
+                let _ = output.try_send(Message::HotkeyPressed(event));
+            }
+            while let Ok(event) = menu_rx.try_recv() {
+                let _ = output.try_send(Message::MenuActivated(event));
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
+    })
 }
 
 impl State {
@@ -193,7 +351,9 @@ impl State {
             .unwrap_or(0);
 
         let row = pos / COLUMNS;
-        let cell_width = (500.0 - 24.0 - (COLUMNS - 1) as f32 * SPACING) / COLUMNS as f32;
+        let content_width = 500.0 - 42.0 - 24.0;
+        let gaps = (COLUMNS - 1) as f32 * SPACING;
+        let cell_width = (content_width - gaps) / COLUMNS as f32;
         let row_height = cell_width + SPACING;
         let y = row as f32 * row_height;
 
@@ -215,6 +375,12 @@ impl State {
         let emoji = entry.emoji.to_owned();
         self.copied = Some(emoji.clone());
 
-        clipboard::write::<Message>(emoji)
+        let mut cmds = vec![clipboard::write::<Message>(emoji)];
+
+        if let Some(id) = self.window_id {
+            cmds.push(window::set_mode::<Message>(id, window::Mode::Hidden));
+        }
+
+        Command::batch(cmds)
     }
 }

@@ -14,3 +14,7 @@ iced = { version = "0.14", features = [
 ] }
 tracing-subscriber = "0.3"
 tokio = { version = "1", features = ["fs", "time"] }
+global-hotkey = "0.8"
+tray-icon = { version = "0.24", default-features = false }
+arboard = { version = "3", default-features = false }
+image = "0.25"
