@@ -3,6 +3,8 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include <flutter/method_channel.h>
+#include <flutter/standard_method_codec.h>
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -26,6 +28,28 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+
+  // --- ADD THIS CODE BOX FOR NATIVE HWND EXTRACTION ---
+  auto method_channel = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+      flutter_controller_->engine()->messenger(), 
+      "com.flemozi.app/native_window", // Channel name
+      &flutter::StandardMethodCodec::GetInstance()
+  );
+
+  // Read the internal HWND address and cast it down to an int64_t representation
+  int64_t hwnd_address = reinterpret_cast<int64_t>(this->GetHandle());
+
+  method_channel->SetMethodCallHandler(
+      [hwnd_address](const flutter::MethodCall<flutter::EncodableValue>& call,
+                     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        if (call.method_name() == "getNativeWindowHandle") {
+            result->Success(flutter::EncodableValue(hwnd_address));
+        } else {
+            result->NotImplemented();
+        }
+      }
+  );
+  // -----------------------------------------------------
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();

@@ -4,6 +4,7 @@ import 'package:flemozi/api/api.dart';
 import 'package:flemozi/intents/close_window.dart';
 import 'package:flemozi/models/shortcut_def.dart';
 import 'package:flemozi/pages/root.dart';
+import 'package:flemozi/providers/native_window_information.dart';
 import 'package:flemozi/providers/shortcut.dart';
 import 'package:flemozi/services/preferences.dart';
 import 'package:flemozi/src/rust/frb_generated.dart';
@@ -57,13 +58,12 @@ Future<void> main(List<String> args) async {
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     final windowSize = preferencesService.getWindowSize();
     if (windowSize != null) {
-      await windowManager.setSize(
-        Size(windowSize.width, windowSize.height),
-      );
+      await windowManager.setSize(Size(windowSize.width, windowSize.height));
     }
     await windowManager.setAsFrameless();
 
     if (isHeadless) return;
+
     await windowManager.show();
     await windowManager.focus();
   });
@@ -82,9 +82,7 @@ Future<void> main(List<String> args) async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        preferencesProvider.overrideWithValue(preferencesService),
-      ],
+      overrides: [preferencesProvider.overrideWithValue(preferencesService)],
       child: const Flemozi(),
     ),
   );
@@ -137,6 +135,8 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
       return null;
     }, const []);
 
+    ref.listen(nativeWindowInformationProvider, (previous, next) {});
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
@@ -166,42 +166,48 @@ class _FlemoziState extends ConsumerState<Flemozi> with WidgetsBindingObserver {
       ),
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return HookBuilder(builder: (context) {
-          final appShortcuts = useFuture(useMemoized(
-            () => Future.wait(shortcuts.entries
-                .where((entry) => entry.key.type == ShortcutType.application)
-                .map(
-              (entry) async {
-                return MapEntry(
-                  await entry.value.toSingleActivator(),
-                  () => entry.key.action(
-                    ref.read,
-                    navigatorKey.currentContext ?? context,
-                  ),
-                );
-              },
-            )),
-            [shortcuts],
-          ));
-
-          return CallbackShortcuts(
-            bindings: {
-              ...Map.fromEntries(appShortcuts.data ?? []),
-              LogicalKeySet(LogicalKeyboardKey.escape): () =>
-                  CloseWindowAction().invoke(const CloseWindowIntent())
-            },
-            child: Container(
-              margin: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.grey[900]!.withOpacity(.5)
-                    : Colors.white60,
-                borderRadius: BorderRadius.circular(10),
+        return HookBuilder(
+          builder: (context) {
+            final appShortcuts = useFuture(
+              useMemoized(
+                () => Future.wait(
+                  shortcuts.entries
+                      .where(
+                        (entry) => entry.key.type == ShortcutType.application,
+                      )
+                      .map((entry) async {
+                        return MapEntry(
+                          await entry.value.toSingleActivator(),
+                          () => entry.key.action(
+                            ref.read,
+                            navigatorKey.currentContext ?? context,
+                          ),
+                        );
+                      }),
+                ),
+                [shortcuts],
               ),
-              child: DragToResizeArea(child: child!),
-            ),
-          );
-        });
+            );
+
+            return CallbackShortcuts(
+              bindings: {
+                ...Map.fromEntries(appShortcuts.data ?? []),
+                LogicalKeySet(LogicalKeyboardKey.escape): () =>
+                    CloseWindowAction().invoke(const CloseWindowIntent()),
+              },
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.grey[900]!.withOpacity(.5)
+                      : Colors.white60,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DragToResizeArea(child: child!),
+              ),
+            );
+          },
+        );
       },
       home: const RootPage(),
       shortcuts: {
