@@ -6,40 +6,54 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-
-            // These functions are ignored because they are not marked as `pub`: `inject_windows_targeted`
+// These functions are ignored because they are not marked as `pub`: `inject_windows_targeted`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
 
+/// This function will be exposed to Dart via flutter_rust_bridge
+Future<void> injectEmoji({
+  required String emoji,
+  required PlatformInt64 targetHwndRaw,
+}) => RustLib.instance.api.crateApiInjectorInjectEmoji(
+  emoji: emoji,
+  targetHwndRaw: targetHwndRaw,
+);
 
-            /// This function will be exposed to Dart via flutter_rust_bridge
-Future<void>  injectEmoji({required String emoji , required PlatformInt64 targetHwndRaw }) => RustLib.instance.api.crateApiInjectorInjectEmoji(emoji: emoji, targetHwndRaw: targetHwndRaw);
+Stream<CaretInfo> startCaretMonitor({required PlatformInt64 flutterHwndRaw}) =>
+    RustLib.instance.api.crateApiInjectorStartCaretMonitor(
+      flutterHwndRaw: flutterHwndRaw,
+    );
 
-Stream<CaretInfo>  startCaretMonitor({required PlatformInt64 flutterHwndRaw }) => RustLib.instance.api.crateApiInjectorStartCaretMonitor(flutterHwndRaw: flutterHwndRaw);
+class CaretInfo {
+  final PlatformInt64 hwnd;
+  final int left;
+  final int top;
+  final int right;
+  final int bottom;
 
-            class CaretInfo  {
-                final PlatformInt64 hwnd;
-final int left;
-final int top;
-final int right;
-final int bottom;
+  const CaretInfo({
+    required this.hwnd,
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  });
 
-                const CaretInfo({required this.hwnd ,required this.left ,required this.top ,required this.right ,required this.bottom ,});
+  @override
+  int get hashCode =>
+      hwnd.hashCode ^
+      left.hashCode ^
+      top.hashCode ^
+      right.hashCode ^
+      bottom.hashCode;
 
-                
-                
-
-                
-        @override
-        int get hashCode => hwnd.hashCode^left.hashCode^top.hashCode^right.hashCode^bottom.hashCode;
-        
-
-                
-        @override
-        bool operator ==(Object other) =>
-            identical(this, other) ||
-            other is CaretInfo &&
-                runtimeType == other.runtimeType
-                && hwnd == other.hwnd&& left == other.left&& top == other.top&& right == other.right&& bottom == other.bottom;
-        
-            }
-            
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CaretInfo &&
+          runtimeType == other.runtimeType &&
+          hwnd == other.hwnd &&
+          left == other.left &&
+          top == other.top &&
+          right == other.right &&
+          bottom == other.bottom;
+}
