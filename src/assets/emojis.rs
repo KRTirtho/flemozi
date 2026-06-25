@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub struct EmojiType {
     pub emoji: &'static str,
     pub description: &'static str,
@@ -9,7 +10,7 @@ pub struct EmojiType {
     pub skin_tones: bool,
 }
 
-const EMOJIS: &[EmojiType] = &[
+pub const EMOJIS: &[EmojiType] = &[
   EmojiType {
   emoji: "😀",
   description: "grinning face",
