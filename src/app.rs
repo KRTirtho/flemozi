@@ -16,6 +16,7 @@ use crate::assets::emojis::EMOJIS;
 use crate::emoji::EmojiEntry;
 use crate::search::filter;
 use crate::ui::main_view;
+use crate::win32::HookKey;
 
 pub(crate) const COLUMNS: usize = 10;
 pub(crate) const SPACING: f32 = 4.0;
@@ -63,7 +64,8 @@ pub enum Message {
     MenuActivated(MenuEvent),
     Init(Option<window::Id>),
     Setup(isize),
-    DoType(isize, String),
+    DoType(String),
+    HookKeyEvent(HookKey),
     Noop,
 }
 
@@ -136,6 +138,8 @@ impl Flemozi {
                     unsafe { crate::win32::set_window_style(hwnd); }
                 }
 
+                crate::win32::init_keyboard_hook();
+
                 let manager = GlobalHotKeyManager::new();
                 if let Ok(manager) = manager {
                     let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Period);
@@ -177,6 +181,7 @@ impl Flemozi {
                 }
             }
             Message::TitleBarClose => {
+                crate::win32::set_hook_active(false);
                 if let Some(id) = state.window_id {
                     window::set_mode::<Message>(id, window::Mode::Hidden)
                 } else {
@@ -185,6 +190,7 @@ impl Flemozi {
             }
             Message::HotkeyPressed(_event) => {
                 state.last_foreground = Some(crate::win32::foreground_window());
+                crate::win32::set_hook_active(true);
                 if let Some(hwnd) = state.our_hwnd.filter(|&h| h != 0) {
                     return Command::future(async move {
                         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
@@ -193,10 +199,7 @@ impl Flemozi {
                     .map(|_| Message::Noop);
                 }
                 if let Some(id) = state.window_id {
-                    Command::batch([
-                        window::set_mode::<Message>(id, window::Mode::Windowed),
-                        window::gain_focus::<Message>(id),
-                    ])
+                    window::set_mode::<Message>(id, window::Mode::Windowed)
                 } else {
                     Command::none()
                 }
@@ -210,6 +213,7 @@ impl Flemozi {
                     }
                 } else if event.id().0 == "show-window" {
                     state.last_foreground = Some(crate::win32::foreground_window());
+                    crate::win32::set_hook_active(true);
                     if let Some(hwnd) = state.our_hwnd.filter(|&h| h != 0) {
                         return Command::future(async move {
                             tokio::time::sleep(std::time::Duration::from_millis(20)).await;
@@ -218,10 +222,7 @@ impl Flemozi {
                         .map(|_| Message::Noop);
                     }
                     if let Some(id) = state.window_id {
-                        Command::batch([
-                            window::set_mode::<Message>(id, window::Mode::Windowed),
-                            window::gain_focus::<Message>(id),
-                        ])
+                        window::set_mode::<Message>(id, window::Mode::Windowed)
                     } else {
                         Command::none()
                     }
@@ -229,12 +230,8 @@ impl Flemozi {
                     Command::none()
                 }
             }
-            Message::DoType(hwnd, emoji) => {
-                if hwnd != 0 {
-                    unsafe { crate::win32::paste_emoji(hwnd, &emoji); }
-                } else {
-                    return clipboard::write::<Message>(emoji);
-                }
+            Message::DoType(emoji) => {
+                unsafe { crate::win32::paste_emoji(&emoji); }
                 Command::none()
             }
             Message::SearchChanged(query) => {
@@ -278,6 +275,73 @@ impl Flemozi {
                 state.visible.insert(i);
                 Command::none()
             }
+            Message::HookKeyEvent(key) => match key {
+                HookKey::Char(ch) => {
+                    state.query.push(ch);
+                    state.filtered = filter(&state.entries, &state.query);
+                    state.selected = state.filtered.first().copied().unwrap_or(0);
+                    operation::scroll_to(
+                        state.scroll_id.clone(),
+                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                    )
+                }
+                HookKey::Backspace => {
+                    state.query.pop();
+                    state.filtered = filter(&state.entries, &state.query);
+                    state.selected = state.filtered.first().copied().unwrap_or(0);
+                    operation::scroll_to(
+                        state.scroll_id.clone(),
+                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                    )
+                }
+                HookKey::Up => {
+                    if state.move_selection(Move::Up) {
+                        state.scroll_to_selected()
+                    } else {
+                        Command::none()
+                    }
+                }
+                HookKey::Down => {
+                    if state.move_selection(Move::Down) {
+                        state.scroll_to_selected()
+                    } else {
+                        Command::none()
+                    }
+                }
+                HookKey::Left => {
+                    state.move_selection(Move::Left);
+                    Command::none()
+                }
+                HookKey::Right => {
+                    state.move_selection(Move::Right);
+                    Command::none()
+                }
+                HookKey::Enter => {
+                    crate::win32::set_hook_active(false);
+                    state.copy()
+                }
+                HookKey::Escape => {
+                    if state.query.is_empty() {
+                        crate::win32::set_hook_active(false);
+                        if let Some(id) = state.window_id {
+                            window::set_mode::<Message>(id, window::Mode::Hidden)
+                        } else {
+                            Command::none()
+                        }
+                    } else {
+                        state.query.clear();
+                        state.filtered = (0..state.entries.len()).collect();
+                        state.selected = state.filtered.first().copied().unwrap_or(0);
+                        Command::batch([
+                            operation::scroll_to(
+                                state.scroll_id.clone(),
+                                scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                            ),
+                            operation::focus(state.search_id.clone()),
+                        ])
+                    }
+                }
+            },
             Message::Noop => Command::none(),
         }
     }
@@ -359,7 +423,10 @@ fn external_events() -> impl iced::futures::Stream<Item = Message> {
             while let Ok(event) = menu_rx.try_recv() {
                 let _ = output.try_send(Message::MenuActivated(event));
             }
-            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            while let Some(key) = crate::win32::try_recv_hook_key() {
+                let _ = output.try_send(Message::HookKeyEvent(key));
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(4)).await;
         }
     })
 }
@@ -428,14 +495,11 @@ impl State {
         let emoji = entry.emoji.to_owned();
         self.copied = Some(emoji.clone());
 
-        let hwnd = self.last_foreground.unwrap_or(0);
-
         if let Some(id) = self.window_id {
             Command::batch([
                 window::set_mode::<Message>(id, window::Mode::Hidden),
                 Command::future(async move {
-                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-                    Message::DoType(hwnd, emoji)
+                    Message::DoType(emoji)
                 }),
             ])
         } else {
