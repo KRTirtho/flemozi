@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use iced::event;
 use iced::keyboard;
 use iced::widget::{self, operation, scrollable};
 use iced::{clipboard, Element, Subscription, Task as Command};
@@ -37,7 +38,6 @@ pub enum Message {
     CopySelected,
     ClearSearch,
     Shown(usize),
-    Hidden(usize),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -79,8 +79,10 @@ impl Flemozi {
                 state.query = query;
                 state.filtered = filter(&state.entries, &state.query);
                 state.selected = state.filtered.first().copied().unwrap_or(0);
-                state.visible.clear();
-                Command::none()
+                operation::scroll_to(
+                    state.scroll_id.clone(),
+                    scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                )
             }
             Message::Selected(i) => {
                 if state.filtered.contains(&i) {
@@ -91,23 +93,27 @@ impl Flemozi {
                 }
             }
             Message::MoveSelection(mv) => {
-                state.move_selection(mv);
-                state.scroll_to_selected()
+                if state.move_selection(mv) {
+                    state.scroll_to_selected()
+                } else {
+                    Command::none()
+                }
             }
             Message::CopySelected => state.copy(),
             Message::ClearSearch => {
                 state.query.clear();
                 state.filtered = (0..state.entries.len()).collect();
                 state.selected = state.filtered.first().copied().unwrap_or(0);
-                state.visible.clear();
-                operation::focus(state.search_id.clone())
+                Command::batch([
+                    operation::scroll_to(
+                        state.scroll_id.clone(),
+                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                    ),
+                    operation::focus(state.search_id.clone()),
+                ])
             }
             Message::Shown(i) => {
                 state.visible.insert(i);
-                Command::none()
-            }
-            Message::Hidden(i) => {
-                state.visible.remove(&i);
                 Command::none()
             }
         }
@@ -121,11 +127,20 @@ impl Flemozi {
     pub fn subscription(&self) -> Subscription<Message> {
         use keyboard::key;
 
-        keyboard::listen().filter_map(|event| match event {
-            keyboard::Event::KeyPressed {
+        event::listen_raw(|event, _status, _window| {
+            let event::Event::Keyboard(event) = event else {
+                return None;
+            };
+
+            let keyboard::Event::KeyPressed {
                 key: keyboard::Key::Named(key),
                 ..
-            } => match key {
+            } = event
+            else {
+                return None;
+            };
+
+            match key {
                 key::Named::ArrowUp => Some(Message::MoveSelection(Move::Up)),
                 key::Named::ArrowDown => Some(Message::MoveSelection(Move::Down)),
                 key::Named::ArrowLeft => Some(Message::MoveSelection(Move::Left)),
@@ -133,16 +148,15 @@ impl Flemozi {
                 key::Named::Enter => Some(Message::CopySelected),
                 key::Named::Escape => Some(Message::ClearSearch),
                 _ => None,
-            },
-            _ => None,
+            }
         })
     }
 }
 
 impl State {
-    fn move_selection(&mut self, mv: Move) {
+    fn move_selection(&mut self, mv: Move) -> bool {
         if self.filtered.is_empty() {
-            return;
+            return false;
         }
 
         let pos = self
@@ -159,7 +173,12 @@ impl State {
             Move::Right => (pos + 1).min(len - 1),
         };
 
+        let old_row = pos / COLUMNS;
+        let new_row = next / COLUMNS;
+
         self.selected = self.filtered[next];
+
+        old_row != new_row
     }
 
     fn scroll_to_selected(&self) -> Command<Message> {
@@ -174,8 +193,9 @@ impl State {
             .unwrap_or(0);
 
         let row = pos / COLUMNS;
-        let cell_with_spacing = 48.0 + SPACING;
-        let y = row as f32 * cell_with_spacing;
+        let cell_width = (500.0 - 24.0 - (COLUMNS - 1) as f32 * SPACING) / COLUMNS as f32;
+        let row_height = cell_width + SPACING;
+        let y = row as f32 * row_height;
 
         operation::scroll_to(
             self.scroll_id.clone(),
