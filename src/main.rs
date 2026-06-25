@@ -12,6 +12,8 @@ use iced::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+mod assets;
+
 pub fn main() -> iced::Result {
     tracing_subscriber::fmt::init();
 
