@@ -1,34 +1,26 @@
 #[cfg(target_os = "windows")]
 use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(target_os = "windows")]
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, channel};
 #[cfg(target_os = "windows")]
 use std::sync::{Mutex, OnceLock};
 
 #[cfg(target_os = "windows")]
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
+#[cfg(target_os = "windows")]
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT,
-    KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP, VIRTUAL_KEY,
-    GetKeyState,
-    VK_BACK, VK_RETURN, VK_ESCAPE, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN,
-    VK_SHIFT, VK_CAPITAL,
-    VK_SPACE,
+    GetKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
+    SendInput, VIRTUAL_KEY, VK_BACK, VK_CAPITAL, VK_DOWN, VK_ESCAPE, VK_LEFT, VK_RETURN, VK_RIGHT,
+    VK_SHIFT, VK_SPACE, VK_UP,
 };
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowLongW, SetWindowLongW,
-    ShowWindow, SetWindowPos, GWL_EXSTYLE, WS_EX_TOPMOST, WS_EX_TOOLWINDOW,
-    SW_SHOWNOACTIVATE, SWP_NOSIZE, SWP_NOACTIVATE, SWP_SHOWWINDOW,
-    HWND_TOPMOST,
-    SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx,
-    GetMessageW, TranslateMessage, DispatchMessageW,
-    MSG, WH_KEYBOARD_LL,
-    WM_KEYDOWN, WM_SYSKEYDOWN,
-    GetCursorPos, GetSystemMetrics,
-    SM_CXSCREEN, SM_CYSCREEN,
+    CallNextHookEx, DispatchMessageW, GWL_EXSTYLE, GetCursorPos, GetForegroundWindow, GetMessageW,
+    GetSystemMetrics, GetWindowLongW, HWND_TOPMOST, MSG, SM_CXSCREEN, SM_CYSCREEN,
+    SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SWP_NOSIZE, SWP_SHOWWINDOW, SetWindowLongW, SetWindowPos,
+    SetWindowsHookExW, ShowWindow, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL,
+    WM_KEYDOWN, WM_SYSKEYDOWN, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
 };
-#[cfg(target_os = "windows")]
-use windows::Win32::Foundation::{HWND, WPARAM, LPARAM, LRESULT, POINT};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {
@@ -55,7 +47,9 @@ pub fn set_hook_active(active: bool) {
 #[allow(dead_code)]
 pub fn is_hook_active() -> bool {
     #[cfg(target_os = "windows")]
-    { HOOK_ACTIVE.load(Ordering::SeqCst) }
+    {
+        HOOK_ACTIVE.load(Ordering::SeqCst)
+    }
     #[cfg(not(target_os = "windows"))]
     false
 }
@@ -82,9 +76,7 @@ pub fn init_keyboard_hook() {
     }
 
     let (tx, rx) = channel::<HookKey>();
-    HOOK_CHANNEL
-        .set((Mutex::new(tx), Mutex::new(rx)))
-        .ok();
+    HOOK_CHANNEL.set((Mutex::new(tx), Mutex::new(rx))).ok();
 
     let _ = HOOK_CHANNEL.get().map(|(tx, _)| {
         let tx = tx.lock().unwrap().clone();
@@ -218,7 +210,9 @@ pub fn foreground_window() -> isize {
 #[cfg(target_os = "windows")]
 pub fn get_cursor_pos() -> (i32, i32) {
     let mut pt = POINT::default();
-    unsafe { let _ = GetCursorPos(&mut pt); }
+    unsafe {
+        let _ = GetCursorPos(&mut pt);
+    }
     (pt.x, pt.y)
 }
 
@@ -261,7 +255,7 @@ pub unsafe fn set_window_style(hwnd: isize) {
         let new_style = style
             | (WS_EX_TOPMOST.0 as i32)
             | (WS_EX_TOOLWINDOW.0 as i32)
-            | (windows::Win32::UI::WindowsAndMessaging::WS_EX_NOACTIVATE.0 as i32);
+            | (WS_EX_NOACTIVATE.0 as i32);
         SetWindowLongW(hwnd, GWL_EXSTYLE, new_style);
     }
 }
@@ -274,7 +268,10 @@ pub unsafe fn show_no_activate(hwnd: isize, x: i32, y: i32) {
         let _ = SetWindowPos(
             hwnd,
             Some(HWND_TOPMOST),
-            x, y, 0, 0,
+            x,
+            y,
+            0,
+            0,
             SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
         );
     }
@@ -282,7 +279,9 @@ pub unsafe fn show_no_activate(hwnd: isize, x: i32, y: i32) {
 
 #[cfg(target_os = "windows")]
 pub unsafe fn paste_emoji(text: &str) {
-    let saved = arboard::Clipboard::new().ok().and_then(|mut c| c.get_text().ok());
+    let saved = arboard::Clipboard::new()
+        .ok()
+        .and_then(|mut c| c.get_text().ok());
 
     arboard::Clipboard::new()
         .and_then(|mut c| c.set_text(text))
@@ -298,7 +297,9 @@ pub unsafe fn paste_emoji(text: &str) {
         keybd(v, KEYEVENTF_KEYUP),
         keybd(ctrl, KEYEVENTF_KEYUP),
     ];
-    unsafe { let _ = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+    unsafe {
+        let _ = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+    }
 
     std::thread::sleep(std::time::Duration::from_millis(50));
 
@@ -316,7 +317,13 @@ fn keybd(vk: VIRTUAL_KEY, flags: KEYBD_EVENT_FLAGS) -> INPUT {
     INPUT {
         r#type: INPUT_KEYBOARD,
         Anonymous: INPUT_0 {
-            ki: KEYBDINPUT { wVk: vk, wScan: 0, dwFlags: flags, time: 0, dwExtraInfo: 0 },
+            ki: KEYBDINPUT {
+                wVk: vk,
+                wScan: 0,
+                dwFlags: flags,
+                time: 0,
+                dwExtraInfo: 0,
+            },
         },
     }
 }
@@ -325,17 +332,27 @@ fn keybd(vk: VIRTUAL_KEY, flags: KEYBD_EVENT_FLAGS) -> INPUT {
 pub fn set_hook_active(_active: bool) {}
 #[cfg(not(target_os = "windows"))]
 #[allow(dead_code)]
-pub fn is_hook_active() -> bool { false }
+pub fn is_hook_active() -> bool {
+    false
+}
 #[cfg(not(target_os = "windows"))]
-pub fn try_recv_hook_key() -> Option<HookKey> { None }
+pub fn try_recv_hook_key() -> Option<HookKey> {
+    None
+}
 #[cfg(not(target_os = "windows"))]
 pub fn init_keyboard_hook() {}
 #[cfg(not(target_os = "windows"))]
-pub fn foreground_window() -> isize { 0 }
+pub fn foreground_window() -> isize {
+    0
+}
 #[cfg(not(target_os = "windows"))]
-pub fn get_cursor_pos() -> (i32, i32) { (0, 0) }
+pub fn get_cursor_pos() -> (i32, i32) {
+    (0, 0)
+}
 #[cfg(not(target_os = "windows"))]
-pub fn get_screen_size() -> (i32, i32) { (0, 0) }
+pub fn get_screen_size() -> (i32, i32) {
+    (0, 0)
+}
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn set_window_style(_hwnd: isize) {}
 #[cfg(not(target_os = "windows"))]
