@@ -194,11 +194,13 @@ impl Flemozi {
                 if let Some(id) = state.window_id {
                     let hwnd = state.our_hwnd.unwrap_or(0);
                     if hwnd != 0 {
+                        let (cx, cy) = crate::win32::get_cursor_pos();
+                        let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
                         return Command::batch([
                             window::set_mode::<Message>(id, window::Mode::Windowed),
                             Command::future(async move {
                                 tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-                                unsafe { crate::win32::show_no_activate(hwnd); }
+                                unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
                             })
                             .map(|_| Message::Noop),
                         ]);
@@ -221,11 +223,13 @@ impl Flemozi {
                     if let Some(id) = state.window_id {
                         let hwnd = state.our_hwnd.unwrap_or(0);
                         if hwnd != 0 {
+                            let (cx, cy) = crate::win32::get_cursor_pos();
+                            let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
                             return Command::batch([
                                 window::set_mode::<Message>(id, window::Mode::Windowed),
                                 Command::future(async move {
                                     tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-                                    unsafe { crate::win32::show_no_activate(hwnd); }
+                                    unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
                                 })
                                 .map(|_| Message::Noop),
                             ]);

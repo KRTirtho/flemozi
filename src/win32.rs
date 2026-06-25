@@ -18,15 +18,17 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 use windows::Win32::UI::WindowsAndMessaging::{
     GetForegroundWindow, GetWindowLongW, SetWindowLongW,
     ShowWindow, SetWindowPos, GWL_EXSTYLE, WS_EX_TOPMOST, WS_EX_TOOLWINDOW,
-    SW_SHOWNOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, SWP_SHOWWINDOW,
+    SW_SHOWNOACTIVATE, SWP_NOSIZE, SWP_NOACTIVATE, SWP_SHOWWINDOW,
     HWND_TOPMOST,
     SetWindowsHookExW, CallNextHookEx, UnhookWindowsHookEx,
     GetMessageW, TranslateMessage, DispatchMessageW,
     MSG, WH_KEYBOARD_LL,
     WM_KEYDOWN, WM_SYSKEYDOWN,
+    GetCursorPos, GetSystemMetrics,
+    SM_CXSCREEN, SM_CYSCREEN,
 };
 #[cfg(target_os = "windows")]
-use windows::Win32::Foundation::{HWND, WPARAM, LPARAM, LRESULT};
+use windows::Win32::Foundation::{HWND, WPARAM, LPARAM, LRESULT, POINT};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {
@@ -214,6 +216,44 @@ pub fn foreground_window() -> isize {
 }
 
 #[cfg(target_os = "windows")]
+pub fn get_cursor_pos() -> (i32, i32) {
+    let mut pt = POINT::default();
+    unsafe { let _ = GetCursorPos(&mut pt); }
+    (pt.x, pt.y)
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_screen_size() -> (i32, i32) {
+    unsafe {
+        let w = GetSystemMetrics(SM_CXSCREEN);
+        let h = GetSystemMetrics(SM_CYSCREEN);
+        (w, h)
+    }
+}
+
+pub fn clamp_window_position(mut cx: i32, mut cy: i32, win_w: i32, win_h: i32) -> (i32, i32) {
+    #[cfg(target_os = "windows")]
+    {
+        let (sw, sh) = get_screen_size();
+        cx -= win_w / 2;
+
+        if cy + 24 + win_h <= sh {
+            cy += 24;
+        } else {
+            cy = (cy - win_h - 24).max(0);
+        }
+
+        cx = cx.clamp(0, (sw - win_w).max(0));
+        cy = cy.clamp(0, (sh - win_h).max(0));
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (win_w, win_h);
+    }
+    (cx, cy)
+}
+
+#[cfg(target_os = "windows")]
 pub unsafe fn set_window_style(hwnd: isize) {
     let hwnd = HWND(hwnd as *mut _);
     unsafe {
@@ -227,15 +267,15 @@ pub unsafe fn set_window_style(hwnd: isize) {
 }
 
 #[cfg(target_os = "windows")]
-pub unsafe fn show_no_activate(hwnd: isize) {
+pub unsafe fn show_no_activate(hwnd: isize, x: i32, y: i32) {
     let hwnd = HWND(hwnd as *mut _);
     unsafe {
         let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
         let _ = SetWindowPos(
             hwnd,
             Some(HWND_TOPMOST),
-            0, 0, 0, 0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+            x, y, 0, 0,
+            SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
         );
     }
 }
@@ -293,8 +333,12 @@ pub fn init_keyboard_hook() {}
 #[cfg(not(target_os = "windows"))]
 pub fn foreground_window() -> isize { 0 }
 #[cfg(not(target_os = "windows"))]
+pub fn get_cursor_pos() -> (i32, i32) { (0, 0) }
+#[cfg(not(target_os = "windows"))]
+pub fn get_screen_size() -> (i32, i32) { (0, 0) }
+#[cfg(not(target_os = "windows"))]
 pub unsafe fn set_window_style(_hwnd: isize) {}
 #[cfg(not(target_os = "windows"))]
-pub unsafe fn show_no_activate(_hwnd: isize) {}
+pub unsafe fn show_no_activate(_hwnd: isize, _x: i32, _y: i32) {}
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn paste_emoji(_text: &str) {}

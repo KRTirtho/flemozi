@@ -18,7 +18,7 @@ fn application() -> iced::Application<impl iced::Program<Message = app::Message,
     iced::application(Flemozi::new, Flemozi::update, Flemozi::view)
         .subscription(Flemozi::subscription)
         .title(Flemozi::title)
-        .window_size((500.0, 800.0))
+        .window_size((500.0, 500.0))
         .decorations(false)
         .exit_on_close_request(false)
         .resizable(false)
