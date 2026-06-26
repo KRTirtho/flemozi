@@ -33,6 +33,17 @@ pub fn sidebar_active_style(theme: &Theme, _status: button::Status) -> button::S
     }
 }
 
+pub fn search_bar_style(theme: &Theme) -> container::Style {
+    let pair = theme.extended_palette().background.weak;
+
+    container::Style {
+        background: Some(Background::from(pair.color)),
+        border: border::rounded(8).width(2.0).color(Color::from_rgb8(0x2e, 0x7d, 0x32)),
+        text_color: Some(pair.text),
+        ..container::Style::default()
+    }
+}
+
 pub fn sidebar_inactive_style(theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {
         button::Status::Hovered => Some(Background::Color(

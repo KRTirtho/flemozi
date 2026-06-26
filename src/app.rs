@@ -41,7 +41,6 @@ pub struct State {
     pub selected: usize,
     pub copied: Option<String>,
     pub visible: HashSet<usize>,
-    pub search_id: widget::Id,
     pub scroll_id: widget::Id,
     pub tab: Tab,
     pub window_id: Option<window::Id>,
@@ -51,7 +50,6 @@ pub struct State {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    SearchChanged(String),
     Selected(usize),
     MoveSelection(Move),
     CopySelected,
@@ -88,7 +86,6 @@ impl Flemozi {
             copied: None,
             query: String::new(),
             visible: HashSet::new(),
-            search_id: "search".into(),
             scroll_id: "grid-scroll".into(),
             tab: Tab::Emojis,
             window_id: None,
@@ -96,10 +93,7 @@ impl Flemozi {
             last_foreground: None,
         };
 
-        let cmd = Command::batch([
-            operation::focus("search"),
-            window::latest().map(Message::Init),
-        ]);
+        let cmd = window::latest().map(Message::Init);
 
         (Self::Loaded(state), cmd)
     }
@@ -223,15 +217,6 @@ impl Flemozi {
                 unsafe { crate::win32::paste_emoji(&emoji); }
                 Command::none()
             }
-            Message::SearchChanged(query) => {
-                state.query = query;
-                state.filtered = filter(&state.entries, &state.query);
-                state.selected = state.filtered.first().copied().unwrap_or(0);
-                operation::scroll_to(
-                    state.scroll_id.clone(),
-                    scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                )
-            }
             Message::Selected(i) => {
                 if state.filtered.contains(&i) {
                     state.selected = i;
@@ -256,13 +241,10 @@ impl Flemozi {
                 state.query.clear();
                 state.filtered = (0..state.entries.len()).collect();
                 state.selected = state.filtered.first().copied().unwrap_or(0);
-                Command::batch([
-                    operation::scroll_to(
-                        state.scroll_id.clone(),
-                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                    ),
-                    operation::focus(state.search_id.clone()),
-                ])
+                operation::scroll_to(
+                    state.scroll_id.clone(),
+                    scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                )
             }
             Message::Shown(i) => {
                 state.visible.insert(i);
@@ -325,13 +307,10 @@ impl Flemozi {
                         state.query.clear();
                         state.filtered = (0..state.entries.len()).collect();
                         state.selected = state.filtered.first().copied().unwrap_or(0);
-                        Command::batch([
-                            operation::scroll_to(
-                                state.scroll_id.clone(),
-                                scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                            ),
-                            operation::focus(state.search_id.clone()),
-                        ])
+                        operation::scroll_to(
+                            state.scroll_id.clone(),
+                            scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                        )
                     }
                 }
             },

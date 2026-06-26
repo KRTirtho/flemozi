@@ -2,14 +2,14 @@ mod grid;
 mod preview;
 mod styles;
 
-use iced::widget::{button, center, column, container, row, scrollable, space, text, text_input};
+use iced::widget::{button, center, column, container, row, scrollable, space, text};
 use iced::{Alignment, Center, Element, Fill};
 
 use crate::app::{Message, State, Tab, COLUMNS, SPACING};
 
 use grid::emoji_cell;
 use preview::preview_bar;
-use styles::{sidebar_active_style, sidebar_inactive_style, subtle};
+use styles::{search_bar_style, sidebar_active_style, sidebar_inactive_style, subtle};
 
 pub fn main_view(state: &State) -> Element<'_, Message> {
     let titlebar = titlebar_view();
@@ -94,11 +94,15 @@ fn sidebar_view(state: &State) -> Element<'_, Message> {
 }
 
 fn emoji_view(state: &State) -> Element<'_, Message> {
-    let search = text_input("Search emojis...", &state.query)
-        .id(state.search_id.clone())
-        .on_input(Message::SearchChanged)
-        .padding(12)
-        .size(20);
+    let placeholder = state.query.is_empty();
+    let search = container(
+        text(if placeholder { "Search emojis..." } else { &state.query })
+            .size(20)
+            .style(if placeholder { subtle } else { |_: &iced::Theme| text::Style::default() }),
+    )
+    .padding(12)
+    .width(Fill)
+    .style(search_bar_style);
 
     let grid_content: Element<_> = if state.filtered.is_empty() {
         center(
