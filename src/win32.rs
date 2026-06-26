@@ -338,6 +338,40 @@ pub unsafe fn paste_emoji(text: &str) {
     }
 }
 
+pub unsafe fn paste_gif(text: &str, html: &str) {
+    let saved = arboard::Clipboard::new()
+        .ok()
+        .and_then(|mut c| c.get_text().ok());
+
+    arboard::Clipboard::new()
+        .and_then(|mut c| c.set_html(html, Some(text)))
+        .ok();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    let ctrl = VIRTUAL_KEY(0x11);
+    let v = VIRTUAL_KEY(0x56);
+    let inputs = [
+        keybd(ctrl, KEYBD_EVENT_FLAGS(0)),
+        keybd(v, KEYBD_EVENT_FLAGS(0)),
+        keybd(v, KEYEVENTF_KEYUP),
+        keybd(ctrl, KEYEVENTF_KEYUP),
+    ];
+    unsafe {
+        let _ = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+    }
+
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
+    if let Some(prev) = saved {
+        arboard::Clipboard::new()
+            .and_then(|mut c| c.set_text(prev))
+            .ok();
+    } else {
+        let _ = arboard::Clipboard::new().and_then(|mut c| c.clear());
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn keybd(vk: VIRTUAL_KEY, flags: KEYBD_EVENT_FLAGS) -> INPUT {
     INPUT {

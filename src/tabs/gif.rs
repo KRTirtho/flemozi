@@ -135,7 +135,7 @@ impl GifTab {
         if !self.filtered.contains(&self.selected) {
             return None;
         }
-        Some(entry.url.clone())
+        Some(entry.gif_url.clone())
     }
 }
 
@@ -238,10 +238,6 @@ pub async fn download_image(url: String) -> Vec<u8> {
         return Vec::new();
     };
     resp.bytes().await.map(|b| b.to_vec()).unwrap_or_default()
-}
-
-pub async fn download_gif_for_copy(url: String) -> Vec<u8> {
-    download_image(url).await
 }
 
 pub async fn fetch_trending_gifs() -> Result<Vec<GifEntry>, String> {

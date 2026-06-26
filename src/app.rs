@@ -94,7 +94,6 @@ pub enum Message {
     GifSearchResult(Result<Vec<crate::tabs::gif::GifEntry>, String>),
     GifSearchDebounce(String),
     GifThumbnail(usize, Vec<u8>),
-    GifCopyReady(Vec<u8>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -225,39 +224,6 @@ impl Flemozi {
                     );
                 }
                 Command::none()
-            }
-            Message::GifCopyReady(bytes) => {
-                if bytes.is_empty() {
-                    return Command::none();
-                }
-                let Ok(img) = image::load_from_memory(&bytes) else {
-                    return Command::none();
-                };
-                let rgba = img.to_rgba8();
-                let (w, h) = rgba.dimensions();
-                let image_data = arboard::ImageData {
-                    width: w as usize,
-                    height: h as usize,
-                    bytes: std::borrow::Cow::Owned(rgba.into_vec()),
-                };
-                let mut clipboard = arboard::Clipboard::new().unwrap();
-                let _ = clipboard.set_image(image_data);
-
-                let encoded = base64_encode(&bytes);
-                let html = format!(
-                    r#"<img src="data:image/gif;base64,{}" width="{}" height="{}" />"#,
-                    encoded, w, h
-                );
-                let _ = clipboard.set_html(&html, Some(&"GIF".to_string()));
-
-                crate::win32::set_hook_active(false);
-                let hwnd = state.our_hwnd.unwrap_or(0);
-                if hwnd != 0 {
-                    unsafe { crate::win32::hide_window(hwnd); }
-                }
-                Command::future(async move {
-                    Message::DoType(String::new())
-                })
             }
             Message::GifThumbnail(index, bytes) => {
                 state.gif.loading_frames.remove(&index);
@@ -398,22 +364,6 @@ impl Flemozi {
                 Command::none()
             }
             Message::Selected(i) => {
-                if state.tab == Tab::Gifs {
-                    if state.gif.filtered.contains(&i) {
-                        state.gif.selected = i;
-                        crate::win32::set_hook_active(false);
-                        if let Some(entry) = state.gif.entries.get(i) {
-                            if !entry.gif_url.is_empty() {
-                                let url = entry.gif_url.clone();
-                                return Command::perform(
-                                    crate::tabs::gif::download_gif_for_copy(url),
-                                    Message::GifCopyReady,
-                                );
-                            }
-                        }
-                    }
-                    return Command::none();
-                }
                 let ok = match state.tab {
                     Tab::Emojis => {
                         if state.emoji.filtered.contains(&i) {
@@ -431,7 +381,14 @@ impl Flemozi {
                             false
                         }
                     }
-                    Tab::Gifs => false,
+                    Tab::Gifs => {
+                        if state.gif.filtered.contains(&i) {
+                            state.gif.selected = i;
+                            true
+                        } else {
+                            false
+                        }
+                    }
                     Tab::Settings => false,
                 };
                 if ok {
@@ -887,30 +844,6 @@ fn hookkey_to_code_name(key: &crate::win32::HookKey) -> String {
     }
 }
 
-pub fn base64_encode(bytes: &[u8]) -> String {
-    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut out = String::with_capacity((bytes.len() + 2) / 3 * 4);
-    for chunk in bytes.chunks(3) {
-        let b0 = chunk[0] as u32;
-        let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
-        let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
-        let triple = (b0 << 16) | (b1 << 8) | b2;
-        out.push(CHARS[((triple >> 18) & 0x3F) as usize] as char);
-        out.push(CHARS[((triple >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 {
-            out.push(CHARS[((triple >> 6) & 0x3F) as usize] as char);
-        } else {
-            out.push('=');
-        }
-        if chunk.len() > 2 {
-            out.push(CHARS[(triple & 0x3F) as usize] as char);
-        } else {
-            out.push('=');
-        }
-    }
-    out
-}
-
 fn code_name_to_code(name: &str) -> Option<Code> {
     Some(match name {
         "Period" => Code::Period,
@@ -1066,6 +999,16 @@ impl State {
             return Command::none();
         };
         self.copied = Some(text.clone());
+
+        if self.tab == Tab::Gifs {
+            let hwnd = self.our_hwnd.unwrap_or(0);
+            if hwnd != 0 {
+                unsafe { crate::win32::hide_window(hwnd); }
+            }
+            let html = format!(r#"<img src="{}" />"#, text);
+            unsafe { crate::win32::paste_gif(&text, &html); }
+            return Command::none();
+        }
 
         if let Some(_id) = self.window_id {
             let hwnd = self.our_hwnd.unwrap_or(0);
