@@ -2,10 +2,10 @@ mod grid;
 mod preview;
 mod styles;
 
-use iced::widget::{button, center, column, container, row, scrollable, space, text};
+use iced::widget::{button, center, column, container, row, scrollable, space, text, toggler};
 use iced::{Alignment, Center, Element, Fill};
 
-use crate::app::{Message, State, Tab, COLUMNS, SPACING};
+use crate::app::{shortcut_display_name, Message, State, Tab, COLUMNS, SPACING};
 
 use grid::emoji_cell;
 use preview::preview_bar;
@@ -17,7 +17,7 @@ pub fn main_view(state: &State) -> Element<'_, Message> {
     let content: Element<'_, Message> = if state.tab == Tab::Emojis {
         emoji_view(state)
     } else {
-        settings_view()
+        settings_view(state)
     };
 
     column![
@@ -168,17 +168,48 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
         .into()
 }
 
-fn settings_view() -> Element<'static, Message> {
+fn settings_view(state: &State) -> Element<'_, Message> {
+    let launch_toggle = toggler(state.config.launch_at_startup)
+        .label("Launch at startup")
+        .on_toggle(|_| Message::ToggleLaunchAtStartup)
+        .size(20)
+        .spacing(8);
+
+    let shortcut_label = if state.capturing_shortcut {
+        "Press shortcut...".to_string()
+    } else {
+        shortcut_display_name(&state.config)
+    };
+    let shortcut_header = text("Global shortcut:").size(16);
+    let shortcut_text = text(shortcut_label).size(14).style(subtle);
+    let record_btn = if state.capturing_shortcut {
+        button(text("Cancel").size(14))
+            .on_press(Message::ToggleCaptureShortcut)
+            .style(button::text)
+            .padding(8)
+    } else {
+        button(text("Record").size(14))
+            .on_press(Message::ToggleCaptureShortcut)
+            .style(button::text)
+            .padding(8)
+    };
+
     container(
         column![
             text("Flemozi Emoji Picker").size(20),
             text("Version 0.1.0").size(14).style(subtle),
-            text("").size(8),
-            text("Keyboard Shortcuts:").size(16),
-            text("  Ctrl+Alt+.  - Toggle window").size(14).style(subtle),
-            text("  Escape      - Clear search").size(14).style(subtle),
+            space::vertical().height(12),
+            launch_toggle,
+            space::vertical().height(12),
+            shortcut_header,
+            row![shortcut_text, record_btn].spacing(8).align_y(Alignment::Center),
+            space::vertical().height(12),
+            text("Keyboard shortcuts:").size(16),
+            text("  Escape      - Clear search (when empty, close)")
+                .size(14)
+                .style(subtle),
             text("  Enter       - Copy emoji").size(14).style(subtle),
-            text("  Arrows      - Navigate").size(14).style(subtle),
+            text("  Arrows      - Navigate emojis").size(14).style(subtle),
         ]
         .spacing(4)
         .padding(20),

@@ -11,7 +11,7 @@ use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
     SendInput, VIRTUAL_KEY, VK_BACK, VK_CAPITAL, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END,
-    VK_ESCAPE, VK_HOME, VK_LEFT, VK_RETURN, VK_RIGHT, VK_SHIFT, VK_SPACE, VK_UP,
+    VK_ESCAPE, VK_HOME, VK_LEFT, VK_MENU, VK_RETURN, VK_RIGHT, VK_SHIFT, VK_SPACE, VK_UP,
 };
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -42,6 +42,7 @@ pub struct HookKeyEvent {
     pub key: HookKey,
     pub ctrl: bool,
     pub shift: bool,
+    pub alt: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -141,6 +142,7 @@ unsafe extern "system" fn hook_proc(code: i32, w_param: WPARAM, l_param: LPARAM)
 
     let shift = (unsafe { GetKeyState(VK_SHIFT.0 as i32) } as u16 & 0x8000) != 0;
     let ctrl = (unsafe { GetKeyState(VK_CONTROL.0 as i32) } as u16 & 0x8000) != 0;
+    let alt = (unsafe { GetKeyState(VK_MENU.0 as i32) } as u16 & 0x8000) != 0;
 
     let key = match kb.vk_code {
         v if v == VK_BACK.0 as u32 => Some(HookKey::Backspace),
@@ -161,7 +163,7 @@ unsafe extern "system" fn hook_proc(code: i32, w_param: WPARAM, l_param: LPARAM)
 
     if let Some(k) = key {
         if let Some((tx, _)) = HOOK_CHANNEL.get() {
-            let _ = tx.lock().ok().map(|tx| tx.send(HookKeyEvent { key: k, ctrl, shift }));
+            let _ = tx.lock().ok().map(|tx| tx.send(HookKeyEvent { key: k, ctrl, shift, alt }));
         }
         return LRESULT(1);
     }

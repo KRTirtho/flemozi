@@ -13,6 +13,7 @@ use tray_icon::menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
 use tray_icon::TrayIconBuilder;
 
 use crate::assets::emojis::EMOJIS;
+use crate::config::Config;
 use crate::emoji::EmojiEntry;
 use crate::search::filter;
 use crate::ui::main_view;
@@ -39,6 +40,8 @@ pub struct State {
     pub cursor: usize,
     pub selection: Option<(usize, usize)>,
     pub search_focused: bool,
+    pub config: Config,
+    pub capturing_shortcut: bool,
     pub entries: Vec<EmojiEntry>,
     pub filtered: Vec<usize>,
     pub selected: usize,
@@ -67,6 +70,8 @@ pub enum Message {
     Setup(isize),
     DoType(String),
     HookKeyEvent(HookKeyEvent),
+    ToggleLaunchAtStartup,
+    ToggleCaptureShortcut,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -82,6 +87,8 @@ impl Flemozi {
         let entries: Vec<EmojiEntry> = EMOJIS.iter().map(EmojiEntry::from_type).collect();
         let filtered = (0..entries.len()).collect();
 
+        let config = Config::load();
+
         let state = State {
             entries,
             filtered,
@@ -91,6 +98,8 @@ impl Flemozi {
             cursor: 0,
             selection: None,
             search_focused: true,
+            config,
+            capturing_shortcut: false,
             visible: HashSet::new(),
             scroll_id: "grid-scroll".into(),
             tab: Tab::Emojis,
@@ -138,13 +147,7 @@ impl Flemozi {
                 }
 
                 crate::win32::init_keyboard_hook();
-
-                let manager = GlobalHotKeyManager::new();
-                if let Ok(manager) = manager {
-                    let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Period);
-                    let _ = manager.register(hotkey);
-                    std::mem::forget(manager);
-                }
+                state.register_hotkey();
 
                 let icon = {
                     let img = image::load_from_memory(LOGO_BYTES).expect("Failed to load logo");
@@ -170,6 +173,17 @@ impl Flemozi {
             }
             Message::TabSelected(tab) => {
                 state.tab = tab;
+                state.search_focused = true;
+                Command::none()
+            }
+            Message::ToggleLaunchAtStartup => {
+                state.config.launch_at_startup = !state.config.launch_at_startup;
+                state.config.apply_launch_at_startup();
+                state.config.save();
+                Command::none()
+            }
+            Message::ToggleCaptureShortcut => {
+                state.capturing_shortcut = !state.capturing_shortcut;
                 Command::none()
             }
             Message::TitleBarDrag => {
@@ -259,7 +273,19 @@ impl Flemozi {
                 Command::none()
             }
             Message::HookKeyEvent(ev) => {
-                let HookKeyEvent { key, ctrl, shift } = ev;
+                let HookKeyEvent { key, ctrl, shift, alt } = ev;
+
+                if state.capturing_shortcut && (ctrl || alt || shift || !matches!(key, crate::win32::HookKey::Char(_))) {
+                    state.capturing_shortcut = false;
+                    state.config.shortcut_ctrl = ctrl;
+                    state.config.shortcut_alt = alt;
+                    state.config.shortcut_shift = shift;
+                    state.config.shortcut_code = hookkey_to_code_name(&key);
+                    state.register_hotkey();
+                    state.config.save();
+                    return Command::none();
+                }
+
                 let mut re_filter = true;
                 match key {
                     crate::win32::HookKey::Char(ch) if ctrl && ch == 'a' => {
@@ -560,7 +586,164 @@ fn external_events() -> impl iced::futures::Stream<Item = Message> {
     })
 }
 
+fn hookkey_to_code_name(key: &crate::win32::HookKey) -> String {
+    match key {
+        crate::win32::HookKey::Char(ch) => match ch {
+            'a'..='z' => format!("Key{}", ch.to_ascii_uppercase()),
+            '0'..='9' => format!("Digit{}", ch),
+            '.' => "Period".to_string(),
+            ',' => "Comma".to_string(),
+            ' ' => "Space".to_string(),
+            '-' => "Minus".to_string(),
+            '=' => "Equal".to_string(),
+            ';' => "Semicolon".to_string(),
+            '\'' => "Quote".to_string(),
+            '/' => "Slash".to_string(),
+            '\\' => "Backslash".to_string(),
+            '[' => "BracketLeft".to_string(),
+            ']' => "BracketRight".to_string(),
+            '`' => "Backquote".to_string(),
+            _ => format!("Key{:?}", ch),
+        },
+        crate::win32::HookKey::Up => "ArrowUp".to_string(),
+        crate::win32::HookKey::Down => "ArrowDown".to_string(),
+        crate::win32::HookKey::Left => "ArrowLeft".to_string(),
+        crate::win32::HookKey::Right => "ArrowRight".to_string(),
+        crate::win32::HookKey::Enter => "Enter".to_string(),
+        crate::win32::HookKey::Escape => "Escape".to_string(),
+        crate::win32::HookKey::Backspace => "Backspace".to_string(),
+        crate::win32::HookKey::Delete => "Delete".to_string(),
+        crate::win32::HookKey::Home => "Home".to_string(),
+        crate::win32::HookKey::End => "End".to_string(),
+    }
+}
+
+pub fn code_name_to_code(name: &str) -> Option<Code> {
+    Some(match name {
+        "Period" => Code::Period,
+        "Comma" => Code::Comma,
+        "Space" => Code::Space,
+        "Enter" => Code::Enter,
+        "Escape" => Code::Escape,
+        "Backspace" => Code::Backspace,
+        "Delete" => Code::Delete,
+        "Home" => Code::Home,
+        "End" => Code::End,
+        "ArrowUp" => Code::ArrowUp,
+        "ArrowDown" => Code::ArrowDown,
+        "ArrowLeft" => Code::ArrowLeft,
+        "ArrowRight" => Code::ArrowRight,
+        "Minus" => Code::Minus,
+        "Equal" => Code::Equal,
+        "Backquote" => Code::Backquote,
+        "Semicolon" => Code::Semicolon,
+        "Quote" => Code::Quote,
+        "Slash" => Code::Slash,
+        "Backslash" => Code::Backslash,
+        "BracketLeft" => Code::BracketLeft,
+        "BracketRight" => Code::BracketRight,
+        "KeyA" => Code::KeyA,
+        "KeyB" => Code::KeyB,
+        "KeyC" => Code::KeyC,
+        "KeyD" => Code::KeyD,
+        "KeyE" => Code::KeyE,
+        "KeyF" => Code::KeyF,
+        "KeyG" => Code::KeyG,
+        "KeyH" => Code::KeyH,
+        "KeyI" => Code::KeyI,
+        "KeyJ" => Code::KeyJ,
+        "KeyK" => Code::KeyK,
+        "KeyL" => Code::KeyL,
+        "KeyM" => Code::KeyM,
+        "KeyN" => Code::KeyN,
+        "KeyO" => Code::KeyO,
+        "KeyP" => Code::KeyP,
+        "KeyQ" => Code::KeyQ,
+        "KeyR" => Code::KeyR,
+        "KeyS" => Code::KeyS,
+        "KeyT" => Code::KeyT,
+        "KeyU" => Code::KeyU,
+        "KeyV" => Code::KeyV,
+        "KeyW" => Code::KeyW,
+        "KeyX" => Code::KeyX,
+        "KeyY" => Code::KeyY,
+        "KeyZ" => Code::KeyZ,
+        "Digit0" => Code::Digit0,
+        "Digit1" => Code::Digit1,
+        "Digit2" => Code::Digit2,
+        "Digit3" => Code::Digit3,
+        "Digit4" => Code::Digit4,
+        "Digit5" => Code::Digit5,
+        "Digit6" => Code::Digit6,
+        "Digit7" => Code::Digit7,
+        "Digit8" => Code::Digit8,
+        "Digit9" => Code::Digit9,
+        _ => return None,
+    })
+}
+
+pub fn shortcut_display_name(config: &Config) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    if config.shortcut_ctrl {
+        parts.push("Ctrl".to_string());
+    }
+    if config.shortcut_alt {
+        parts.push("Alt".to_string());
+    }
+    if config.shortcut_shift {
+        parts.push("Shift".to_string());
+    }
+    let key = config.shortcut_code.as_str();
+    let key_name = key
+        .strip_prefix("Key")
+        .or_else(|| key.strip_prefix("Digit"))
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| match key {
+            "Period" => ".".to_string(),
+            "Comma" => ",".to_string(),
+            "Space" => "Space".to_string(),
+            "ArrowUp" => "↑".to_string(),
+            "ArrowDown" => "↓".to_string(),
+            "ArrowLeft" => "←".to_string(),
+            "ArrowRight" => "→".to_string(),
+            "Minus" => "-".to_string(),
+            "Equal" => "=".to_string(),
+            "Semicolon" => ";".to_string(),
+            "Quote" => "'".to_string(),
+            "Slash" => "/".to_string(),
+            "Backslash" => "\\".to_string(),
+            "BracketLeft" => "[".to_string(),
+            "BracketRight" => "]".to_string(),
+            "Backquote" => "`".to_string(),
+            _ => key.to_string(),
+        });
+    parts.push(key_name);
+    parts.join("+")
+}
+
 impl State {
+    fn register_hotkey(&self) {
+        let c = &self.config;
+        let manager = GlobalHotKeyManager::new();
+        if let Ok(manager) = manager {
+            let mut modifiers = Modifiers::empty();
+            if c.shortcut_ctrl {
+                modifiers |= Modifiers::CONTROL;
+            }
+            if c.shortcut_alt {
+                modifiers |= Modifiers::ALT;
+            }
+            if c.shortcut_shift {
+                modifiers |= Modifiers::SHIFT;
+            }
+            if let Some(code) = code_name_to_code(&c.shortcut_code) {
+                let hotkey = HotKey::new(Some(modifiers), code);
+                let _ = manager.register(hotkey);
+            }
+            std::mem::forget(manager);
+        }
+    }
+
     fn move_selection(&mut self, mv: Move) -> bool {
         if self.filtered.is_empty() {
             return false;

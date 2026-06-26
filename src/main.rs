@@ -1,5 +1,6 @@
 mod app;
 mod assets;
+mod config;
 mod emoji;
 mod search;
 mod twemoji_stems;
