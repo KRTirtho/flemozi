@@ -1004,9 +1004,21 @@ impl State {
             let hwnd = self.our_hwnd.unwrap_or(0);
             if hwnd != 0 {
                 unsafe { crate::win32::hide_window(hwnd); }
+                if let Some(entry) = self.gif.entries.get(self.gif.selected) {
+                    if !entry.gif_url.is_empty() {
+                        let url = entry.gif_url.clone();
+                        return Command::perform(
+                            async move {
+                                let bytes = crate::tabs::gif::download_image(url).await;
+                                if !bytes.is_empty() {
+                                    unsafe { crate::win32::paste_gif_file(&bytes); }
+                                }
+                            },
+                            |_| Message::TitleBarClose,
+                        );
+                    }
+                }
             }
-            let html = format!(r#"<img src="{}" />"#, text);
-            unsafe { crate::win32::paste_gif(&text, &html); }
             return Command::none();
         }
 

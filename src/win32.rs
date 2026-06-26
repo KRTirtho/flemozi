@@ -4,6 +4,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 #[cfg(target_os = "windows")]
 use std::sync::{Mutex, OnceLock};
+#[cfg(target_os = "windows")]
+use std::os::windows::ffi::OsStrExt;
 
 #[cfg(target_os = "windows")]
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
@@ -21,6 +23,12 @@ use windows::Win32::UI::WindowsAndMessaging::{
     SetWindowsHookExW, ShowWindow, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL,
     WM_KEYDOWN, WM_SYSKEYDOWN, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
 };
+#[cfg(target_os = "windows")]
+use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
+#[cfg(target_os = "windows")]
+use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GHND};
+#[cfg(target_os = "windows")]
+use windows::Win32::Foundation::HANDLE;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {
@@ -338,17 +346,58 @@ pub unsafe fn paste_emoji(text: &str) {
     }
 }
 
-pub unsafe fn paste_gif(text: &str, html: &str) {
-    let saved = arboard::Clipboard::new()
-        .ok()
-        .and_then(|mut c| c.get_text().ok());
+pub unsafe fn paste_gif_file(bytes: &[u8]) {
+    let tmp = std::env::temp_dir().join("flemozi_gif");
+    let _ = std::fs::create_dir_all(&tmp);
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let path = tmp.join(format!("paste_{stamp}.gif"));
+    if std::fs::write(&path, bytes).is_err() {
+        return;
+    }
 
-    arboard::Clipboard::new()
-        .and_then(|mut c| c.set_html(html, Some(text)))
-        .ok();
+    let wide: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+
+    // DROPFILES is 20 bytes: pFiles(u32) + pt.x(i32) + pt.y(i32) + fNC(i32) + fWide(i32)
+    const HDR: usize = 20;
+    let buf_size = HDR + wide.len() * 2;
+
+    let Ok(h) = (unsafe { GlobalAlloc(GHND, buf_size) }) else {
+        let _ = std::fs::remove_file(&path);
+        return;
+    };
+    let ptr = unsafe { GlobalLock(h) } as *mut u8;
+    if ptr.is_null() {
+        let _ = std::fs::remove_file(&path);
+        return;
+    }
+
+    let dst = unsafe { std::slice::from_raw_parts_mut(ptr, buf_size) };
+    dst[0..4].copy_from_slice(&(HDR as u32).to_ne_bytes());   // pFiles
+    dst[16..20].copy_from_slice(&1i32.to_ne_bytes());          // fWide = TRUE (Unicode)
+    // pt.x, pt.y, fNC are already zero (GHND zero-inits)
+
+    for (i, &w) in wide.iter().enumerate() {
+        let off = HDR + i * 2;
+        dst[off..off + 2].copy_from_slice(&w.to_ne_bytes());
+    }
+
+    unsafe { GlobalUnlock(h).ok(); }
+
+    unsafe {
+        let _ = OpenClipboard(None);
+        let _ = EmptyClipboard();
+        let _ = SetClipboardData(0x000F, Some(HANDLE(h.0))); // CF_HDROP = 0x000F
+        let _ = CloseClipboard();
+    }
 
     std::thread::sleep(std::time::Duration::from_millis(10));
-
     let ctrl = VIRTUAL_KEY(0x11);
     let v = VIRTUAL_KEY(0x56);
     let inputs = [
@@ -361,15 +410,10 @@ pub unsafe fn paste_gif(text: &str, html: &str) {
         let _ = SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(50));
-
-    if let Some(prev) = saved {
-        arboard::Clipboard::new()
-            .and_then(|mut c| c.set_text(prev))
-            .ok();
-    } else {
-        let _ = arboard::Clipboard::new().and_then(|mut c| c.clear());
-    }
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(15));
+        let _ = std::fs::remove_file(&path);
+    });
 }
 
 #[cfg(target_os = "windows")]
@@ -421,3 +465,5 @@ pub unsafe fn show_no_activate(_hwnd: isize, _x: i32, _y: i32) {}
 pub unsafe fn hide_window(_hwnd: isize) {}
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn paste_emoji(_text: &str) {}
+#[cfg(not(target_os = "windows"))]
+pub unsafe fn paste_gif_file(_bytes: &[u8]) {}

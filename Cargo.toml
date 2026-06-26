@@ -19,7 +19,14 @@ global-hotkey = "0.8"
 tray-icon = { version = "0.24", default-features = false }
 arboard = { version = "3", default-features = false, features = ["image-data"] }
 image = "0.25"
-windows = { version = "0.62.2", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
+windows = { version = "0.62.2", features = [
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_UI_Shell",
+    "Win32_System_DataExchange",
+    "Win32_System_Memory",
+] }
 raw-window-handle = "0.6.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
