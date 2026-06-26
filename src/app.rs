@@ -14,6 +14,7 @@ use tray_icon::TrayIconBuilder;
 use crate::config::Config;
 use crate::tabs::emoji::EmojiTab;
 use crate::tabs::emoticon::EmoticonTab;
+use crate::tabs::gif::GifTab;
 use crate::ui::main_view;
 use crate::win32::HookKeyEvent;
 
@@ -27,6 +28,7 @@ static LOGO_BYTES: &[u8] = include_bytes!("../assets/logo.png");
 pub enum Tab {
     Emojis,
     Emoticons,
+    Gifs,
     Settings,
 }
 
@@ -63,6 +65,7 @@ pub struct State {
     pub copied: Option<String>,
     pub emoji: EmojiTab,
     pub emoticon: EmoticonTab,
+    pub gif: GifTab,
     pub tab: Tab,
     pub window_id: Option<window::Id>,
     pub our_hwnd: Option<isize>,
@@ -87,6 +90,11 @@ pub enum Message {
     HookKeyEvent(HookKeyEvent),
     ToggleLaunchAtStartup,
     ToggleCaptureShortcut,
+    GifFetched(Result<Vec<crate::tabs::gif::GifEntry>, String>),
+    GifSearchResult(Result<Vec<crate::tabs::gif::GifEntry>, String>),
+    GifSearchDebounce(String),
+    GifThumbnail(usize, Vec<u8>),
+    GifCopyReady(Vec<u8>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -111,13 +119,17 @@ impl Flemozi {
             copied: None,
             emoji: EmojiTab::new(),
             emoticon: EmoticonTab::new(),
+            gif: GifTab::new(),
             tab: Tab::Emojis,
             window_id: None,
             our_hwnd: None,
             last_foreground: None,
         };
 
-        let cmd = window::latest().map(Message::Init);
+        let cmd = Command::batch([
+            window::latest().map(Message::Init),
+            Command::perform(crate::tabs::gif::fetch_trending_gifs(), Message::GifFetched),
+        ]);
 
         (Self::Loaded(state), cmd)
     }
@@ -180,6 +192,80 @@ impl Flemozi {
 
                 Command::none()
             }
+            Message::GifFetched(result) | Message::GifSearchResult(result) => {
+                match result {
+                    Ok(entries) => {
+                        state.gif.set_entries(entries);
+                        let count = 30.min(state.gif.entries.len());
+                        let mut cmds = Vec::with_capacity(count);
+                        for i in 0..count {
+                            state.gif.visible.insert(i);
+                            if let Some(entry) = state.gif.entries.get(i) {
+                                if !entry.preview_url.is_empty() {
+                                    state.gif.loading_frames.insert(i);
+                                    let url = entry.preview_url.clone();
+                                    cmds.push(Command::perform(
+                                        crate::tabs::gif::download_image(url),
+                                        move |bytes| Message::GifThumbnail(i, bytes),
+                                    ));
+                                }
+                            }
+                        }
+                        return Command::batch(cmds);
+                    }
+                    Err(msg) => state.gif.set_error(msg),
+                }
+                Command::none()
+            }
+            Message::GifSearchDebounce(query) => {
+                if state.query == query {
+                    return Command::perform(
+                        crate::tabs::gif::search_gifs(query),
+                        Message::GifSearchResult,
+                    );
+                }
+                Command::none()
+            }
+            Message::GifCopyReady(bytes) => {
+                if bytes.is_empty() {
+                    return Command::none();
+                }
+                let Ok(img) = image::load_from_memory(&bytes) else {
+                    return Command::none();
+                };
+                let rgba = img.to_rgba8();
+                let (w, h) = rgba.dimensions();
+                let image_data = arboard::ImageData {
+                    width: w as usize,
+                    height: h as usize,
+                    bytes: std::borrow::Cow::Owned(rgba.into_vec()),
+                };
+                let mut clipboard = arboard::Clipboard::new().unwrap();
+                let _ = clipboard.set_image(image_data);
+
+                let encoded = base64_encode(&bytes);
+                let html = format!(
+                    r#"<img src="data:image/gif;base64,{}" width="{}" height="{}" />"#,
+                    encoded, w, h
+                );
+                let _ = clipboard.set_html(&html, Some(&"GIF".to_string()));
+
+                crate::win32::set_hook_active(false);
+                let hwnd = state.our_hwnd.unwrap_or(0);
+                if hwnd != 0 {
+                    unsafe { crate::win32::hide_window(hwnd); }
+                }
+                Command::future(async move {
+                    Message::DoType(String::new())
+                })
+            }
+            Message::GifThumbnail(index, bytes) => {
+                state.gif.loading_frames.remove(&index);
+                if let Ok(frames) = iced_gif::Frames::from_bytes(bytes) {
+                    state.gif.frames.insert(index, frames);
+                }
+                Command::none()
+            }
             Message::TabSelected(tab) => {
                 let s = &mut state.query;
                 let c = &mut state.cursor;
@@ -197,6 +283,12 @@ impl Flemozi {
                         state.emoticon.saved_search.cursor = *c;
                         state.emoticon.saved_search.selection = sel.take();
                         state.emoticon.saved_search.search_focused = *sf;
+                    }
+                    Tab::Gifs => {
+                        state.gif.saved_search.query = std::mem::take(s);
+                        state.gif.saved_search.cursor = *c;
+                        state.gif.saved_search.selection = sel.take();
+                        state.gif.saved_search.search_focused = *sf;
                     }
                     Tab::Settings => {}
                 }
@@ -217,6 +309,23 @@ impl Flemozi {
                         state.selection = state.emoticon.saved_search.selection;
                         state.search_focused = state.emoticon.saved_search.search_focused;
                         state.emoticon.apply_search(&state.query);
+                    }
+                    Tab::Gifs => {
+                        state.query = state.gif.saved_search.query.clone();
+                        state.cursor = state.gif.saved_search.cursor;
+                        state.selection = state.gif.saved_search.selection;
+                        state.search_focused = state.gif.saved_search.search_focused;
+                        if !state.query.is_empty() {
+                            return Command::perform(
+                                crate::tabs::gif::search_gifs(state.query.clone()),
+                                Message::GifSearchResult,
+                            );
+                        } else if state.gif.entries.is_empty() {
+                            return Command::perform(
+                                crate::tabs::gif::fetch_trending_gifs(),
+                                Message::GifFetched,
+                            );
+                        }
                     }
                     Tab::Settings => {
                         state.query.clear();
@@ -289,6 +398,22 @@ impl Flemozi {
                 Command::none()
             }
             Message::Selected(i) => {
+                if state.tab == Tab::Gifs {
+                    if state.gif.filtered.contains(&i) {
+                        state.gif.selected = i;
+                        crate::win32::set_hook_active(false);
+                        if let Some(entry) = state.gif.entries.get(i) {
+                            if !entry.gif_url.is_empty() {
+                                let url = entry.gif_url.clone();
+                                return Command::perform(
+                                    crate::tabs::gif::download_gif_for_copy(url),
+                                    Message::GifCopyReady,
+                                );
+                            }
+                        }
+                    }
+                    return Command::none();
+                }
                 let ok = match state.tab {
                     Tab::Emojis => {
                         if state.emoji.filtered.contains(&i) {
@@ -306,6 +431,7 @@ impl Flemozi {
                             false
                         }
                     }
+                    Tab::Gifs => false,
                     Tab::Settings => false,
                 };
                 if ok {
@@ -345,6 +471,15 @@ impl Flemozi {
                             scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
                         );
                     }
+                    Tab::Gifs => {
+                        state.query.clear();
+                        state.cursor = 0;
+                        state.selection = None;
+                        return Command::perform(
+                            crate::tabs::gif::fetch_trending_gifs(),
+                            Message::GifFetched,
+                        );
+                    }
                     Tab::Settings => {}
                 }
                 Command::none()
@@ -356,6 +491,23 @@ impl Flemozi {
                     }
                     Tab::Emoticons => {
                         state.emoticon.visible.insert(i);
+                    }
+                    Tab::Gifs => {
+                        state.gif.visible.insert(i);
+                        if !state.gif.frames.contains_key(&i)
+                            && !state.gif.loading_frames.contains(&i)
+                        {
+                            if let Some(entry) = state.gif.entries.get(i) {
+                                if !entry.preview_url.is_empty() {
+                                    state.gif.loading_frames.insert(i);
+                                    let url = entry.preview_url.clone();
+                                    return Command::perform(
+                                        crate::tabs::gif::download_image(url),
+                                        move |bytes| Message::GifThumbnail(i, bytes),
+                                    );
+                                }
+                            }
+                        }
                     }
                     Tab::Settings => {}
                 }
@@ -537,6 +689,7 @@ impl Flemozi {
                         let at_top = match state.tab {
                             Tab::Emojis => state.emoji.filtered.first().is_some_and(|&f| f == state.emoji.selected),
                             Tab::Emoticons => state.emoticon.filtered.first().is_some_and(|&f| f == state.emoticon.selected),
+                            Tab::Gifs => state.gif.filtered.first().is_some_and(|&f| f == state.gif.selected),
                             Tab::Settings => true,
                         };
                         if at_top {
@@ -587,12 +740,26 @@ impl Flemozi {
                         Tab::Emoticons => {
                             state.emoticon.apply_search(&state.query);
                         }
+                        Tab::Gifs => {
+                            let empty = state.gif.apply_search(&state.query);
+                            if !state.query.is_empty() && empty {
+                                let q = state.query.clone();
+                                return Command::perform(
+                                    async {
+                                        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                        q
+                                    },
+                                    Message::GifSearchDebounce,
+                                );
+                            }
+                        }
                         Tab::Settings => {}
                     }
                 }
                 let sid = match state.tab {
                     Tab::Emojis => state.emoji.scroll_id.clone(),
                     Tab::Emoticons => state.emoticon.scroll_id.clone(),
+                    Tab::Gifs => state.gif.scroll_id.clone(),
                     Tab::Settings => state.emoji.scroll_id.clone(),
                 };
                 operation::scroll_to(
@@ -720,7 +887,31 @@ fn hookkey_to_code_name(key: &crate::win32::HookKey) -> String {
     }
 }
 
-pub fn code_name_to_code(name: &str) -> Option<Code> {
+pub fn base64_encode(bytes: &[u8]) -> String {
+    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity((bytes.len() + 2) / 3 * 4);
+    for chunk in bytes.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
+        let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
+        let triple = (b0 << 16) | (b1 << 8) | b2;
+        out.push(CHARS[((triple >> 18) & 0x3F) as usize] as char);
+        out.push(CHARS[((triple >> 12) & 0x3F) as usize] as char);
+        if chunk.len() > 1 {
+            out.push(CHARS[((triple >> 6) & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+        if chunk.len() > 2 {
+            out.push(CHARS[(triple & 0x3F) as usize] as char);
+        } else {
+            out.push('=');
+        }
+    }
+    out
+}
+
+fn code_name_to_code(name: &str) -> Option<Code> {
     Some(match name {
         "Period" => Code::Period,
         "Comma" => Code::Comma,
@@ -850,6 +1041,7 @@ impl State {
         match self.tab {
             Tab::Emojis => self.emoji.move_selection(mv),
             Tab::Emoticons => self.emoticon.move_selection(mv),
+            Tab::Gifs => self.gif.move_selection(mv),
             Tab::Settings => false,
         }
     }
@@ -858,6 +1050,7 @@ impl State {
         match self.tab {
             Tab::Emojis => self.emoji.scroll_to_selected(),
             Tab::Emoticons => self.emoticon.scroll_to_selected(),
+            Tab::Gifs => self.gif.scroll_to_selected(),
             Tab::Settings => Command::none(),
         }
     }
@@ -866,6 +1059,7 @@ impl State {
         let text = match self.tab {
             Tab::Emojis => self.emoji.copy_text(),
             Tab::Emoticons => self.emoticon.copy_text(),
+            Tab::Gifs => self.gif.copy_text(),
             Tab::Settings => return Command::none(),
         };
         let Some(text) = text else {

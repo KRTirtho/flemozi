@@ -3,6 +3,7 @@ mod assets;
 mod config;
 mod emoji;
 mod emoticon;
+mod env;
 mod search;
 mod tabs;
 mod twemoji_stems;

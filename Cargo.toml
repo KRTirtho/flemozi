@@ -12,13 +12,16 @@ iced = { version = "0.14", features = [
     "fira-sans",
     "image",
 ] }
+tracing = "0.1"
 tracing-subscriber = "0.3"
 tokio = { version = "1", features = ["fs", "time"] }
 global-hotkey = "0.8"
 tray-icon = { version = "0.24", default-features = false }
-arboard = { version = "3", default-features = false }
+arboard = { version = "3", default-features = false, features = ["image-data"] }
 image = "0.25"
 windows = { version = "0.62.2", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
 raw-window-handle = "0.6.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+iced_gif = "0.14.0"
