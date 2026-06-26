@@ -2,6 +2,7 @@ mod app;
 mod assets;
 mod config;
 mod emoji;
+mod emoticon;
 mod search;
 mod twemoji_stems;
 mod ui;
