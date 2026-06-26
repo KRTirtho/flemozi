@@ -16,7 +16,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, DispatchMessageW, GWL_EXSTYLE, GetCursorPos, GetForegroundWindow, GetMessageW,
-    GetSystemMetrics, GetWindowLongW, HWND_TOPMOST, MSG, SM_CXSCREEN, SM_CYSCREEN,
+    GetSystemMetrics, GetWindowLongW, HWND_TOPMOST, MSG, SM_CXSCREEN, SM_CYSCREEN, SW_HIDE,
     SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SWP_NOSIZE, SWP_SHOWWINDOW, SetWindowLongW, SetWindowPos,
     SetWindowsHookExW, ShowWindow, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL,
     WM_KEYDOWN, WM_SYSKEYDOWN, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
@@ -278,6 +278,14 @@ pub unsafe fn show_no_activate(hwnd: isize, x: i32, y: i32) {
 }
 
 #[cfg(target_os = "windows")]
+pub unsafe fn hide_window(hwnd: isize) {
+    let hwnd = HWND(hwnd as *mut _);
+    unsafe {
+        let _ = ShowWindow(hwnd, SW_HIDE);
+    }
+}
+
+#[cfg(target_os = "windows")]
 pub unsafe fn paste_emoji(text: &str) {
     let saved = arboard::Clipboard::new()
         .ok()
@@ -357,5 +365,7 @@ pub fn get_screen_size() -> (i32, i32) {
 pub unsafe fn set_window_style(_hwnd: isize) {}
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn show_no_activate(_hwnd: isize, _x: i32, _y: i32) {}
+#[cfg(not(target_os = "windows"))]
+pub unsafe fn hide_window(_hwnd: isize) {}
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn paste_emoji(_text: &str) {}

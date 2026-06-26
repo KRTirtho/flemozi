@@ -66,7 +66,6 @@ pub enum Message {
     Setup(isize),
     DoType(String),
     HookKeyEvent(HookKey),
-    Noop,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -182,33 +181,22 @@ impl Flemozi {
             }
             Message::TitleBarClose => {
                 crate::win32::set_hook_active(false);
-                if let Some(id) = state.window_id {
-                    window::set_mode::<Message>(id, window::Mode::Hidden)
-                } else {
-                    Command::none()
+                let hwnd = state.our_hwnd.unwrap_or(0);
+                if hwnd != 0 {
+                    unsafe { crate::win32::hide_window(hwnd); }
                 }
+                Command::none()
             }
             Message::HotkeyPressed(_event) => {
                 state.last_foreground = Some(crate::win32::foreground_window());
                 crate::win32::set_hook_active(true);
-                if let Some(id) = state.window_id {
-                    let hwnd = state.our_hwnd.unwrap_or(0);
-                    if hwnd != 0 {
-                        let (cx, cy) = crate::win32::get_cursor_pos();
-                        let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
-                        return Command::batch([
-                            window::set_mode::<Message>(id, window::Mode::Windowed),
-                            Command::future(async move {
-                                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-                                unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
-                            })
-                            .map(|_| Message::Noop),
-                        ]);
-                    }
-                    window::set_mode::<Message>(id, window::Mode::Windowed)
-                } else {
-                    Command::none()
+                let hwnd = state.our_hwnd.unwrap_or(0);
+                if hwnd != 0 {
+                    let (cx, cy) = crate::win32::get_cursor_pos();
+                    let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
+                    unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
                 }
+                Command::none()
             }
             Message::MenuActivated(event) => {
                 if event.id().0 == "exit" {
@@ -220,24 +208,13 @@ impl Flemozi {
                 } else if event.id().0 == "show-window" {
                     state.last_foreground = Some(crate::win32::foreground_window());
                     crate::win32::set_hook_active(true);
-                    if let Some(id) = state.window_id {
-                        let hwnd = state.our_hwnd.unwrap_or(0);
-                        if hwnd != 0 {
-                            let (cx, cy) = crate::win32::get_cursor_pos();
-                            let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
-                            return Command::batch([
-                                window::set_mode::<Message>(id, window::Mode::Windowed),
-                                Command::future(async move {
-                                    tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-                                    unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
-                                })
-                                .map(|_| Message::Noop),
-                            ]);
-                        }
-                        window::set_mode::<Message>(id, window::Mode::Windowed)
-                    } else {
-                        Command::none()
+                    let hwnd = state.our_hwnd.unwrap_or(0);
+                    if hwnd != 0 {
+                        let (cx, cy) = crate::win32::get_cursor_pos();
+                        let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
+                        unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
                     }
+                    Command::none()
                 } else {
                     Command::none()
                 }
@@ -339,11 +316,11 @@ impl Flemozi {
                 HookKey::Escape => {
                     if state.query.is_empty() {
                         crate::win32::set_hook_active(false);
-                        if let Some(id) = state.window_id {
-                            window::set_mode::<Message>(id, window::Mode::Hidden)
-                        } else {
-                            Command::none()
+                        let hwnd = state.our_hwnd.unwrap_or(0);
+                        if hwnd != 0 {
+                            unsafe { crate::win32::hide_window(hwnd); }
                         }
+                        Command::none()
                     } else {
                         state.query.clear();
                         state.filtered = (0..state.entries.len()).collect();
@@ -358,7 +335,6 @@ impl Flemozi {
                     }
                 }
             },
-            Message::Noop => Command::none(),
         }
     }
 
@@ -511,13 +487,14 @@ impl State {
         let emoji = entry.emoji.to_owned();
         self.copied = Some(emoji.clone());
 
-        if let Some(id) = self.window_id {
-            Command::batch([
-                window::set_mode::<Message>(id, window::Mode::Hidden),
-                Command::future(async move {
-                    Message::DoType(emoji)
-                }),
-            ])
+        if let Some(_id) = self.window_id {
+            let hwnd = self.our_hwnd.unwrap_or(0);
+            if hwnd != 0 {
+                unsafe { crate::win32::hide_window(hwnd); }
+            }
+            Command::future(async move {
+                Message::DoType(emoji)
+            })
         } else {
             clipboard::write::<Message>(emoji)
         }
