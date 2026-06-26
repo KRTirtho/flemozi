@@ -4,9 +4,9 @@ use iced::{border, Center, Color, ContentFit, Element, Fill};
 use crate::app::{Message, State};
 
 pub fn emoji_cell<'a>(state: &'a State, i: usize) -> Element<'a, Message> {
-    let entry = &state.entries[i];
-    let is_selected = i == state.selected;
-    let is_visible = state.visible.contains(&i);
+    let entry = &state.emoji.entries[i];
+    let is_selected = i == state.emoji.selected;
+    let is_visible = state.emoji.visible.contains(&i);
 
     let cell: Element<_> = if is_visible {
         match &entry.image {

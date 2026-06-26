@@ -149,7 +149,7 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
             search_bar_inactive_style
         });
 
-    let grid_content: Element<_> = if state.filtered.is_empty() {
+    let grid_content: Element<_> = if state.emoji.filtered.is_empty() {
         center(
             text("No emojis found")
                 .width(Fill)
@@ -160,7 +160,7 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
         .height(200)
         .into()
     } else {
-        let cells = state.filtered.iter().map(|&i| emoji_cell(state, i));
+        let cells = state.emoji.filtered.iter().map(|&i| emoji_cell(state, i));
 
         iced::widget::grid(cells)
             .columns(COLUMNS)
@@ -170,7 +170,7 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
     };
 
     let scroll = scrollable(grid_content)
-        .id(state.scroll_id.clone())
+        .id(state.emoji.scroll_id.clone())
         .width(Fill)
         .height(Fill)
         .auto_scroll(true);
@@ -186,8 +186,8 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
 }
 
 fn emoticon_cell(state: &State, i: usize) -> Element<'_, Message> {
-    let entry = &state.emoticon_entries[i];
-    let is_selected = i == state.emoticon_selected;
+    let entry = &state.emoticon.entries[i];
+    let is_selected = i == state.emoticon.selected;
 
     let cell = text(entry.text)
         .size(13)
@@ -218,8 +218,8 @@ fn emoticon_cell(state: &State, i: usize) -> Element<'_, Message> {
 }
 
 fn emoticon_preview(state: &State) -> Element<'_, Message> {
-    let (entry, is_copied) = match state.emoticon_filtered.is_empty() {
-        false => match state.emoticon_entries.get(state.emoticon_selected) {
+    let (entry, is_copied) = match state.emoticon.filtered.is_empty() {
+        false => match state.emoticon.entries.get(state.emoticon.selected) {
             Some(e) => (
                 e,
                 state.copied.as_deref() == Some(e.text),
@@ -291,7 +291,7 @@ fn emoticons_view(state: &State) -> Element<'_, Message> {
             search_bar_inactive_style
         });
 
-    let grid_content: Element<_> = if state.emoticon_filtered.is_empty() {
+    let grid_content: Element<_> = if state.emoticon.filtered.is_empty() {
         center(
             text("No emoticons found")
                 .width(Fill)
@@ -303,7 +303,8 @@ fn emoticons_view(state: &State) -> Element<'_, Message> {
         .into()
     } else {
         let cells = state
-            .emoticon_filtered
+            .emoticon
+            .filtered
             .iter()
             .map(|&i| emoticon_cell(state, i));
 
@@ -315,7 +316,7 @@ fn emoticons_view(state: &State) -> Element<'_, Message> {
     };
 
     let scroll = scrollable(grid_content)
-        .id(state.emoticon_scroll_id.clone())
+        .id(state.emoticon.scroll_id.clone())
         .width(Fill)
         .height(Fill)
         .auto_scroll(true);

@@ -4,6 +4,7 @@ mod config;
 mod emoji;
 mod emoticon;
 mod search;
+mod tabs;
 mod twemoji_stems;
 mod ui;
 mod win32;

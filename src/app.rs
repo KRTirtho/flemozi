@@ -1,23 +1,19 @@
-use std::collections::HashSet;
 use std::sync::Mutex;
 
 use iced::event;
 use iced::keyboard;
 use iced::mouse;
 use iced::stream;
-use iced::widget::{self, operation, scrollable};
+use iced::widget::{operation, scrollable};
 use iced::{clipboard, window, Element, Point, Subscription, Task as Command};
 use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager};
 use tray_icon::menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
 use tray_icon::TrayIconBuilder;
 
-use crate::assets::emojis::EMOJIS;
-use crate::assets::emoticons::EMOTICONS;
 use crate::config::Config;
-use crate::emoji::EmojiEntry;
-use crate::emoticon::{filter_emoticons, EmoticonEntry};
-use crate::search::filter;
+use crate::tabs::emoji::EmojiTab;
+use crate::tabs::emoticon::EmoticonTab;
 use crate::ui::main_view;
 use crate::win32::HookKeyEvent;
 
@@ -64,19 +60,9 @@ pub struct State {
     pub search_focused: bool,
     pub config: Config,
     pub capturing_shortcut: bool,
-    pub entries: Vec<EmojiEntry>,
-    pub filtered: Vec<usize>,
-    pub selected: usize,
     pub copied: Option<String>,
-    pub visible: HashSet<usize>,
-    pub scroll_id: widget::Id,
-    pub emoji_search: SearchState,
-    pub emoticon_search: SearchState,
-    pub emoticon_entries: Vec<EmoticonEntry>,
-    pub emoticon_filtered: Vec<usize>,
-    pub emoticon_selected: usize,
-    pub emoticon_visible: HashSet<usize>,
-    pub emoticon_scroll_id: widget::Id,
+    pub emoji: EmojiTab,
+    pub emoticon: EmoticonTab,
     pub tab: Tab,
     pub window_id: Option<window::Id>,
     pub our_hwnd: Option<isize>,
@@ -113,40 +99,18 @@ pub enum Move {
 
 impl Flemozi {
     pub fn new() -> (Self, Command<Message>) {
-        let entries: Vec<EmojiEntry> = EMOJIS.iter().map(EmojiEntry::from_type).collect();
-        let filtered = (0..entries.len()).collect();
-
-        let emoticon_entries: Vec<EmoticonEntry> = EMOTICONS
-            .iter()
-            .map(|t| EmoticonEntry {
-                text: t.text,
-                category: t.category,
-            })
-            .collect();
-        let emoticon_filtered = (0..emoticon_entries.len()).collect();
-
         let config = Config::load();
 
         let state = State {
-            entries,
-            filtered,
-            selected: 0,
-            copied: None,
             query: String::new(),
             cursor: 0,
             selection: None,
             search_focused: true,
             config,
             capturing_shortcut: false,
-            visible: HashSet::new(),
-            scroll_id: "grid-scroll".into(),
-            emoji_search: SearchState::new(),
-            emoticon_search: SearchState::new(),
-            emoticon_entries,
-            emoticon_filtered,
-            emoticon_selected: 0,
-            emoticon_visible: HashSet::new(),
-            emoticon_scroll_id: "emoticon-scroll".into(),
+            copied: None,
+            emoji: EmojiTab::new(),
+            emoticon: EmoticonTab::new(),
             tab: Tab::Emojis,
             window_id: None,
             our_hwnd: None,
@@ -217,49 +181,42 @@ impl Flemozi {
                 Command::none()
             }
             Message::TabSelected(tab) => {
-                // Save current tab's search state
+                let s = &mut state.query;
+                let c = &mut state.cursor;
+                let sel = &mut state.selection;
+                let sf = &mut state.search_focused;
                 match state.tab {
                     Tab::Emojis => {
-                        state.emoji_search.query =
-                            std::mem::take(&mut state.query);
-                        state.emoji_search.cursor = state.cursor;
-                        state.emoji_search.selection = state.selection.take();
-                        state.emoji_search.search_focused = state.search_focused;
+                        state.emoji.saved_search.query = std::mem::take(s);
+                        state.emoji.saved_search.cursor = *c;
+                        state.emoji.saved_search.selection = sel.take();
+                        state.emoji.saved_search.search_focused = *sf;
                     }
                     Tab::Emoticons => {
-                        state.emoticon_search.query =
-                            std::mem::take(&mut state.query);
-                        state.emoticon_search.cursor = state.cursor;
-                        state.emoticon_search.selection = state.selection.take();
-                        state.emoticon_search.search_focused = state.search_focused;
+                        state.emoticon.saved_search.query = std::mem::take(s);
+                        state.emoticon.saved_search.cursor = *c;
+                        state.emoticon.saved_search.selection = sel.take();
+                        state.emoticon.saved_search.search_focused = *sf;
                     }
                     Tab::Settings => {}
                 }
 
                 state.tab = tab;
 
-                // Restore new tab's search state
                 match tab {
                     Tab::Emojis => {
-                        state.query = state.emoji_search.query.clone();
-                        state.cursor = state.emoji_search.cursor;
-                        state.selection = state.emoji_search.selection;
-                        state.search_focused = state.emoji_search.search_focused;
-                        state.filtered = filter(&state.entries, &state.query);
-                        state.selected = state.filtered.first().copied().unwrap_or(0);
+                        state.query = state.emoji.saved_search.query.clone();
+                        state.cursor = state.emoji.saved_search.cursor;
+                        state.selection = state.emoji.saved_search.selection;
+                        state.search_focused = state.emoji.saved_search.search_focused;
+                        state.emoji.apply_search(&state.query);
                     }
                     Tab::Emoticons => {
-                        state.query = state.emoticon_search.query.clone();
-                        state.cursor = state.emoticon_search.cursor;
-                        state.selection = state.emoticon_search.selection;
-                        state.search_focused = state.emoticon_search.search_focused;
-                        state.emoticon_filtered =
-                            filter_emoticons(&state.emoticon_entries, &state.query);
-                        state.emoticon_selected = state
-                            .emoticon_filtered
-                            .first()
-                            .copied()
-                            .unwrap_or(0);
+                        state.query = state.emoticon.saved_search.query.clone();
+                        state.cursor = state.emoticon.saved_search.cursor;
+                        state.selection = state.emoticon.saved_search.selection;
+                        state.search_focused = state.emoticon.saved_search.search_focused;
+                        state.emoticon.apply_search(&state.query);
                     }
                     Tab::Settings => {
                         state.query.clear();
@@ -331,27 +288,33 @@ impl Flemozi {
                 unsafe { crate::win32::paste_emoji(&emoji); }
                 Command::none()
             }
-            Message::Selected(i) => match state.tab {
-                Tab::Emojis => {
-                    if state.filtered.contains(&i) {
-                        state.selected = i;
-                        crate::win32::set_hook_active(false);
-                        state.copy()
-                    } else {
-                        Command::none()
+            Message::Selected(i) => {
+                let ok = match state.tab {
+                    Tab::Emojis => {
+                        if state.emoji.filtered.contains(&i) {
+                            state.emoji.selected = i;
+                            true
+                        } else {
+                            false
+                        }
                     }
-                }
-                Tab::Emoticons => {
-                    if state.emoticon_filtered.contains(&i) {
-                        state.emoticon_selected = i;
-                        crate::win32::set_hook_active(false);
-                        state.copy()
-                    } else {
-                        Command::none()
+                    Tab::Emoticons => {
+                        if state.emoticon.filtered.contains(&i) {
+                            state.emoticon.selected = i;
+                            true
+                        } else {
+                            false
+                        }
                     }
+                    Tab::Settings => false,
+                };
+                if ok {
+                    crate::win32::set_hook_active(false);
+                    state.copy()
+                } else {
+                    Command::none()
                 }
-                Tab::Settings => Command::none(),
-            },
+            }
             Message::MoveSelection(mv) => {
                 if state.move_selection(mv) {
                     state.scroll_to_selected()
@@ -369,31 +332,30 @@ impl Flemozi {
                 state.selection = None;
                 match state.tab {
                     Tab::Emojis => {
-                        state.filtered = (0..state.entries.len()).collect();
-                        state.selected = state.filtered.first().copied().unwrap_or(0);
+                        state.emoji.reset_search();
+                        return operation::scroll_to(
+                            state.emoji.scroll_id.clone(),
+                            scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                        );
                     }
                     Tab::Emoticons => {
-                        state.emoticon_filtered = (0..state.emoticon_entries.len()).collect();
-                        state.emoticon_selected = state
-                            .emoticon_filtered
-                            .first()
-                            .copied()
-                            .unwrap_or(0);
+                        state.emoticon.reset_search();
+                        return operation::scroll_to(
+                            state.emoticon.scroll_id.clone(),
+                            scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                        );
                     }
                     Tab::Settings => {}
                 }
-                operation::scroll_to(
-                    state.scroll_id.clone(),
-                    scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                )
+                Command::none()
             }
             Message::Shown(i) => {
                 match state.tab {
                     Tab::Emojis => {
-                        state.visible.insert(i);
+                        state.emoji.visible.insert(i);
                     }
                     Tab::Emoticons => {
-                        state.emoticon_visible.insert(i);
+                        state.emoticon.visible.insert(i);
                     }
                     Tab::Settings => {}
                 }
@@ -572,10 +534,11 @@ impl Flemozi {
                         state.search_focused = false;
                     }
                     crate::win32::HookKey::Up => {
-                        let at_top = state
-                            .filtered
-                            .first()
-                            .is_some_and(|&f| f == state.selected);
+                        let at_top = match state.tab {
+                            Tab::Emojis => state.emoji.filtered.first().is_some_and(|&f| f == state.emoji.selected),
+                            Tab::Emoticons => state.emoticon.filtered.first().is_some_and(|&f| f == state.emoticon.selected),
+                            Tab::Settings => true,
+                        };
                         if at_top {
                             state.search_focused = true;
                         } else if state.move_selection(Move::Up) {
@@ -619,24 +582,21 @@ impl Flemozi {
                 if re_filter {
                     match state.tab {
                         Tab::Emojis => {
-                            state.filtered = filter(&state.entries, &state.query);
-                            state.selected =
-                                state.filtered.first().copied().unwrap_or(0);
+                            state.emoji.apply_search(&state.query);
                         }
                         Tab::Emoticons => {
-                            state.emoticon_filtered =
-                                filter_emoticons(&state.emoticon_entries, &state.query);
-                            state.emoticon_selected = state
-                                .emoticon_filtered
-                                .first()
-                                .copied()
-                                .unwrap_or(0);
+                            state.emoticon.apply_search(&state.query);
                         }
                         Tab::Settings => {}
                     }
                 }
+                let sid = match state.tab {
+                    Tab::Emojis => state.emoji.scroll_id.clone(),
+                    Tab::Emoticons => state.emoticon.scroll_id.clone(),
+                    Tab::Settings => state.emoji.scroll_id.clone(),
+                };
                 operation::scroll_to(
-                    state.scroll_id.clone(),
+                    sid,
                     scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
                 )
             }
@@ -863,54 +823,6 @@ pub fn shortcut_display_name(config: &Config) -> String {
     parts.join("+")
 }
 
-fn move_selection_in(filtered: &[usize], selected: &mut usize, mv: Move) -> bool {
-    if filtered.is_empty() {
-        return false;
-    }
-
-    let pos = filtered
-        .iter()
-        .position(|&i| i == *selected)
-        .unwrap_or(0);
-
-    let len = filtered.len();
-    let next = match mv {
-        Move::Up => pos.saturating_sub(COLUMNS),
-        Move::Down => (pos + COLUMNS).min(len - 1),
-        Move::Left => pos.saturating_sub(1),
-        Move::Right => (pos + 1).min(len - 1),
-    };
-
-    let old_row = pos / COLUMNS;
-    let new_row = next / COLUMNS;
-
-    *selected = filtered[next];
-
-    old_row != new_row
-}
-
-fn scroll_pos_in(filtered: &[usize], selected: usize, columns: usize) -> f32 {
-    let pos = filtered
-        .iter()
-        .position(|&i| i == selected)
-        .unwrap_or(0);
-
-    let row = pos / columns;
-    let content_width = 500.0 - 42.0 - 24.0;
-    let gaps = (columns - 1) as f32 * SPACING;
-    let cell_width = (content_width - gaps) / columns as f32;
-    let row_height = cell_width + SPACING;
-
-    row as f32 * row_height
-}
-
-fn scroll_to_id(id: &widget::Id, y: f32) -> Command<Message> {
-    operation::scroll_to(
-        id.clone(),
-        scrollable::AbsoluteOffset { x: 0.0, y },
-    )
-}
-
 impl State {
     fn register_hotkey(&self) {
         let c = &self.config;
@@ -936,71 +848,29 @@ impl State {
 
     fn move_selection(&mut self, mv: Move) -> bool {
         match self.tab {
-            Tab::Emojis => move_selection_in(&self.filtered, &mut self.selected, mv),
-            Tab::Emoticons => {
-                move_selection_in(&self.emoticon_filtered, &mut self.emoticon_selected, mv)
-            }
+            Tab::Emojis => self.emoji.move_selection(mv),
+            Tab::Emoticons => self.emoticon.move_selection(mv),
             Tab::Settings => false,
         }
     }
 
     fn scroll_to_selected(&self) -> Command<Message> {
         match self.tab {
-            Tab::Emojis => scroll_to_id(
-                &self.scroll_id,
-                scroll_pos_in(&self.filtered, self.selected, COLUMNS),
-            ),
-            Tab::Emoticons => scroll_to_id(
-                &self.emoticon_scroll_id,
-                scroll_pos_in(&self.emoticon_filtered, self.emoticon_selected, COLUMNS),
-            ),
+            Tab::Emojis => self.emoji.scroll_to_selected(),
+            Tab::Emoticons => self.emoticon.scroll_to_selected(),
             Tab::Settings => Command::none(),
         }
     }
 
     fn copy(&mut self) -> Command<Message> {
-        match self.tab {
-            Tab::Emojis => self.copy_emoji(),
-            Tab::Emoticons => self.copy_emoticon(),
-            Tab::Settings => Command::none(),
-        }
-    }
-
-    fn copy_emoji(&mut self) -> Command<Message> {
-        let Some(entry) = self.entries.get(self.selected) else {
+        let text = match self.tab {
+            Tab::Emojis => self.emoji.copy_text(),
+            Tab::Emoticons => self.emoticon.copy_text(),
+            Tab::Settings => return Command::none(),
+        };
+        let Some(text) = text else {
             return Command::none();
         };
-
-        if !self.filtered.contains(&self.selected) {
-            return Command::none();
-        }
-
-        let emoji = entry.emoji.to_owned();
-        self.copied = Some(emoji.clone());
-
-        if let Some(_id) = self.window_id {
-            let hwnd = self.our_hwnd.unwrap_or(0);
-            if hwnd != 0 {
-                unsafe { crate::win32::hide_window(hwnd); }
-            }
-            Command::future(async move {
-                Message::DoType(emoji)
-            })
-        } else {
-            clipboard::write::<Message>(emoji)
-        }
-    }
-
-    fn copy_emoticon(&mut self) -> Command<Message> {
-        let Some(entry) = self.emoticon_entries.get(self.emoticon_selected) else {
-            return Command::none();
-        };
-
-        if !self.emoticon_filtered.contains(&self.emoticon_selected) {
-            return Command::none();
-        }
-
-        let text = entry.text.to_owned();
         self.copied = Some(text.clone());
 
         if let Some(_id) = self.window_id {

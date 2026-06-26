@@ -7,8 +7,8 @@ use crate::emoji::to_codepoints;
 use super::styles::{copied_style, preview_style, subtle};
 
 pub fn preview_bar(state: &State) -> Element<'_, Message> {
-    let (entry, is_copied) = match state.filtered.is_empty() {
-        false => match state.entries.get(state.selected) {
+    let (entry, is_copied) = match state.emoji.filtered.is_empty() {
+        false => match state.emoji.entries.get(state.emoji.selected) {
             Some(e) => (e, state.copied.as_deref() == Some(e.emoji)),
             None => return empty_preview(),
         },
