@@ -33,7 +33,7 @@ pub fn emoji_cell<'a>(state: &'a State, i: usize) -> Element<'a, Message> {
         .style(button::text)
         .on_press(Message::Selected(i));
 
-    let styled: Element<_> = if is_selected {
+    let styled: Element<_> = if is_selected && !state.search_focused {
         container(button)
             .style(move |_theme| container::Style {
                 border: border::rounded(4)

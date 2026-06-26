@@ -9,7 +9,7 @@ use crate::app::{Message, State, Tab, COLUMNS, SPACING};
 
 use grid::emoji_cell;
 use preview::preview_bar;
-use styles::{search_bar_style, selected_text_style, sidebar_active_style, sidebar_inactive_style, subtle};
+use styles::{search_bar_active_style, search_bar_inactive_style, selected_text_style, sidebar_active_style, sidebar_inactive_style, subtle};
 
 pub fn main_view(state: &State) -> Element<'_, Message> {
     let titlebar = titlebar_view();
@@ -111,7 +111,7 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
             text(after).size(20),
         ]
         .into()
-    } else {
+    } else if state.search_focused {
         let before = &state.query[..state.cursor];
         let after = &state.query[state.cursor..];
         row![
@@ -120,11 +120,17 @@ fn emoji_view(state: &State) -> Element<'_, Message> {
             text(after).size(20),
         ]
         .into()
+    } else {
+        text(&state.query).size(20).into()
     };
     let search = container(content)
         .padding(12)
         .width(Fill)
-        .style(search_bar_style);
+        .style(if state.search_focused {
+            search_bar_active_style
+        } else {
+            search_bar_inactive_style
+        });
 
     let grid_content: Element<_> = if state.filtered.is_empty() {
         center(

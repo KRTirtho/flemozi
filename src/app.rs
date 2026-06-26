@@ -38,6 +38,7 @@ pub struct State {
     pub query: String,
     pub cursor: usize,
     pub selection: Option<(usize, usize)>,
+    pub search_focused: bool,
     pub entries: Vec<EmojiEntry>,
     pub filtered: Vec<usize>,
     pub selected: usize,
@@ -89,6 +90,7 @@ impl Flemozi {
             query: String::new(),
             cursor: 0,
             selection: None,
+            search_focused: true,
             visible: HashSet::new(),
             scroll_id: "grid-scroll".into(),
             tab: Tab::Emojis,
@@ -261,12 +263,16 @@ impl Flemozi {
                 let mut re_filter = true;
                 match key {
                     crate::win32::HookKey::Char(ch) if ctrl && ch == 'a' => {
+                        state.search_focused = true;
                         state.cursor = state.query.len();
                         state.selection = Some((0, state.query.len()));
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'c' => {}
+                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'c' => {
+                        state.search_focused = true;
+                    }
                     crate::win32::HookKey::Char(ch) => {
+                        state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
                             let hi = a.max(b);
@@ -277,6 +283,7 @@ impl Flemozi {
                         state.cursor += 1;
                     }
                     crate::win32::HookKey::Backspace if ctrl => {
+                        state.search_focused = true;
                         state.selection = None;
                         let before = &state.query[..state.cursor];
                         let word_start = before
@@ -287,6 +294,7 @@ impl Flemozi {
                         state.cursor = word_start;
                     }
                     crate::win32::HookKey::Backspace => {
+                        state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
                             let hi = a.max(b);
@@ -299,6 +307,7 @@ impl Flemozi {
                         }
                     }
                     crate::win32::HookKey::Delete if ctrl => {
+                        state.search_focused = true;
                         state.selection = None;
                         let after = &state.query[state.cursor..];
                         let word_end = after
@@ -308,6 +317,7 @@ impl Flemozi {
                         state.query.replace_range(state.cursor..word_end, "");
                     }
                     crate::win32::HookKey::Delete => {
+                        state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
                             let hi = a.max(b);
@@ -317,7 +327,7 @@ impl Flemozi {
                             state.query.remove(state.cursor);
                         }
                     }
-                    crate::win32::HookKey::Left => {
+                    crate::win32::HookKey::Left if state.search_focused => {
                         if ctrl {
                             let word_start = state
                                 .query[..state.cursor]
@@ -343,8 +353,13 @@ impl Flemozi {
                                 state.cursor -= 1;
                             }
                         }
+                        re_filter = false;
                     }
-                    crate::win32::HookKey::Right => {
+                    crate::win32::HookKey::Left => {
+                        state.move_selection(Move::Left);
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Right if state.search_focused => {
                         if ctrl {
                             let after = &state.query[state.cursor..];
                             let word_end = after
@@ -370,8 +385,13 @@ impl Flemozi {
                                 state.cursor += 1;
                             }
                         }
+                        re_filter = false;
                     }
-                    crate::win32::HookKey::Home => {
+                    crate::win32::HookKey::Right => {
+                        state.move_selection(Move::Right);
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Home if state.search_focused => {
                         if shift {
                             let anchor = state.selection.map_or(state.cursor, |(a, _)| a);
                             state.selection = Some((anchor, 0));
@@ -379,8 +399,9 @@ impl Flemozi {
                             state.selection = None;
                         }
                         state.cursor = 0;
+                        re_filter = false;
                     }
-                    crate::win32::HookKey::End => {
+                    crate::win32::HookKey::End if state.search_focused => {
                         let len = state.query.len();
                         if shift {
                             let anchor = state.selection.map_or(state.cursor, |(_, b)| b);
@@ -389,16 +410,39 @@ impl Flemozi {
                             state.selection = None;
                         }
                         state.cursor = len;
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Home | crate::win32::HookKey::End => {
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Up if state.search_focused => {
+                        state.search_focused = false;
                     }
                     crate::win32::HookKey::Up => {
-                        if state.move_selection(Move::Up) {
+                        let at_top = state
+                            .filtered
+                            .first()
+                            .is_some_and(|&f| f == state.selected);
+                        if at_top {
+                            state.search_focused = true;
+                        } else if state.move_selection(Move::Up) {
                             return state.scroll_to_selected();
                         }
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Down if state.search_focused => {
+                        state.search_focused = false;
+                        re_filter = false;
                     }
                     crate::win32::HookKey::Down => {
                         if state.move_selection(Move::Down) {
                             return state.scroll_to_selected();
                         }
+                        re_filter = false;
+                    }
+                    crate::win32::HookKey::Enter if state.search_focused => {
+                        state.search_focused = false;
+                        re_filter = false;
                     }
                     crate::win32::HookKey::Enter => {
                         crate::win32::set_hook_active(false);
