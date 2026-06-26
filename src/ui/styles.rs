@@ -1,6 +1,16 @@
 use iced::widget::{button, container, text};
 use iced::{Background, Color, Theme, border};
 
+pub fn selected_text_style(theme: &Theme) -> container::Style {
+    let palette = theme.extended_palette().background;
+    let accent = palette.strong.color;
+    container::Style {
+        background: Some(Background::Color(accent)),
+        text_color: Some(palette.strong.text),
+        ..container::Style::default()
+    }
+}
+
 pub fn subtle(theme: &Theme) -> text::Style {
     text::Style {
         color: Some(theme.palette().text.scale_alpha(0.5)),

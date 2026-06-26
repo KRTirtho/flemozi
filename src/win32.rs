@@ -10,8 +10,8 @@ use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
-    SendInput, VIRTUAL_KEY, VK_BACK, VK_CAPITAL, VK_DOWN, VK_ESCAPE, VK_LEFT, VK_RETURN, VK_RIGHT,
-    VK_SHIFT, VK_SPACE, VK_UP,
+    SendInput, VIRTUAL_KEY, VK_BACK, VK_CAPITAL, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END,
+    VK_ESCAPE, VK_HOME, VK_LEFT, VK_RETURN, VK_RIGHT, VK_SHIFT, VK_SPACE, VK_UP,
 };
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -26,12 +26,22 @@ use windows::Win32::UI::WindowsAndMessaging::{
 pub enum HookKey {
     Char(char),
     Backspace,
+    Delete,
+    Home,
+    End,
     Up,
     Down,
     Left,
     Right,
     Enter,
     Escape,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HookKeyEvent {
+    pub key: HookKey,
+    pub ctrl: bool,
+    pub shift: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -55,9 +65,10 @@ pub fn is_hook_active() -> bool {
 }
 
 #[cfg(target_os = "windows")]
-static HOOK_CHANNEL: OnceLock<(Mutex<Sender<HookKey>>, Mutex<Receiver<HookKey>>)> = OnceLock::new();
+static HOOK_CHANNEL: OnceLock<(Mutex<Sender<HookKeyEvent>>, Mutex<Receiver<HookKeyEvent>>)> =
+    OnceLock::new();
 
-pub fn try_recv_hook_key() -> Option<HookKey> {
+pub fn try_recv_hook_key() -> Option<HookKeyEvent> {
     #[cfg(target_os = "windows")]
     {
         HOOK_CHANNEL
@@ -75,7 +86,7 @@ pub fn init_keyboard_hook() {
         return;
     }
 
-    let (tx, rx) = channel::<HookKey>();
+    let (tx, rx) = channel::<HookKeyEvent>();
     HOOK_CHANNEL.set((Mutex::new(tx), Mutex::new(rx))).ok();
 
     let _ = HOOK_CHANNEL.get().map(|(tx, _)| {
@@ -128,8 +139,14 @@ unsafe extern "system" fn hook_proc(code: i32, w_param: WPARAM, l_param: LPARAM)
         return unsafe { CallNextHookEx(None, code, w_param, l_param) };
     }
 
+    let shift = (unsafe { GetKeyState(VK_SHIFT.0 as i32) } as u16 & 0x8000) != 0;
+    let ctrl = (unsafe { GetKeyState(VK_CONTROL.0 as i32) } as u16 & 0x8000) != 0;
+
     let key = match kb.vk_code {
         v if v == VK_BACK.0 as u32 => Some(HookKey::Backspace),
+        v if v == VK_DELETE.0 as u32 => Some(HookKey::Delete),
+        v if v == VK_HOME.0 as u32 => Some(HookKey::Home),
+        v if v == VK_END.0 as u32 => Some(HookKey::End),
         v if v == VK_RETURN.0 as u32 => Some(HookKey::Enter),
         v if v == VK_ESCAPE.0 as u32 => Some(HookKey::Escape),
         v if v == VK_LEFT.0 as u32 => Some(HookKey::Left),
@@ -137,7 +154,6 @@ unsafe extern "system" fn hook_proc(code: i32, w_param: WPARAM, l_param: LPARAM)
         v if v == VK_RIGHT.0 as u32 => Some(HookKey::Right),
         v if v == VK_DOWN.0 as u32 => Some(HookKey::Down),
         _ => {
-            let shift = (unsafe { GetKeyState(VK_SHIFT.0 as i32) } as u16 & 0x8000) != 0;
             let caps = (unsafe { GetKeyState(VK_CAPITAL.0 as i32) } & 1) != 0;
             vk_to_char(kb.vk_code, shift, caps).map(HookKey::Char)
         }
@@ -145,7 +161,7 @@ unsafe extern "system" fn hook_proc(code: i32, w_param: WPARAM, l_param: LPARAM)
 
     if let Some(k) = key {
         if let Some((tx, _)) = HOOK_CHANNEL.get() {
-            let _ = tx.lock().ok().map(|tx| tx.send(k));
+            let _ = tx.lock().ok().map(|tx| tx.send(HookKeyEvent { key: k, ctrl, shift }));
         }
         return LRESULT(1);
     }
@@ -344,7 +360,7 @@ pub fn is_hook_active() -> bool {
     false
 }
 #[cfg(not(target_os = "windows"))]
-pub fn try_recv_hook_key() -> Option<HookKey> {
+pub fn try_recv_hook_key() -> Option<HookKeyEvent> {
     None
 }
 #[cfg(not(target_os = "windows"))]

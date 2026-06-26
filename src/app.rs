@@ -16,7 +16,7 @@ use crate::assets::emojis::EMOJIS;
 use crate::emoji::EmojiEntry;
 use crate::search::filter;
 use crate::ui::main_view;
-use crate::win32::HookKey;
+use crate::win32::HookKeyEvent;
 
 pub(crate) const COLUMNS: usize = 10;
 pub(crate) const SPACING: f32 = 4.0;
@@ -36,6 +36,8 @@ pub enum Flemozi {
 
 pub struct State {
     pub query: String,
+    pub cursor: usize,
+    pub selection: Option<(usize, usize)>,
     pub entries: Vec<EmojiEntry>,
     pub filtered: Vec<usize>,
     pub selected: usize,
@@ -63,7 +65,7 @@ pub enum Message {
     Init(Option<window::Id>),
     Setup(isize),
     DoType(String),
-    HookKeyEvent(HookKey),
+    HookKeyEvent(HookKeyEvent),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -85,6 +87,8 @@ impl Flemozi {
             selected: 0,
             copied: None,
             query: String::new(),
+            cursor: 0,
+            selection: None,
             visible: HashSet::new(),
             scroll_id: "grid-scroll".into(),
             tab: Tab::Emojis,
@@ -239,6 +243,8 @@ impl Flemozi {
             }
             Message::ClearSearch => {
                 state.query.clear();
+                state.cursor = 0;
+                state.selection = None;
                 state.filtered = (0..state.entries.len()).collect();
                 state.selected = state.filtered.first().copied().unwrap_or(0);
                 operation::scroll_to(
@@ -250,70 +256,178 @@ impl Flemozi {
                 state.visible.insert(i);
                 Command::none()
             }
-            Message::HookKeyEvent(key) => match key {
-                HookKey::Char(ch) => {
-                    state.query.push(ch);
-                    state.filtered = filter(&state.entries, &state.query);
-                    state.selected = state.filtered.first().copied().unwrap_or(0);
-                    operation::scroll_to(
-                        state.scroll_id.clone(),
-                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                    )
-                }
-                HookKey::Backspace => {
-                    state.query.pop();
-                    state.filtered = filter(&state.entries, &state.query);
-                    state.selected = state.filtered.first().copied().unwrap_or(0);
-                    operation::scroll_to(
-                        state.scroll_id.clone(),
-                        scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                    )
-                }
-                HookKey::Up => {
-                    if state.move_selection(Move::Up) {
-                        state.scroll_to_selected()
-                    } else {
-                        Command::none()
+            Message::HookKeyEvent(ev) => {
+                let HookKeyEvent { key, ctrl, shift } = ev;
+                let mut re_filter = true;
+                match key {
+                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'a' => {
+                        state.cursor = state.query.len();
+                        state.selection = Some((0, state.query.len()));
+                        re_filter = false;
                     }
-                }
-                HookKey::Down => {
-                    if state.move_selection(Move::Down) {
-                        state.scroll_to_selected()
-                    } else {
-                        Command::none()
-                    }
-                }
-                HookKey::Left => {
-                    state.move_selection(Move::Left);
-                    Command::none()
-                }
-                HookKey::Right => {
-                    state.move_selection(Move::Right);
-                    Command::none()
-                }
-                HookKey::Enter => {
-                    crate::win32::set_hook_active(false);
-                    state.copy()
-                }
-                HookKey::Escape => {
-                    if state.query.is_empty() {
-                        crate::win32::set_hook_active(false);
-                        let hwnd = state.our_hwnd.unwrap_or(0);
-                        if hwnd != 0 {
-                            unsafe { crate::win32::hide_window(hwnd); }
+                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'c' => {}
+                    crate::win32::HookKey::Char(ch) => {
+                        if let Some((a, b)) = state.selection.take() {
+                            let lo = a.min(b);
+                            let hi = a.max(b);
+                            state.query.replace_range(lo..hi, "");
+                            state.cursor = lo;
                         }
-                        Command::none()
-                    } else {
-                        state.query.clear();
-                        state.filtered = (0..state.entries.len()).collect();
-                        state.selected = state.filtered.first().copied().unwrap_or(0);
-                        operation::scroll_to(
-                            state.scroll_id.clone(),
-                            scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
-                        )
+                        state.query.insert(state.cursor, ch);
+                        state.cursor += 1;
+                    }
+                    crate::win32::HookKey::Backspace if ctrl => {
+                        state.selection = None;
+                        let before = &state.query[..state.cursor];
+                        let word_start = before
+                            .rfind(|c: char| c == ' ')
+                            .map(|i| i + 1)
+                            .unwrap_or(0);
+                        state.query.replace_range(word_start..state.cursor, "");
+                        state.cursor = word_start;
+                    }
+                    crate::win32::HookKey::Backspace => {
+                        if let Some((a, b)) = state.selection.take() {
+                            let lo = a.min(b);
+                            let hi = a.max(b);
+                            state.query.replace_range(lo..hi, "");
+                            state.cursor = lo;
+                        } else if state.cursor > 0 {
+                            let lo = state.cursor - 1;
+                            state.query.remove(lo);
+                            state.cursor = lo;
+                        }
+                    }
+                    crate::win32::HookKey::Delete if ctrl => {
+                        state.selection = None;
+                        let after = &state.query[state.cursor..];
+                        let word_end = after
+                            .find(|c: char| c == ' ')
+                            .map(|i| state.cursor + i + 1)
+                            .unwrap_or(state.query.len());
+                        state.query.replace_range(state.cursor..word_end, "");
+                    }
+                    crate::win32::HookKey::Delete => {
+                        if let Some((a, b)) = state.selection.take() {
+                            let lo = a.min(b);
+                            let hi = a.max(b);
+                            state.query.replace_range(lo..hi, "");
+                            state.cursor = lo;
+                        } else if state.cursor < state.query.len() {
+                            state.query.remove(state.cursor);
+                        }
+                    }
+                    crate::win32::HookKey::Left => {
+                        if ctrl {
+                            let word_start = state
+                                .query[..state.cursor]
+                                .rfind(|c: char| c == ' ')
+                                .map(|i| i + 1)
+                                .unwrap_or(0);
+                            if shift {
+                                let anchor = state.selection.map_or(state.cursor, |(a, _)| a);
+                                state.selection = Some((anchor, word_start));
+                            } else {
+                                state.selection = None;
+                            }
+                            state.cursor = word_start;
+                        } else if shift {
+                            let anchor = state.selection.map_or(state.cursor, |(a, _)| a);
+                            if state.cursor > 0 {
+                                state.cursor -= 1;
+                            }
+                            state.selection = Some((anchor, state.cursor));
+                        } else {
+                            state.selection = None;
+                            if state.cursor > 0 {
+                                state.cursor -= 1;
+                            }
+                        }
+                    }
+                    crate::win32::HookKey::Right => {
+                        if ctrl {
+                            let after = &state.query[state.cursor..];
+                            let word_end = after
+                                .find(|c: char| c == ' ')
+                                .map(|i| state.cursor + i + 1)
+                                .unwrap_or(state.query.len());
+                            if shift {
+                                let anchor = state.selection.map_or(state.cursor, |(_, b)| b);
+                                state.selection = Some((anchor, word_end));
+                            } else {
+                                state.selection = None;
+                            }
+                            state.cursor = word_end;
+                        } else if shift {
+                            let anchor = state.selection.map_or(state.cursor, |(_, b)| b);
+                            if state.cursor < state.query.len() {
+                                state.cursor += 1;
+                            }
+                            state.selection = Some((anchor, state.cursor));
+                        } else {
+                            state.selection = None;
+                            if state.cursor < state.query.len() {
+                                state.cursor += 1;
+                            }
+                        }
+                    }
+                    crate::win32::HookKey::Home => {
+                        if shift {
+                            let anchor = state.selection.map_or(state.cursor, |(a, _)| a);
+                            state.selection = Some((anchor, 0));
+                        } else {
+                            state.selection = None;
+                        }
+                        state.cursor = 0;
+                    }
+                    crate::win32::HookKey::End => {
+                        let len = state.query.len();
+                        if shift {
+                            let anchor = state.selection.map_or(state.cursor, |(_, b)| b);
+                            state.selection = Some((anchor, len));
+                        } else {
+                            state.selection = None;
+                        }
+                        state.cursor = len;
+                    }
+                    crate::win32::HookKey::Up => {
+                        if state.move_selection(Move::Up) {
+                            return state.scroll_to_selected();
+                        }
+                    }
+                    crate::win32::HookKey::Down => {
+                        if state.move_selection(Move::Down) {
+                            return state.scroll_to_selected();
+                        }
+                    }
+                    crate::win32::HookKey::Enter => {
+                        crate::win32::set_hook_active(false);
+                        return state.copy();
+                    }
+                    crate::win32::HookKey::Escape => {
+                        if state.query.is_empty() {
+                            crate::win32::set_hook_active(false);
+                            let hwnd = state.our_hwnd.unwrap_or(0);
+                            if hwnd != 0 {
+                                unsafe { crate::win32::hide_window(hwnd); }
+                            }
+                            return Command::none();
+                        } else {
+                            state.query.clear();
+                            state.cursor = 0;
+                            state.selection = None;
+                        }
                     }
                 }
-            },
+                if re_filter {
+                    state.filtered = filter(&state.entries, &state.query);
+                    state.selected = state.filtered.first().copied().unwrap_or(0);
+                }
+                operation::scroll_to(
+                    state.scroll_id.clone(),
+                    scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
+                )
+            }
         }
     }
 

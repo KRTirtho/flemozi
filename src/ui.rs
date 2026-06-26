@@ -9,7 +9,7 @@ use crate::app::{Message, State, Tab, COLUMNS, SPACING};
 
 use grid::emoji_cell;
 use preview::preview_bar;
-use styles::{search_bar_style, sidebar_active_style, sidebar_inactive_style, subtle};
+use styles::{search_bar_style, selected_text_style, sidebar_active_style, sidebar_inactive_style, subtle};
 
 pub fn main_view(state: &State) -> Element<'_, Message> {
     let titlebar = titlebar_view();
@@ -94,15 +94,37 @@ fn sidebar_view(state: &State) -> Element<'_, Message> {
 }
 
 fn emoji_view(state: &State) -> Element<'_, Message> {
-    let placeholder = state.query.is_empty();
-    let search = container(
-        text(if placeholder { "Search emojis..." } else { &state.query })
+    let content: Element<'_, Message> = if state.query.is_empty() {
+        text("Search emojis...")
             .size(20)
-            .style(if placeholder { subtle } else { |_: &iced::Theme| text::Style::default() }),
-    )
-    .padding(12)
-    .width(Fill)
-    .style(search_bar_style);
+            .style(subtle)
+            .into()
+    } else if let Some((a, b)) = state.selection {
+        let lo = a.min(b);
+        let hi = a.max(b);
+        let before = &state.query[..lo];
+        let selected = &state.query[lo..hi];
+        let after = &state.query[hi..];
+        row![
+            text(before).size(20),
+            container(text(selected).size(20)).style(selected_text_style),
+            text(after).size(20),
+        ]
+        .into()
+    } else {
+        let before = &state.query[..state.cursor];
+        let after = &state.query[state.cursor..];
+        row![
+            text(before).size(20),
+            text("|").size(20),
+            text(after).size(20),
+        ]
+        .into()
+    };
+    let search = container(content)
+        .padding(12)
+        .width(Fill)
+        .style(search_bar_style);
 
     let grid_content: Element<_> = if state.filtered.is_empty() {
         center(
