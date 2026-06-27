@@ -6,9 +6,6 @@ edition = "2024"
 [dependencies]
 iced = { version = "0.14", features = [
     "tokio",
-    "debug",
-    "time-travel",
-    "webgl",
     "fira-sans",
     "image",
 ] }

@@ -125,10 +125,7 @@ impl Flemozi {
             last_foreground: None,
         };
 
-        let cmd = Command::batch([
-            window::latest().map(Message::Init),
-            Command::perform(crate::tabs::gif::fetch_trending_gifs(), Message::GifFetched),
-        ]);
+        let cmd = window::latest().map(Message::Init);
 
         (Self::Loaded(state), cmd)
     }

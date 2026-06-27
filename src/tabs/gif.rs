@@ -96,23 +96,14 @@ impl GifTab {
     }
 
     pub fn apply_search(&mut self, query: &str) -> bool {
-        let q = query.trim().to_lowercase();
-
-        if q.is_empty() {
+        if query.trim().is_empty() {
             self.filtered = (0..self.entries.len()).collect();
             self.selected = self.filtered.first().copied().unwrap_or(0);
-            return self.entries.is_empty();
+            return false;
         }
-
-        self.filtered = self
-            .entries
-            .iter()
-            .enumerate()
-            .filter(|(_, e)| e.slug.to_lowercase().contains(&q))
-            .map(|(i, _)| i)
-            .collect();
-        self.selected = self.filtered.first().copied().unwrap_or(0);
-        self.filtered.is_empty()
+        // No local filtering — the API is the search engine.
+        // Signal that we need an API search.
+        true
     }
 
     pub fn move_selection(&mut self, mv: Move) -> bool {
