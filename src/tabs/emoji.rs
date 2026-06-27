@@ -36,7 +36,8 @@ fn scroll_y(filtered: &[usize], selected: usize) -> f32 {
     let gaps = (COLUMNS - 1) as f32 * SPACING;
     let cell_width = (content_width - gaps) / COLUMNS as f32;
     let row_height = cell_width + SPACING;
-    row as f32 * row_height
+    let y = row as f32 * row_height;
+    (y - 120.0).max(0.0)
 }
 
 pub struct EmojiTab {
