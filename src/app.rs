@@ -578,7 +578,7 @@ impl Flemozi {
                     }
                     crate::win32::HookKey::Left => {
                         state.move_selection(Move::Left);
-                        re_filter = false;
+                        return Command::none();
                     }
                     crate::win32::HookKey::Right if state.search_focused => {
                         if ctrl {
@@ -610,7 +610,7 @@ impl Flemozi {
                     }
                     crate::win32::HookKey::Right => {
                         state.move_selection(Move::Right);
-                        re_filter = false;
+                        return Command::none();
                     }
                     crate::win32::HookKey::Home if state.search_focused => {
                         if shift {

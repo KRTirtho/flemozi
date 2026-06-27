@@ -13,12 +13,13 @@ fn move_in(filtered: &[usize], selected: &mut usize, mv: Move) -> bool {
     }
 
     let pos = filtered.iter().position(|&i| i == *selected).unwrap_or(0);
+    let col = pos % COLUMNS;
     let len = filtered.len();
     let next = match mv {
         Move::Up => pos.saturating_sub(COLUMNS),
         Move::Down => (pos + COLUMNS).min(len - 1),
-        Move::Left => pos.saturating_sub(1),
-        Move::Right => (pos + 1).min(len - 1),
+        Move::Left => if col > 0 { pos - 1 } else { pos },
+        Move::Right => if col + 1 < COLUMNS && pos + 1 < len { pos + 1 } else { pos },
     };
 
     let old_row = pos / COLUMNS;

@@ -4,9 +4,10 @@ use iced::widget::{self, operation, scrollable};
 use iced::Task as Command;
 use serde::Deserialize;
 
-use crate::app::{COLUMNS, Message, Move, SPACING, SearchState};
+use crate::app::{Message, Move, SPACING, SearchState};
 
 const API_BASE: &str = "https://api.giphy.com/v1/gifs";
+const GIF_COLUMNS: usize = 2;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -38,26 +39,27 @@ fn move_in(filtered: &[usize], selected: &mut usize, mv: Move) -> bool {
     }
 
     let pos = filtered.iter().position(|&i| i == *selected).unwrap_or(0);
+    let col = pos % GIF_COLUMNS;
     let len = filtered.len();
     let next = match mv {
-        Move::Up => pos.saturating_sub(COLUMNS),
-        Move::Down => (pos + COLUMNS).min(len - 1),
-        Move::Left => pos.saturating_sub(1),
-        Move::Right => (pos + 1).min(len - 1),
+        Move::Up => pos.saturating_sub(GIF_COLUMNS),
+        Move::Down => (pos + GIF_COLUMNS).min(len - 1),
+        Move::Left => if col > 0 { pos - 1 } else { pos },
+        Move::Right => if col + 1 < GIF_COLUMNS && pos + 1 < len { pos + 1 } else { pos },
     };
 
-    let old_row = pos / COLUMNS;
-    let new_row = next / COLUMNS;
+    let old_row = pos / GIF_COLUMNS;
+    let new_row = next / GIF_COLUMNS;
     *selected = filtered[next];
     old_row != new_row
 }
 
 fn scroll_y(filtered: &[usize], selected: usize) -> f32 {
     let pos = filtered.iter().position(|&i| i == selected).unwrap_or(0);
-    let row = pos / COLUMNS;
+    let row = pos / GIF_COLUMNS;
     let content_width = 500.0 - 42.0 - 24.0;
-    let gaps = (COLUMNS - 1) as f32 * SPACING;
-    let cell_width = (content_width - gaps) / COLUMNS as f32;
+    let gaps = (GIF_COLUMNS - 1) as f32 * SPACING;
+    let cell_width = (content_width - gaps) / GIF_COLUMNS as f32;
     let row_height = cell_width + SPACING;
     row as f32 * row_height
 }

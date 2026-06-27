@@ -399,44 +399,6 @@ fn gif_cell(state: &State, i: usize) -> Element<'_, Message> {
         .into()
 }
 
-fn gif_preview(state: &State) -> Element<'_, Message> {
-    let (entry, is_copied) = match state.gif.filtered.is_empty() {
-        false => match state.gif.entries.get(state.gif.selected) {
-            Some(e) => (
-                e,
-                state.copied.as_deref() == Some(&e.url),
-            ),
-            None => return preview_empty(),
-        },
-        true => return preview_empty(),
-    };
-
-    let slug = &entry.slug;
-    let title_display = text(slug).size(16);
-
-    let rating = text(format!("Rating: {}", entry.rating.to_uppercase()))
-        .size(12)
-        .style(subtle);
-
-    let info = column![title_display, rating].spacing(2);
-
-    let status = if is_copied {
-        text("Copied to clipboard!").size(13).style(copied_style)
-    } else {
-        text("Press Enter to copy URL").size(13).style(subtle)
-    };
-
-    container(
-        row![info, status]
-            .spacing(12)
-            .align_y(Alignment::Center)
-            .width(Fill),
-    )
-    .padding(10)
-    .style(preview_style)
-    .into()
-}
-
 fn gif_view(state: &State) -> Element<'_, Message> {
     let content: Element<'_, Message> = if state.query.is_empty() {
         text("Search GIFs...")
@@ -526,9 +488,7 @@ fn gif_view(state: &State) -> Element<'_, Message> {
         .height(Fill)
         .auto_scroll(true);
 
-    let preview = gif_preview(state);
-
-    column![search, scroll, preview]
+    column![search, scroll]
         .spacing(12)
         .padding(12)
         .width(Fill)
