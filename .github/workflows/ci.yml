@@ -1,0 +1,70 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag for the release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build + Release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write .env from secrets
+        shell: pwsh
+        run: |
+          @("GIPHY_API_KEY=${{ secrets.GIPHY_API_KEY }}") -join "`n" | Set-Content .env
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build (debug)
+        run: cargo build --locked
+
+      - name: Install cargo-packager
+        run: cargo install cargo-packager --locked
+
+      - name: Build installer
+        run: cargo packager --release --formats nsis
+
+      - name: Create / update release
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          gh release view $tag --json id 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title $tag --generate-notes
+            Write-Output "Release $tag created"
+          } else {
+            Write-Output "Release $tag already exists"
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          Get-ChildItem target/release/flemozi_*_x64-setup.exe | ForEach-Object {
+            gh release upload $tag $_.FullName --clobber
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
