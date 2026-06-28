@@ -59,12 +59,16 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cargo/bin
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Build (debug check)
         run: cargo build --locked
+
+      - name: Install cargo-packager
+        run: cargo install cargo-packager --locked
 
       - name: Build installer
         run: cargo packager --release --formats nsis
