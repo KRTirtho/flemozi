@@ -1,27 +1,54 @@
-name: Build & Release
+name: Flemozi Release Binary
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Git tag for the release (e.g. v0.1.0)"
+      version:
+        description: Version to release (x.x.x)
+        default: 0.1.1
         required: true
         type: string
+      channel:
+        type: choice
+        description: Release Channel
+        required: true
+        options:
+          - stable
+          - nightly
+        default: nightly
+      dry_run:
+        description: Dry run
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Build + Release
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Write .env from secrets
+      - name: Create .env (stable)
+        if: inputs.channel == 'stable'
         shell: pwsh
+        env:
+          DOTENV: ${{ secrets.DOTENV_RELEASE }}
         run: |
-          @("GIPHY_API_KEY=${{ secrets.GIPHY_API_KEY }}") -join "`n" | Set-Content .env
+          $env:DOTENV | Set-Content .env
+
+      - name: Create .env (nightly)
+        if: inputs.channel == 'nightly'
+        shell: pwsh
+        env:
+          DOTENV: ${{ secrets.DOTENV_NIGHTLY }}
+        run: |
+          $env:DOTENV | Set-Content .env
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -36,35 +63,59 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - name: Build (debug)
+      - name: Build (debug check)
         run: cargo build --locked
-
-      - name: Install cargo-packager
-        run: cargo install cargo-packager --locked
 
       - name: Build installer
         run: cargo packager --release --formats nsis
 
-      - name: Create / update release
+      - name: Rename Installer
         shell: pwsh
         run: |
-          $tag = "${{ github.event.inputs.tag }}"
-          gh release view $tag --json id 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create $tag --title $tag --generate-notes
-            Write-Output "Release $tag created"
-          } else {
-            Write-Output "Release $tag already exists"
-          }
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          New-Item -ItemType Directory -Force dist
+          Move-Item target/release/flemozi_*_x64-setup.exe dist/Flemozi-windows-x86_64-setup.exe -Force
 
-      - name: Upload installer
-        shell: pwsh
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flemozi-Release-Binaries
+          path: dist/
+
+  upload:
+    runs-on: ubuntu-22.04
+    needs: [windows]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Flemozi-Release-Binaries
+          path: Flemozi-Release-Binaries
+
+      - name: Generate Checksums
         run: |
-          $tag = "${{ github.event.inputs.tag }}"
-          Get-ChildItem target/release/flemozi_*_x64-setup.exe | ForEach-Object {
-            gh release upload $tag $_.FullName --clobber
-          }
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cd Flemozi-Release-Binaries
+          md5sum *.exe > RELEASE.md5sum
+          sha256sum *.exe > RELEASE.sha256sum
+
+      - name: Upload Release Binaries (stable)
+        if: ${{ !inputs.dry_run && inputs.channel == 'stable' }}
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ inputs.version }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifacts: Flemozi-Release-Binaries/*
+
+      - name: Upload Release Binaries (nightly)
+        if: ${{ !inputs.dry_run && inputs.channel == 'nightly' }}
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: nightly
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifacts: Flemozi-Release-Binaries/*

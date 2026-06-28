@@ -18,6 +18,34 @@ Edition 2024 → Rust ≥1.85. No tests, no CI, no linter/formatter config.
 `build.rs` scans `assets/twemoji/*.png`, generates `OUT_DIR/twemoji_stems.rs`
 (embedded via `include!` in `src/twemoji_stems.rs`). Twemoji PNGs must be present.
 
+Also reads `.env` at build time to embed obfuscated API keys (XOR-encrypted) into
+the binary via `OUT_DIR/env_vars.rs`.
+
+## App icon
+
+`winres` in `build.rs` embeds `assets/icon.ico` into the `.exe`.
+
+## Installer
+
+`cargo-packager` builds an NSIS installer:
+
+```sh
+cargo install cargo-packager --locked
+cargo packager --release
+```
+
+Output: `target/release/flemozi_*_x64-setup.exe`
+
+## Release via CI
+
+Trigger the "Flemozi Release Binary" workflow in GitHub Actions with:
+- `version`: semver (e.g. `0.1.1`)
+- `channel`: `stable` or `nightly`
+- `dry_run`: `true` to test without uploading
+
+Secrets `DOTENV_RELEASE` / `DOTENV_NIGHTLY` must contain the full `.env` file
+(e.g. `GIPHY_API_KEY=xxx`).
+
 ## `.env` is stale
 
 `.env.example` asks for `TENOR_API_KEY`/`GIPHY_API_KEY` — leftover from the
