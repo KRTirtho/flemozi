@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use iced::widget::image;
 
 use crate::assets::emojis::EmojiType;
@@ -17,10 +15,17 @@ pub struct EmojiEntry {
 
 impl EmojiEntry {
     pub fn from_type(t: &EmojiType) -> Self {
+        let assets = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+            .unwrap_or_default()
+            .join("assets")
+            .join("twemoji");
+
         let image = twemoji_candidates(t.emoji)
             .into_iter()
             .find(|c| TWEMOJI_STEMS.binary_search(&c.as_str()).is_ok())
-            .map(|c| image::Handle::from_path(PathBuf::from("assets/twemoji").join(format!("{c}.png"))));
+            .map(|c| image::Handle::from_path(assets.join(format!("{c}.png"))));
 
         EmojiEntry {
             emoji: t.emoji,

@@ -4,6 +4,11 @@ use std::fs;
 use std::path::PathBuf;
 
 fn main() {
+    // ── app icon ──
+    let mut res = winres::WindowsResource::new();
+    res.set_icon("assets/icon.ico");
+    let _ = res.compile();
+
     println!("cargo:rerun-if-changed=assets/twemoji");
     println!("cargo:rerun-if-changed=.env");
 

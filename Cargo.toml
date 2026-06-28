@@ -1,7 +1,9 @@
 [package]
 name = "flemozi"
 version = "0.1.0"
+authors = ["Kingkor Roy Tirtho"]
 edition = "2024"
+license = "GPL-2.0-or-later"
 
 [dependencies]
 iced = { version = "0.14", features = [
@@ -29,3 +31,24 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 iced_gif = "0.14.0"
+
+[build-dependencies]
+winres = "0.1"
+
+[package.metadata.packager]
+product_name = "Flemozi"
+identifier = "dev.krtirtho.flemozi"
+publisher = "Kingkor Roy Tirtho"
+license_file = "LICENSE"
+before_packaging_command = "cargo build --release"
+formats = ["nsis"]
+icons = ["assets/icon.ico"]
+resources = ["assets/twemoji/"]
+
+[[package.metadata.packager.binaries]]
+path = "flemozi"
+main = true
+
+[package.metadata.packager.nsis]
+installer_icon = "assets/icon.ico"
+sidebar_image = "assets/icon.ico"
