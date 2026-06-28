@@ -15,17 +15,26 @@ pub struct EmojiEntry {
 
 impl EmojiEntry {
     pub fn from_type(t: &EmojiType) -> Self {
-        let assets = std::env::current_exe()
+        let exe_dir = std::env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|p| p.to_path_buf()))
-            .unwrap_or_default()
-            .join("assets")
-            .join("twemoji");
+            .unwrap_or_default();
 
         let image = twemoji_candidates(t.emoji)
             .into_iter()
             .find(|c| TWEMOJI_STEMS.binary_search(&c.as_str()).is_ok())
-            .map(|c| image::Handle::from_path(assets.join(format!("{c}.png"))));
+            .and_then(|c| {
+                let rel = format!("assets/twemoji/{c}.png");
+                let exe_assets = exe_dir.join(&rel);
+                let exe_flat = exe_dir.join("twemoji").join(format!("{c}.png"));
+                if exe_assets.exists() {
+                    Some(image::Handle::from_path(exe_assets))
+                } else if exe_flat.exists() {
+                    Some(image::Handle::from_path(exe_flat))
+                } else {
+                    Some(image::Handle::from_path(std::path::PathBuf::from(&rel)))
+                }
+            });
 
         EmojiEntry {
             emoji: t.emoji,
