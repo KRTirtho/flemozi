@@ -15,6 +15,7 @@ use objc2_foundation::{NSPoint, NSRect};
 
 unsafe extern "C" {
     fn object_setClass(obj: *mut AnyObject, cls: *const AnyClass) -> *const AnyClass;
+    fn AXIsProcessTrustedWithOptions(options: *const AnyObject) -> Bool;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,12 +81,16 @@ pub fn init_keyboard_hook() {
         error!("init_keyboard_hook: failed to set channel: {e:?}");
         return;
     }
-    info!("init_keyboard_hook: channel created, spawning listener thread");
+    info!("init_keyboard_hook: channel created, checking permissions");
+
+    request_permissions();
+
+    info!("init_keyboard_hook: spawning listener thread");
 
     std::thread::spawn(move || {
         info!("init_keyboard_hook: listener thread started, creating CGEventTap");
         let result = CGEventTap::with_enabled(
-            CGEventTapLocation::HID,
+            CGEventTapLocation::Session,
             CGEventTapPlacement::HeadInsertEventTap,
             CGEventTapOptions::Default,
             vec![
@@ -140,7 +145,7 @@ pub fn init_keyboard_hook() {
         );
 
         if let Err(()) = result {
-            error!("cgevent tap: failed to create event tap. Grant both Accessibility and Input Monitoring permission in System Settings → Privacy & Security.");
+            error!("cgevent tap: failed to create event tap. Grant Accessibility permission in System Settings → Privacy & Security → Accessibility.");
         }
     });
 }
@@ -253,6 +258,34 @@ pub unsafe fn set_activation_policy_accessory() {
         msg_send![AnyClass::get(c"NSApplication").unwrap(), sharedApplication];
     let _success: Bool = msg_send![app, setActivationPolicy: 1isize];
     info!("set_activation_policy_accessory: done");
+}
+
+pub fn request_permissions() {
+    info!("request_permissions: called");
+    unsafe {
+        let trusted = AXIsProcessTrustedWithOptions(std::ptr::null());
+        info!("request_permissions: AXIsProcessTrusted={trusted:?}");
+        if trusted.as_bool() {
+            info!("request_permissions: already trusted");
+            return;
+        }
+    }
+
+    info!("request_permissions: prompting for Accessibility permission");
+    unsafe {
+        let key: *const AnyObject = msg_send![
+            AnyClass::get(c"NSString").unwrap(),
+            stringWithUTF8String: b"AXTrustedCheckOptionPrompt\0".as_ptr() as *const i8
+        ];
+        let value: *const AnyObject =
+            msg_send![AnyClass::get(c"NSNumber").unwrap(), numberWithBool: true];
+        let dict: *const AnyObject = msg_send![
+            AnyClass::get(c"NSDictionary").unwrap(),
+            dictionaryWithObject: value, forKey: key
+        ];
+        AXIsProcessTrustedWithOptions(dict);
+    }
+    info!("request_permissions: done");
 }
 
 pub fn foreground_window() -> isize {

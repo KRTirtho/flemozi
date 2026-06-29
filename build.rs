@@ -19,6 +19,9 @@ fn main() {
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=framework=CoreGraphics");
 
+    #[cfg(target_os = "macos")]
+    println!("cargo:rustc-link-lib=framework=ApplicationServices");
+
     println!("cargo:rerun-if-changed=assets/twemoji");
     println!("cargo:rerun-if-changed=.env");
 
