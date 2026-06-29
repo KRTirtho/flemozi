@@ -42,7 +42,6 @@ pub fn set_hook_active(active: bool) {
     HOOK_ACTIVE.store(active, Ordering::SeqCst);
 }
 
-#[allow(dead_code)]
 pub fn is_hook_active() -> bool {
     HOOK_ACTIVE.load(Ordering::SeqCst)
 }
@@ -84,7 +83,7 @@ pub fn init_keyboard_hook() {
         let result = CGEventTap::with_enabled(
             CGEventTapLocation::HID,
             CGEventTapPlacement::HeadInsertEventTap,
-            CGEventTapOptions::ListenOnly,
+            CGEventTapOptions::Default,
             vec![
                 CGEventType::KeyDown,
                 CGEventType::KeyUp,
@@ -104,11 +103,7 @@ pub fn init_keyboard_hook() {
 
                         info!("cgevent tap: key code={code} ctrl={ctrl} shift={shift} alt={alt}");
 
-                        if !active {
-                            return CallbackResult::Keep;
-                        }
-
-                        if matches!(event_type, CGEventType::KeyDown) {
+                        if active && matches!(event_type, CGEventType::KeyDown) {
                             if let Some(ev) = keycode_to_hook_event(code, shift, ctrl, alt) {
                                 info!("cgevent tap: sending {ev:?}");
                                 if let Err(e) = tx.send(ev) {
@@ -116,10 +111,12 @@ pub fn init_keyboard_hook() {
                                 }
                             }
                         }
+
+                        if active {
+                            return CallbackResult::Drop;
+                        }
                     }
-                    CGEventType::FlagsChanged => {
-                        // Modifier-only event; we read flags from regular key events.
-                    }
+                    CGEventType::FlagsChanged => {}
                     CGEventType::TapDisabledByTimeout => {
                         warn!("cgevent tap: disabled by timeout");
                     }
@@ -293,14 +290,19 @@ pub fn clamp_window_position(mut cx: i32, mut cy: i32, win_w: i32, win_h: i32) -
     info!("clamp_window_position: input=({cx},{cy}) win={win_w}x{win_h} screen={sw}x{sh}");
     cx -= win_w / 2;
 
-    if cy + 24 + win_h <= sh {
-        cy += 24;
+    // macOS: y=0 is bottom-left. setFrameTopLeftPoint places the window's
+    // top-left corner; the window extends downward from that point (to y - win_h).
+    // Prefer placing below cursor; fall back to above with a 24px gap.
+    if cy - 24 >= win_h {
+        // Enough room below: window top at (cy - 24), window bottom at (cy - 24 - win_h) >= 0
+        cy -= 24;
     } else {
-        cy = (cy - win_h - 24).max(0);
+        // Not enough room below: place above. Window bottom at (cy + 24), top at (cy + 24 + win_h)
+        cy = cy + 24 + win_h;
     }
 
     cx = cx.clamp(0, (sw - win_w).max(0));
-    cy = cy.clamp(0, (sh - win_h).max(0));
+    cy = cy.clamp(win_h, sh);
     info!("clamp_window_position: output=({cx},{cy})");
     (cx, cy)
 }
@@ -384,12 +386,12 @@ pub unsafe fn paste_emoji(text: &str) {
         }
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(10));
+    std::thread::sleep(std::time::Duration::from_millis(80));
 
     info!("paste_emoji: simulating Cmd+V");
     simulate_cmd_v();
 
-    std::thread::sleep(std::time::Duration::from_millis(50));
+    std::thread::sleep(std::time::Duration::from_millis(80));
 
     match saved {
         Some(prev) => match arboard::Clipboard::new() {
@@ -457,7 +459,7 @@ pub unsafe fn paste_gif_file(bytes: &[u8]) {
     }
     info!("paste_gif_file: GIF written to pasteboard");
 
-    std::thread::sleep(std::time::Duration::from_millis(15));
+    std::thread::sleep(std::time::Duration::from_millis(80));
 
     info!("paste_gif_file: simulating Cmd+V");
     simulate_cmd_v();
@@ -481,7 +483,7 @@ fn simulate_cmd_v() {
             CGEventSetFlags(v_down, CGEventGetFlags(v_down) | cmd_flag);
         }
 
-        let tap = CG_SESSION_EVENT_TAP;
+        let tap = CG_HID_EVENT_TAP;
 
         if !cmd_down.is_null() {
             CGEventPost(tap, cmd_down);
@@ -509,7 +511,7 @@ fn simulate_cmd_v() {
     info!("simulate_cmd_v: end");
 }
 
-const CG_SESSION_EVENT_TAP: u32 = 1;
+const CG_HID_EVENT_TAP: u32 = 0;
 
 unsafe extern "C" {
     fn CGEventCreateKeyboardEvent(

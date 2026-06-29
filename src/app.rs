@@ -1,7 +1,6 @@
 use std::sync::Mutex;
 
 use iced::event;
-use iced::keyboard;
 use iced::mouse;
 use iced::stream;
 use iced::widget::{operation, scrollable};
@@ -80,8 +79,11 @@ pub struct State {
 #[derive(Debug, Clone)]
 pub enum Message {
     Selected(usize),
+    #[allow(dead_code)]
     MoveSelection(Move),
+    #[allow(dead_code)]
     CopySelected,
+    #[allow(dead_code)]
     ClearSearch,
     Shown(usize),
     TabSelected(Tab),
@@ -346,6 +348,9 @@ impl Flemozi {
                 Command::none()
             }
             Message::HotkeyPressed(_event) => {
+                if platform::is_hook_active() {
+                    return Command::none();
+                }
                 info!("HotkeyPressed: capturing foreground window");
                 state.last_foreground = Some(platform::foreground_window());
                 info!("HotkeyPressed: activating hook");
@@ -772,34 +777,7 @@ impl Flemozi {
     }
 
     pub fn subscription(&self) -> Subscription<Message> {
-        use keyboard::key;
-
-        let keyboard = event::listen_raw(|event, _status, _window| {
-            let event::Event::Keyboard(event) = event else {
-                return None;
-            };
-
-            let keyboard::Event::KeyPressed {
-                key: keyboard::Key::Named(key),
-                ..
-            } = event
-            else {
-                return None;
-            };
-
-            match key {
-                key::Named::ArrowUp => Some(Message::MoveSelection(Move::Up)),
-                key::Named::ArrowDown => Some(Message::MoveSelection(Move::Down)),
-                key::Named::ArrowLeft => Some(Message::MoveSelection(Move::Left)),
-                key::Named::ArrowRight => Some(Message::MoveSelection(Move::Right)),
-                key::Named::Enter => Some(Message::CopySelected),
-                key::Named::Escape => Some(Message::ClearSearch),
-                _ => None,
-            }
-        });
-
         Subscription::batch([
-            keyboard,
             window::close_requests().map(|_id| Message::TitleBarClose),
             titlebar_drag_subscription(),
             Subscription::run(external_events),
