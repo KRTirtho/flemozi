@@ -211,8 +211,8 @@ async fn get(path: &str, params: &[(&str, &str)]) -> Result<Vec<GifEntry>, Strin
             url: g.url,
             gif_url: g
                 .images
-                .original
-                .or(g.images.downsized)
+                .downsized
+                .or(g.images.original)
                 .map(|i| i.url)
                 .unwrap_or_default(),
             preview_url: g

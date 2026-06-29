@@ -420,6 +420,14 @@ pub unsafe fn paste_emoji(text: &str) {
 
 pub unsafe fn paste_gif_file(bytes: &[u8]) {
     info!("paste_gif_file: bytes={}", bytes.len());
+
+    let path = std::path::PathBuf::from("/tmp/flemozi_paste.gif");
+    if let Err(e) = std::fs::write(&path, bytes) {
+        error!("paste_gif_file: failed to write temp file: {e}");
+        return;
+    }
+    info!("paste_gif_file: wrote temp file {:?}", path);
+
     let pb: *const AnyObject =
         msg_send![AnyClass::get(c"NSPasteboard").unwrap(), generalPasteboard];
     let Some(pb) = as_ref(pb) else {
@@ -430,34 +438,34 @@ pub unsafe fn paste_gif_file(bytes: &[u8]) {
     info!("paste_gif_file: clearing pasteboard");
     let _: isize = msg_send![pb, clearContents];
 
-    info!("paste_gif_file: creating NSData");
-    let ns_data: *const AnyObject = msg_send![
-        AnyClass::get(c"NSData").unwrap(),
-        dataWithBytes: bytes.as_ptr(),
-        length: bytes.len()
-    ];
-    let Some(ns_data) = as_ref(ns_data) else {
-        error!("paste_gif_file: NSData allocation failed");
-        return;
-    };
-
-    info!("paste_gif_file: creating type string");
-    let type_str: *const AnyObject = msg_send![
+    let path_str = path.to_string_lossy();
+    let path_cstr = std::ffi::CString::new(path_str.as_bytes())
+        .unwrap_or_else(|_| std::ffi::CString::new("/tmp/flemozi_paste.gif").unwrap());
+    let ns_path: *const AnyObject = msg_send![
         AnyClass::get(c"NSString").unwrap(),
-        stringWithUTF8String: c"com.compuserve.gif".as_ptr()
+        stringWithUTF8String: path_cstr.as_ptr()
     ];
-    let Some(type_str) = as_ref(type_str) else {
-        error!("paste_gif_file: type string allocation failed");
+    let Some(ns_path) = as_ref(ns_path) else {
+        error!("paste_gif_file: NSString allocation failed");
         return;
     };
 
-    info!("paste_gif_file: writing GIF data");
-    let success: bool = msg_send![pb, setData: ns_data, forType: type_str];
-    if !success {
-        error!("paste_gif_file: NSPasteboard rejected GIF data");
+    let url: *const AnyObject = msg_send![
+        AnyClass::get(c"NSURL").unwrap(),
+        fileURLWithPath: ns_path
+    ];
+    let Some(url) = as_ref(url) else {
+        error!("paste_gif_file: NSURL creation failed");
         return;
-    }
-    info!("paste_gif_file: GIF written to pasteboard");
+    };
+
+    let items: *const AnyObject = msg_send![
+        AnyClass::get(c"NSArray").unwrap(),
+        arrayWithObject: url
+    ];
+
+    info!("paste_gif_file: writing file URL to pasteboard");
+    let _: bool = msg_send![pb, writeObjects: items];
 
     std::thread::sleep(std::time::Duration::from_millis(80));
 
