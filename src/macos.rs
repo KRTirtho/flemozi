@@ -13,6 +13,10 @@ use objc2::msg_send;
 use objc2::runtime::{AnyClass, AnyObject, Bool};
 use objc2_foundation::{NSPoint, NSRect};
 
+unsafe extern "C" {
+    fn object_setClass(obj: *mut AnyObject, cls: *const AnyClass) -> *const AnyClass;
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {
     Char(char),
@@ -243,6 +247,14 @@ fn as_ref<'a>(ptr: *const AnyObject) -> Option<&'a AnyObject> {
     }
 }
 
+pub unsafe fn set_activation_policy_accessory() {
+    info!("set_activation_policy_accessory: called");
+    let app: *const AnyObject =
+        msg_send![AnyClass::get(c"NSApplication").unwrap(), sharedApplication];
+    let _success: Bool = msg_send![app, setActivationPolicy: 1isize];
+    info!("set_activation_policy_accessory: done");
+}
+
 pub fn foreground_window() -> isize {
     info!("foreground_window: called");
     unsafe {
@@ -315,14 +327,27 @@ pub unsafe fn set_window_style(ns_view: isize) {
         return;
     };
 
+    info!("set_window_style: converting NSWindow to NSPanel");
+    let panel_class = AnyClass::get(c"NSPanel").expect("NSPanel class not found");
+    let old_class = unsafe { object_setClass(window as *const AnyObject as *mut AnyObject, panel_class) };
+    info!("set_window_style: old class={old_class:?}");
+
+    info!("set_window_style: setting styleMask (non-activating panel)");
+    let current_style_mask: u64 = msg_send![window, styleMask];
+    let style_mask = current_style_mask | (1u64 << 7); // NSWindowStyleMaskNonactivatingPanel
+    let _: () = msg_send![window, setStyleMask: style_mask];
+
     info!("set_window_style: setting level");
     let _: () = msg_send![window, setLevel: 3isize];
     info!("set_window_style: setting collection behavior");
-    let _: () = msg_send![window, setCollectionBehavior: (1u64 << 0) | (1u64 << 3)];
+    let _: () = msg_send![window, setCollectionBehavior: (1u64 << 0) | (1u64 << 3) | (1u64 << 6)];
     info!("set_window_style: setting hasShadow");
     let _: () = msg_send![window, setHasShadow: Bool::YES];
     info!("set_window_style: setting opaque");
     let _: () = msg_send![window, setOpaque: Bool::NO];
+    info!("set_window_style: setting backgroundColor");
+    let color: *const AnyObject = msg_send![AnyClass::get(c"NSColor").unwrap(), clearColor];
+    let _: () = msg_send![window, setBackgroundColor: color];
     info!("set_window_style: done");
 }
 

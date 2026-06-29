@@ -20,6 +20,11 @@ use app::Flemozi;
 pub fn main() -> iced::Result {
     tracing_subscriber::fmt::init();
 
+    #[cfg(target_os = "macos")]
+    unsafe {
+        macos::set_activation_policy_accessory();
+    }
+
     application().run()
 }
 
