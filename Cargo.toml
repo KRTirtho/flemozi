@@ -18,6 +18,13 @@ global-hotkey = "0.8"
 tray-icon = { version = "0.24", default-features = false }
 arboard = { version = "3", default-features = false, features = ["image-data"] }
 image = "0.25"
+raw-window-handle = "0.6.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+iced_gif = "0.14.0"
+
+[target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",
@@ -26,13 +33,14 @@ windows = { version = "0.62.2", features = [
     "Win32_System_DataExchange",
     "Win32_System_Memory",
 ] }
-raw-window-handle = "0.6.2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
-iced_gif = "0.14.0"
 
-[build-dependencies]
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = "0.25"
+core-foundation = "0.10"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSGeometry"] }
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
 winres = "0.1"
 
 [package.metadata.packager]

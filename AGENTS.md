@@ -1,7 +1,7 @@
 # Flemozi
 
-Rust + [iced] v0.14 desktop emoji picker. **Windows-only** (global keyboard hook,
-`windows` crate, `SendInput` clipboard paste). **Not Flutter** (README is stale).
+Rust + [iced] v0.14 desktop emoji picker. **Windows & macOS**.
+**Not Flutter** (README is stale).
 
 ## Build & Run
 
@@ -23,7 +23,7 @@ the binary via `OUT_DIR/env_vars.rs`.
 
 ## App icon
 
-`winres` in `build.rs` embeds `assets/icon.ico` into the `.exe`.
+`winres` in `build.rs` embeds `assets/icon.ico` into the `.exe` (Windows only).
 
 ## Installer
 
@@ -58,7 +58,8 @@ Flutter version. Current Rust code does not read `.env`.
 | `src/main.rs` | Entrypoint: iced app builder |
 | `src/app.rs` | State, messages, update & subscription logic |
 | `src/ui/` | Widgets (grid, preview, styles) |
-| `src/win32.rs` | Win32 FFI: hook, window mgmt, clipboard paste |
+| `src/win32.rs` | Windows FFI: hook, window mgmt, clipboard paste |
+| `src/macos.rs` | macOS FFI: CGEvent tap, NSWindow mgmt, clipboard paste |
 | `src/search.rs` | Simple substring/tag matching |
 | `src/emoji.rs` | EmojiEntry → Twemoji image resolution |
 | `src/assets/emojis.rs` | Static ~3000-entry emoji dataset (codegen from gemoji) |
@@ -69,7 +70,9 @@ Flutter version. Current Rust code does not read `.env`.
 - `global-hotkey` 0.8 — registers Ctrl+Alt+.
 - `tray-icon` 0.24 — system tray with Show/Exit menu
 - `arboard` 3 — clipboard save/restore around `SendInput` Ctrl+V
-- `windows` 0.62 — `WH_KEYBOARD_LL`, `SetWindowPos`, `ShowWindow`
+- `windows` 0.62 — `WH_KEYBOARD_LL`, `SetWindowPos`, `ShowWindow` (Windows)
+- `core-graphics` + `objc2` — CGEvent tap, NSWindow, Cmd+V paste (macOS)
+- Direct `CGEventTap` (no `rdev`) — keyboard hook on macOS; US-QWERTY keycode mapping
 - Twemoji images rendered via `iced::widget::image`
 
 ## Dev notes
@@ -77,4 +80,5 @@ Flutter version. Current Rust code does not read `.env`.
 - `cargo build` must be run at the repo root (no monorepo config, no workspace).
 - No snapshot or fixture tests. No integration test runner.
 - Hotkey hook requires admin elevation on some Windows configs.
+- On macOS, Accessibility permission must be granted for keyboard hook.
 - `window_size` suggestion in Cargo.toml is `(500.0, 500.0)`.

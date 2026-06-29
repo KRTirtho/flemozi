@@ -8,6 +8,7 @@ use iced::widget::{operation, scrollable};
 use iced::{clipboard, window, Element, Point, Subscription, Task as Command};
 use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager};
+use tracing::{info, warn};
 use tray_icon::menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem};
 use tray_icon::TrayIconBuilder;
 
@@ -16,7 +17,11 @@ use crate::tabs::emoji::EmojiTab;
 use crate::tabs::emoticon::EmoticonTab;
 use crate::tabs::gif::GifTab;
 use crate::ui::main_view;
-use crate::win32::HookKeyEvent;
+
+#[cfg(target_os = "windows")]
+use crate::win32::{self as platform, HookKeyEvent};
+#[cfg(target_os = "macos")]
+use crate::macos::{self as platform, HookKeyEvent};
 
 pub(crate) const COLUMNS: usize = 10;
 pub(crate) const SPACING: f32 = 4.0;
@@ -94,6 +99,7 @@ pub enum Message {
     GifSearchResult(Result<Vec<crate::tabs::gif::GifEntry>, String>),
     GifSearchDebounce(String),
     GifThumbnail(usize, Vec<u8>),
+    GifPaste(Vec<u8>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -144,12 +150,21 @@ impl Flemozi {
                     return window::run(wid, |w| {
                         let hwnd = w
                             .window_handle()
+                            .inspect_err(|e| warn!("Failed to get window handle: {e}"))
                             .ok()
                             .and_then(|h| match h.as_raw() {
+                                #[cfg(target_os = "windows")]
                                 raw_window_handle::RawWindowHandle::Win32(h) => {
                                     Some(h.hwnd.get() as isize)
                                 }
-                                _ => None,
+                                #[cfg(target_os = "macos")]
+                                raw_window_handle::RawWindowHandle::AppKit(h) => {
+                                    Some(h.ns_view.as_ptr() as isize)
+                                }
+                                _ => {
+                                    warn!("Unknown raw window handle type on this platform");
+                                    None
+                                }
                             })
                             .unwrap_or(0);
                         Message::Setup(hwnd)
@@ -160,10 +175,12 @@ impl Flemozi {
             Message::Setup(hwnd) => {
                 state.our_hwnd = Some(hwnd);
                 if hwnd != 0 {
-                    unsafe { crate::win32::set_window_style(hwnd); }
+                    unsafe { platform::set_window_style(hwnd); }
+                } else {
+                    warn!("Window handle is 0 — platform window functions will be disabled");
                 }
 
-                crate::win32::init_keyboard_hook();
+                platform::init_keyboard_hook();
                 state.register_hotkey();
 
                 let icon = {
@@ -317,25 +334,36 @@ impl Flemozi {
                 }
             }
             Message::TitleBarClose => {
-                crate::win32::set_hook_active(false);
+                info!("TitleBarClose: disabling hook");
+                platform::set_hook_active(false);
                 let hwnd = state.our_hwnd.unwrap_or(0);
+                info!("TitleBarClose: hwnd={hwnd}");
                 if hwnd != 0 {
-                    unsafe { crate::win32::hide_window(hwnd); }
+                    info!("TitleBarClose: calling hide_window");
+                    unsafe { platform::hide_window(hwnd); }
+                    info!("TitleBarClose: hide_window returned");
                 }
                 Command::none()
             }
             Message::HotkeyPressed(_event) => {
-                state.last_foreground = Some(crate::win32::foreground_window());
-                crate::win32::set_hook_active(true);
+                info!("HotkeyPressed: capturing foreground window");
+                state.last_foreground = Some(platform::foreground_window());
+                info!("HotkeyPressed: activating hook");
+                platform::set_hook_active(true);
                 let hwnd = state.our_hwnd.unwrap_or(0);
+                info!("HotkeyPressed: hwnd={hwnd}");
                 if hwnd != 0 {
-                    let (cx, cy) = crate::win32::get_cursor_pos();
-                    let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
-                    unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
+                    let (cx, cy) = platform::get_cursor_pos();
+                    info!("HotkeyPressed: cursor=({cx},{cy})");
+                    let (wx, wy) = platform::clamp_window_position(cx, cy, 500, 500);
+                    info!("HotkeyPressed: showing window at ({wx},{wy})");
+                    unsafe { platform::show_no_activate(hwnd, wx, wy); }
+                    info!("HotkeyPressed: show_no_activate returned");
                 }
                 Command::none()
             }
             Message::MenuActivated(event) => {
+                info!("MenuActivated: id={}", event.id().0);
                 if event.id().0 == "exit" {
                     if let Some(id) = state.window_id {
                         window::close::<Message>(id)
@@ -343,13 +371,14 @@ impl Flemozi {
                         Command::none()
                     }
                 } else if event.id().0 == "show-window" {
-                    state.last_foreground = Some(crate::win32::foreground_window());
-                    crate::win32::set_hook_active(true);
+                    state.last_foreground = Some(platform::foreground_window());
+                    platform::set_hook_active(true);
                     let hwnd = state.our_hwnd.unwrap_or(0);
                     if hwnd != 0 {
-                        let (cx, cy) = crate::win32::get_cursor_pos();
-                        let (wx, wy) = crate::win32::clamp_window_position(cx, cy, 500, 500);
-                        unsafe { crate::win32::show_no_activate(hwnd, wx, wy); }
+                        let (cx, cy) = platform::get_cursor_pos();
+                        let (wx, wy) = platform::clamp_window_position(cx, cy, 500, 500);
+                        info!("MenuActivated: showing window at ({wx},{wy})");
+                        unsafe { platform::show_no_activate(hwnd, wx, wy); }
                     }
                     Command::none()
                 } else {
@@ -357,10 +386,19 @@ impl Flemozi {
                 }
             }
             Message::DoType(emoji) => {
-                unsafe { crate::win32::paste_emoji(&emoji); }
+                info!("DoType: emoji_len={}", emoji.len());
+                unsafe { platform::paste_emoji(&emoji); }
+                info!("DoType: paste_emoji returned");
+                Command::none()
+            }
+            Message::GifPaste(bytes) => {
+                info!("GifPaste: bytes={}", bytes.len());
+                unsafe { platform::paste_gif_file(&bytes); }
+                info!("GifPaste: paste_gif_file returned");
                 Command::none()
             }
             Message::Selected(i) => {
+                info!("Selected: index={i}");
                 let ok = match state.tab {
                     Tab::Emojis => {
                         if state.emoji.filtered.contains(&i) {
@@ -389,13 +427,14 @@ impl Flemozi {
                     Tab::Settings => false,
                 };
                 if ok {
-                    crate::win32::set_hook_active(false);
+                    platform::set_hook_active(false);
                     state.copy()
                 } else {
                     Command::none()
                 }
             }
             Message::MoveSelection(mv) => {
+                info!("MoveSelection: {mv:?}");
                 if state.move_selection(mv) {
                     state.scroll_to_selected()
                 } else {
@@ -403,7 +442,8 @@ impl Flemozi {
                 }
             }
             Message::CopySelected => {
-                crate::win32::set_hook_active(false);
+                info!("CopySelected: disabling hook");
+                platform::set_hook_active(false);
                 state.copy()
             }
             Message::ClearSearch => {
@@ -469,8 +509,9 @@ impl Flemozi {
             }
             Message::HookKeyEvent(ev) => {
                 let HookKeyEvent { key, ctrl, shift, alt } = ev;
+                info!("HookKeyEvent: key={key:?} ctrl={ctrl} shift={shift} alt={alt}");
 
-                if state.capturing_shortcut && (ctrl || alt || shift || !matches!(key, crate::win32::HookKey::Char(_))) {
+                if state.capturing_shortcut && (ctrl || alt || shift || !matches!(key, platform::HookKey::Char(_))) {
                     state.capturing_shortcut = false;
                     state.config.shortcut_ctrl = ctrl;
                     state.config.shortcut_alt = alt;
@@ -483,16 +524,16 @@ impl Flemozi {
 
                 let mut re_filter = true;
                 match key {
-                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'a' => {
+                    platform::HookKey::Char(ch) if ctrl && ch == 'a' => {
                         state.search_focused = true;
                         state.cursor = state.query.len();
                         state.selection = Some((0, state.query.len()));
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Char(ch) if ctrl && ch == 'c' => {
+                    platform::HookKey::Char(ch) if ctrl && ch == 'c' => {
                         state.search_focused = true;
                     }
-                    crate::win32::HookKey::Char(ch) => {
+                    platform::HookKey::Char(ch) => {
                         state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
@@ -503,7 +544,7 @@ impl Flemozi {
                         state.query.insert(state.cursor, ch);
                         state.cursor += 1;
                     }
-                    crate::win32::HookKey::Backspace if ctrl => {
+                    platform::HookKey::Backspace if ctrl => {
                         state.search_focused = true;
                         state.selection = None;
                         let before = &state.query[..state.cursor];
@@ -514,7 +555,7 @@ impl Flemozi {
                         state.query.replace_range(word_start..state.cursor, "");
                         state.cursor = word_start;
                     }
-                    crate::win32::HookKey::Backspace => {
+                    platform::HookKey::Backspace => {
                         state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
@@ -527,7 +568,7 @@ impl Flemozi {
                             state.cursor = lo;
                         }
                     }
-                    crate::win32::HookKey::Delete if ctrl => {
+                    platform::HookKey::Delete if ctrl => {
                         state.search_focused = true;
                         state.selection = None;
                         let after = &state.query[state.cursor..];
@@ -537,7 +578,7 @@ impl Flemozi {
                             .unwrap_or(state.query.len());
                         state.query.replace_range(state.cursor..word_end, "");
                     }
-                    crate::win32::HookKey::Delete => {
+                    platform::HookKey::Delete => {
                         state.search_focused = true;
                         if let Some((a, b)) = state.selection.take() {
                             let lo = a.min(b);
@@ -548,7 +589,7 @@ impl Flemozi {
                             state.query.remove(state.cursor);
                         }
                     }
-                    crate::win32::HookKey::Left if state.search_focused => {
+                    platform::HookKey::Left if state.search_focused => {
                         if ctrl {
                             let word_start = state
                                 .query[..state.cursor]
@@ -576,11 +617,11 @@ impl Flemozi {
                         }
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Left => {
+                    platform::HookKey::Left => {
                         state.move_selection(Move::Left);
                         return Command::none();
                     }
-                    crate::win32::HookKey::Right if state.search_focused => {
+                    platform::HookKey::Right if state.search_focused => {
                         if ctrl {
                             let after = &state.query[state.cursor..];
                             let word_end = after
@@ -608,11 +649,11 @@ impl Flemozi {
                         }
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Right => {
+                    platform::HookKey::Right => {
                         state.move_selection(Move::Right);
                         return Command::none();
                     }
-                    crate::win32::HookKey::Home if state.search_focused => {
+                    platform::HookKey::Home if state.search_focused => {
                         if shift {
                             let anchor = state.selection.map_or(state.cursor, |(a, _)| a);
                             state.selection = Some((anchor, 0));
@@ -622,7 +663,7 @@ impl Flemozi {
                         state.cursor = 0;
                         re_filter = false;
                     }
-                    crate::win32::HookKey::End if state.search_focused => {
+                    platform::HookKey::End if state.search_focused => {
                         let len = state.query.len();
                         if shift {
                             let anchor = state.selection.map_or(state.cursor, |(_, b)| b);
@@ -633,13 +674,13 @@ impl Flemozi {
                         state.cursor = len;
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Home | crate::win32::HookKey::End => {
+                    platform::HookKey::Home | platform::HookKey::End => {
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Up if state.search_focused => {
+                    platform::HookKey::Up if state.search_focused => {
                         state.search_focused = false;
                     }
-                    crate::win32::HookKey::Up => {
+                    platform::HookKey::Up => {
                         let at_top = match state.tab {
                             Tab::Emojis => state.emoji.filtered.first().is_some_and(|&f| f == state.emoji.selected),
                             Tab::Emoticons => state.emoticon.filtered.first().is_some_and(|&f| f == state.emoticon.selected),
@@ -653,30 +694,30 @@ impl Flemozi {
                         }
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Down if state.search_focused => {
+                    platform::HookKey::Down if state.search_focused => {
                         state.search_focused = false;
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Down => {
+                    platform::HookKey::Down => {
                         if state.move_selection(Move::Down) {
                             return state.scroll_to_selected();
                         }
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Enter if state.search_focused => {
+                    platform::HookKey::Enter if state.search_focused => {
                         state.search_focused = false;
                         re_filter = false;
                     }
-                    crate::win32::HookKey::Enter => {
-                        crate::win32::set_hook_active(false);
+                    platform::HookKey::Enter => {
+                        platform::set_hook_active(false);
                         return state.copy();
                     }
-                    crate::win32::HookKey::Escape => {
+                    platform::HookKey::Escape => {
                         if state.query.is_empty() {
-                            crate::win32::set_hook_active(false);
+                            platform::set_hook_active(false);
                             let hwnd = state.our_hwnd.unwrap_or(0);
                             if hwnd != 0 {
-                                unsafe { crate::win32::hide_window(hwnd); }
+                                unsafe { platform::hide_window(hwnd); }
                             }
                             return Command::none();
                         } else {
@@ -716,6 +757,7 @@ impl Flemozi {
                     Tab::Gifs => state.gif.scroll_id.clone(),
                     Tab::Settings => state.emoji.scroll_id.clone(),
                 };
+                info!("HookKeyEvent: handled, re_filter={re_filter}");
                 operation::scroll_to(
                     sid,
                     scrollable::AbsoluteOffset { x: 0.0, y: 0.0 },
@@ -766,7 +808,11 @@ impl Flemozi {
 }
 
 fn cursor_pos() -> Option<Point> {
-    LAST_CURSOR.lock().ok().and_then(|guard| *guard)
+    LAST_CURSOR
+        .lock()
+        .inspect_err(|e| warn!("Cursor mutex poisoned: {e}"))
+        .ok()
+        .and_then(|guard| *guard)
 }
 
 fn titlebar_drag_subscription() -> Subscription<Message> {
@@ -796,22 +842,31 @@ fn external_events() -> impl iced::futures::Stream<Item = Message> {
 
         loop {
             while let Ok(event) = hotkey_rx.try_recv() {
-                let _ = output.try_send(Message::HotkeyPressed(event));
+                info!("external_events: hotkey received");
+                if output.try_send(Message::HotkeyPressed(event)).is_err() {
+                    warn!("Hotkey event channel closed");
+                }
             }
             while let Ok(event) = menu_rx.try_recv() {
-                let _ = output.try_send(Message::MenuActivated(event));
+                info!("external_events: menu received");
+                if output.try_send(Message::MenuActivated(event)).is_err() {
+                    warn!("Menu event channel closed");
+                }
             }
-            while let Some(key) = crate::win32::try_recv_hook_key() {
-                let _ = output.try_send(Message::HookKeyEvent(key));
+            while let Some(key) = platform::try_recv_hook_key() {
+                info!("external_events: hook key received");
+                if output.try_send(Message::HookKeyEvent(key)).is_err() {
+                    warn!("Hook key channel closed");
+                }
             }
             tokio::time::sleep(std::time::Duration::from_millis(4)).await;
         }
     })
 }
 
-fn hookkey_to_code_name(key: &crate::win32::HookKey) -> String {
+fn hookkey_to_code_name(key: &platform::HookKey) -> String {
     match key {
-        crate::win32::HookKey::Char(ch) => match ch {
+        platform::HookKey::Char(ch) => match ch {
             'a'..='z' => format!("Key{}", ch.to_ascii_uppercase()),
             '0'..='9' => format!("Digit{}", ch),
             '.' => "Period".to_string(),
@@ -828,16 +883,16 @@ fn hookkey_to_code_name(key: &crate::win32::HookKey) -> String {
             '`' => "Backquote".to_string(),
             _ => format!("Key{:?}", ch),
         },
-        crate::win32::HookKey::Up => "ArrowUp".to_string(),
-        crate::win32::HookKey::Down => "ArrowDown".to_string(),
-        crate::win32::HookKey::Left => "ArrowLeft".to_string(),
-        crate::win32::HookKey::Right => "ArrowRight".to_string(),
-        crate::win32::HookKey::Enter => "Enter".to_string(),
-        crate::win32::HookKey::Escape => "Escape".to_string(),
-        crate::win32::HookKey::Backspace => "Backspace".to_string(),
-        crate::win32::HookKey::Delete => "Delete".to_string(),
-        crate::win32::HookKey::Home => "Home".to_string(),
-        crate::win32::HookKey::End => "End".to_string(),
+        platform::HookKey::Up => "ArrowUp".to_string(),
+        platform::HookKey::Down => "ArrowDown".to_string(),
+        platform::HookKey::Left => "ArrowLeft".to_string(),
+        platform::HookKey::Right => "ArrowRight".to_string(),
+        platform::HookKey::Enter => "Enter".to_string(),
+        platform::HookKey::Escape => "Escape".to_string(),
+        platform::HookKey::Backspace => "Backspace".to_string(),
+        platform::HookKey::Delete => "Delete".to_string(),
+        platform::HookKey::Home => "Home".to_string(),
+        platform::HookKey::End => "End".to_string(),
     }
 }
 
@@ -946,24 +1001,34 @@ pub fn shortcut_display_name(config: &Config) -> String {
 
 impl State {
     fn register_hotkey(&self) {
+        info!("register_hotkey: called");
         let c = &self.config;
         let manager = GlobalHotKeyManager::new();
-        if let Ok(manager) = manager {
-            let mut modifiers = Modifiers::empty();
-            if c.shortcut_ctrl {
-                modifiers |= Modifiers::CONTROL;
+        match manager {
+            Ok(manager) => {
+                let mut modifiers = Modifiers::empty();
+                if c.shortcut_ctrl {
+                    modifiers |= Modifiers::CONTROL;
+                }
+                if c.shortcut_alt {
+                    modifiers |= Modifiers::ALT;
+                }
+                if c.shortcut_shift {
+                    modifiers |= Modifiers::SHIFT;
+                }
+                if let Some(code) = code_name_to_code(&c.shortcut_code) {
+                    let hotkey = HotKey::new(Some(modifiers), code);
+                    info!("register_hotkey: registering {:?}", c.shortcut_code);
+                    match manager.register(hotkey) {
+                        Ok(()) => info!("register_hotkey: success"),
+                        Err(e) => warn!("Failed to register global hotkey: {e}"),
+                    }
+                } else {
+                    warn!("register_hotkey: unknown code {:?}", c.shortcut_code);
+                }
+                std::mem::forget(manager);
             }
-            if c.shortcut_alt {
-                modifiers |= Modifiers::ALT;
-            }
-            if c.shortcut_shift {
-                modifiers |= Modifiers::SHIFT;
-            }
-            if let Some(code) = code_name_to_code(&c.shortcut_code) {
-                let hotkey = HotKey::new(Some(modifiers), code);
-                let _ = manager.register(hotkey);
-            }
-            std::mem::forget(manager);
+            Err(e) => warn!("Failed to create global hotkey manager: {e}"),
         }
     }
 
@@ -1000,18 +1065,22 @@ impl State {
         if self.tab == Tab::Gifs {
             let hwnd = self.our_hwnd.unwrap_or(0);
             if hwnd != 0 {
-                unsafe { crate::win32::hide_window(hwnd); }
+                unsafe { platform::hide_window(hwnd); }
                 if let Some(entry) = self.gif.entries.get(self.gif.selected) {
                     if !entry.gif_url.is_empty() {
                         let url = entry.gif_url.clone();
                         return Command::perform(
                             async move {
                                 let bytes = crate::tabs::gif::download_image(url).await;
-                                if !bytes.is_empty() {
-                                    unsafe { crate::win32::paste_gif_file(&bytes); }
+                                bytes
+                            },
+                            |bytes| {
+                                if bytes.is_empty() {
+                                    Message::TitleBarClose
+                                } else {
+                                    Message::GifPaste(bytes)
                                 }
                             },
-                            |_| Message::TitleBarClose,
                         );
                     }
                 }
@@ -1022,7 +1091,7 @@ impl State {
         if let Some(_id) = self.window_id {
             let hwnd = self.our_hwnd.unwrap_or(0);
             if hwnd != 0 {
-                unsafe { crate::win32::hide_window(hwnd); }
+                unsafe { platform::hide_window(hwnd); }
             }
             Command::future(async move {
                 Message::DoType(text)
