@@ -49,8 +49,7 @@ identifier = "dev.krtirtho.flemozi"
 publisher = "Kingkor Roy Tirtho"
 license_file = "LICENSE"
 before_packaging_command = "cargo build --release --locked"
-formats = ["nsis"]
-icons = ["assets/icon.ico"]
+icons = ["assets/icon.ico", "assets/icon.icns"]
 resources = ["assets/twemoji/"]
 
 [[package.metadata.packager.binaries]]
@@ -60,3 +59,8 @@ main = true
 [package.metadata.packager.nsis]
 installer_icon = "assets/icon.ico"
 sidebar_image = "assets/icon.ico"
+
+[package.metadata.packager.dmg]
+
+[package.metadata.packager.macos]
+backgroundApp = true

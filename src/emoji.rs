@@ -13,27 +13,35 @@ pub struct EmojiEntry {
     pub image: Option<image::Handle>,
 }
 
-impl EmojiEntry {
+    impl EmojiEntry {
     pub fn from_type(t: &EmojiType) -> Self {
         let exe_dir = std::env::current_exe()
             .ok()
-            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
-            .unwrap_or_default();
+            .and_then(|p| {
+                let p = p.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+                Some(p)
+            });
 
         let image = twemoji_candidates(t.emoji)
             .into_iter()
             .find(|c| TWEMOJI_STEMS.binary_search(&c.as_str()).is_ok())
             .and_then(|c| {
                 let rel = format!("assets/twemoji/{c}.png");
-                let exe_assets = exe_dir.join(&rel);
-                let exe_flat = exe_dir.join("twemoji").join(format!("{c}.png"));
-                if exe_assets.exists() {
-                    Some(image::Handle::from_path(exe_assets))
-                } else if exe_flat.exists() {
-                    Some(image::Handle::from_path(exe_flat))
+                let candidates: Vec<std::path::PathBuf> = if let Some(ref exe) = exe_dir {
+                    vec![
+                        exe.join(&rel),
+                        exe.join("twemoji").join(format!("{c}.png")),
+                        exe.join("../Resources").join(&rel),
+                        exe.join("../Resources/twemoji").join(format!("{c}.png")),
+                    ]
                 } else {
-                    Some(image::Handle::from_path(std::path::PathBuf::from(&rel)))
-                }
+                    vec![]
+                };
+                candidates
+                    .into_iter()
+                    .chain([std::path::PathBuf::from(&rel)])
+                    .find(|p| p.exists())
+                    .map(image::Handle::from_path)
             });
 
         EmojiEntry {

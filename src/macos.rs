@@ -140,7 +140,7 @@ pub fn init_keyboard_hook() {
         );
 
         if let Err(()) = result {
-            error!("cgevent tap: failed to create event tap. Grant Accessibility permission in System Settings → Privacy & Security → Accessibility.");
+            error!("cgevent tap: failed to create event tap. Grant both Accessibility and Input Monitoring permission in System Settings → Privacy & Security.");
         }
     });
 }
