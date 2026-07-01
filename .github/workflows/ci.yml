@@ -68,7 +68,7 @@ jobs:
         run: cargo build --locked
 
       - name: Install cargo-packager
-        run: cargo install cargo-packager --locked
+        run: cargo install cargo-packager --locked --force
 
       - name: Build installer
         run: cargo packager --release --formats nsis
@@ -124,7 +124,7 @@ jobs:
         run: cargo build --locked
 
       - name: Install cargo-packager
-        run: cargo install cargo-packager --locked
+        run: cargo install cargo-packager --locked --force
 
       - name: Build DMG
         run: cargo packager --release --formats dmg
@@ -132,7 +132,7 @@ jobs:
       - name: Rename DMG
         run: |
           mkdir -p dist
-          mv target/release/flemozi_*.dmg dist/Flemozi-macos-universal.dmg
+          find target/release -maxdepth 1 -name '*.dmg' -exec mv {} dist/Flemozi-macos-universal.dmg \;
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
