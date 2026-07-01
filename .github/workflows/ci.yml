@@ -82,7 +82,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Flemozi-Release-Binaries
+          name: Flemozi-Windows-Binaries
           path: dist/
 
   macos:
@@ -137,7 +137,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Flemozi-Release-Binaries
+          name: Flemozi-macOS-Binaries
           path: dist/
 
   upload:
@@ -146,14 +146,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Flemozi-Release-Binaries
           path: Flemozi-Release-Binaries
 
       - name: Generate Checksums
         run: |
-          cd Flemozi-Release-Binaries
-          md5sum * > RELEASE.md5sum
-          sha256sum * > RELEASE.sha256sum
+          find Flemozi-Release-Binaries -type f -exec md5sum {} + > Flemozi-Release-Binaries/RELEASE.md5sum
+          find Flemozi-Release-Binaries -type f -exec sha256sum {} + > Flemozi-Release-Binaries/RELEASE.sha256sum
 
       - name: Upload Release Binaries (stable)
         if: ${{ !inputs.dry_run && inputs.channel == 'stable' }}
