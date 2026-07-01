@@ -1,5 +1,7 @@
-use iced::widget::{button, container, image, sensor, space, text};
-use iced::{border, Center, Color, ContentFit, Element, Fill};
+use iced::widget::{button, container, sensor, space, text};
+use iced::{border, Center, Color, Element, Fill};
+use iced::font::Font;
+use iced::widget::text::Shaping;
 
 use crate::app::{Message, State};
 
@@ -9,19 +11,14 @@ pub fn emoji_cell<'a>(state: &'a State, i: usize) -> Element<'a, Message> {
     let is_visible = state.emoji.visible.contains(&i);
 
     let cell: Element<_> = if is_visible {
-        match &entry.image {
-            Some(handle) => image(handle)
-                .width(Fill)
-                .height(Fill)
-                .content_fit(ContentFit::Contain)
-                .into(),
-            None => text(entry.emoji)
-                .width(Fill)
-                .height(Fill)
-                .align_x(Center)
-                .size(24)
-                .into(),
-        }
+        text(entry.emoji)
+            .width(Fill)
+            .height(Fill)
+            .align_x(Center)
+            .size(24)
+            .font(Font::with_name("Noto Color Emoji"))
+            .shaping(Shaping::Advanced)
+            .into()
     } else {
         space().into()
     };

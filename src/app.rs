@@ -102,6 +102,7 @@ pub enum Message {
     GifSearchDebounce(String),
     GifThumbnail(usize, Vec<u8>),
     GifPaste(Vec<u8>),
+    FontLoaded(Result<(), iced::font::Error>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -134,8 +135,10 @@ impl Flemozi {
         };
 
         let cmd = window::latest().map(Message::Init);
+        let font_bytes: &[u8] = include_bytes!("../assets/NotoColorEmoji.ttf");
+        let font_cmd = iced::font::load(font_bytes).map(Message::FontLoaded);
 
-        (Self::Loaded(state), cmd)
+        (Self::Loaded(state), Command::batch([cmd, font_cmd]))
     }
 
     pub fn title(&self) -> String {
@@ -400,6 +403,13 @@ impl Flemozi {
                 info!("GifPaste: bytes={}", bytes.len());
                 unsafe { platform::paste_gif_file(&bytes); }
                 info!("GifPaste: paste_gif_file returned");
+                Command::none()
+            }
+            Message::FontLoaded(result) => {
+                match result {
+                    Ok(()) => info!("Noto Color Emoji font loaded"),
+                    Err(e) => warn!("Failed to load Noto Color Emoji: {e:?}"),
+                }
                 Command::none()
             }
             Message::Selected(i) => {

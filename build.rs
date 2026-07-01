@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -22,29 +21,10 @@ fn main() {
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=framework=ApplicationServices");
 
-    println!("cargo:rerun-if-changed=assets/twemoji");
     println!("cargo:rerun-if-changed=.env");
 
     let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let out_dir = env::var("OUT_DIR").unwrap();
-
-    // ── twemoji stems ──
-    let dir = manifest.join("assets/twemoji");
-    let mut stems: BTreeSet<String> = BTreeSet::new();
-    if let Ok(entries) = fs::read_dir(&dir) {
-        for entry in entries.flatten() {
-            if let Some(stem) = entry.path().file_stem().and_then(|s| s.to_str()) {
-                stems.insert(stem.to_lowercase());
-            }
-        }
-    }
-    let dest = PathBuf::from(&out_dir).join("twemoji_stems.rs");
-    let mut content = String::from("pub const TWEMOJI_STEMS: &[&str] = &[\n");
-    for stem in &stems {
-        content.push_str(&format!("    \"{stem}\",\n"));
-    }
-    content.push_str("];\n");
-    fs::write(&dest, content).unwrap();
 
     // ── obfuscated env vars (envied-style) ──
     let env_path = manifest.join(".env");

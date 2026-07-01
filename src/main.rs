@@ -8,7 +8,7 @@ mod emoticon;
 mod env;
 mod search;
 mod tabs;
-mod twemoji_stems;
+
 mod ui;
 #[cfg(target_os = "windows")]
 mod win32;

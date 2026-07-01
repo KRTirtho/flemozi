@@ -1,5 +1,7 @@
-use iced::widget::{column, container, image, row, text};
-use iced::{Alignment, ContentFit, Element, Fill, Pixels};
+use iced::widget::{column, container, row, text};
+use iced::{Alignment, Element, Fill};
+use iced::font::Font;
+use iced::widget::text::Shaping;
 
 use crate::app::{Message, State};
 use crate::emoji::to_codepoints;
@@ -15,14 +17,11 @@ pub fn preview_bar(state: &State) -> Element<'_, Message> {
         true => return empty_preview(),
     };
 
-    let icon: Element<_> = match &entry.image {
-        Some(handle) => image(handle)
-            .width(Pixels(48.0))
-            .height(Pixels(48.0))
-            .content_fit(ContentFit::Contain)
-            .into(),
-        None => text(entry.emoji).size(40).into(),
-    };
+    let icon: Element<_> = text(entry.emoji)
+        .size(40)
+        .font(Font::with_name("Noto Color Emoji"))
+        .shaping(Shaping::Advanced)
+        .into();
 
     let description = text(entry.description).size(16);
     let codepoints = text(format!("{}  ·  U+{}", entry.emoji, to_codepoints(entry.emoji)))
